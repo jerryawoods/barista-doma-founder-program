@@ -1,12 +1,15 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #15100c; color: #f7efe6; }
-.page { max-width: 920px; margin: 0 auto; padding: 24px; }
+.page { max-width: 980px; margin: 0 auto; padding: 24px; }
 .card { background: #241b15; border: 1px solid #4a372b; border-radius: 18px; padding: 22px; margin: 16px 0; box-shadow: 0 12px 28px rgba(0,0,0,.25); }
 .hero { background: linear-gradient(135deg, #2a1d14, #3b291d); }
+.advisorCard { border-color: #8a674a; }
+.principleCard { background: #1f1813; border-color: #d6b48c; }
 .eyebrow { text-transform: uppercase; letter-spacing: .12em; color: #d6b48c; font-size: 12px; margin: 0 0 8px; }
 h1 { margin: 0 0 10px; font-size: 34px; line-height: 1.1; }
 h2 { margin-top: 0; }
-button { border: 0; border-radius: 14px; padding: 14px 18px; margin: 6px 8px 6px 0; font-weight: 700; cursor: pointer; }
+h3 { margin-bottom: 6px; }
+button { border: 0; border-radius: 14px; padding: 14px 18px; margin: 10px 8px 6px 0; font-weight: 700; cursor: pointer; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 .primary { background: #f0c987; color: #21160f; }
 .secondary { background: #3d3028; color: #f7efe6; border: 1px solid #6c5343; }
@@ -15,7 +18,17 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .statusBox { background: #1b1410; border: 1px solid #5e4636; }
 .errorBox { background: #3a1513; border: 1px solid #b94b42; color: #ffd8d3; white-space: pre-wrap; }
 .successBox { background: #18351f; border: 1px solid #58a766; color: #dcffe3; }
-textarea { width: 100%; min-height: 160px; background: #100c09; color: #fff7ec; border: 1px solid #6c5343; border-radius: 14px; padding: 14px; font-size: 16px; }
+textarea, input, select { width: 100%; background: #100c09; color: #fff7ec; border: 1px solid #6c5343; border-radius: 14px; padding: 14px; font-size: 16px; }
+textarea { min-height: 170px; }
+input, select { min-height: 50px; }
+.label { display: block; color: #d6b48c; font-weight: 700; font-size: 13px; margin: 14px 0 6px; }
 audio { width: 100%; margin-top: 12px; }
 .log { background: #100c09; border: 1px solid #4a372b; border-radius: 14px; padding: 14px; max-height: 320px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
 .small { color: #ccb7a5; font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+@media (max-width: 720px) {
+  .page { padding: 14px; }
+  h1 { font-size: 28px; }
+  .grid { grid-template-columns: 1fr; }
+  button { width: 100%; margin-right: 0; }
+}

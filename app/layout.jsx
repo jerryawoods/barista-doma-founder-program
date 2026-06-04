@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Barista Doma Voice Diagnostic v3",
-  description: "Hosted voice transcription proof for Barista Doma"
+  title: "Barista Doma Advisor Interaction v5",
+  description: "Premium Advisor interaction diagnostic for The Home Barista Occasion Simulator"
 };
 
 export default function RootLayout({ children }) {
