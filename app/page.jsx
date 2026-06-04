@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-const advisorStarterText = `I hear that this is your second fast shot on the Breville, using your usual 18g dose and aiming for your house 36g yield. Since you are serving guests in ten minutes, do not chase a full reset. Keep the dose steady, move the grind one step finer, and shorten the next pull if the flow still races. Your aim now is not perfection; it is a steady, hospitable cup that preserves the moment.`;
+const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Generate an Advisor response to see the blended context.`;
 
 const defaultContext = {
   machine: "Breville Barista Express",
@@ -31,6 +31,7 @@ export default function Home() {
   const [matrixMatch, setMatrixMatch] = useState(null);
   const [advisorAudioUrl, setAdvisorAudioUrl] = useState("");
   const [advisorVoice, setAdvisorVoice] = useState("sage");
+  const [synthesis, setSynthesis] = useState(null);
   const [advisorBusy, setAdvisorBusy] = useState(false);
   const [respondBusy, setRespondBusy] = useState(false);
   const recorderRef = useRef(null);
@@ -71,6 +72,7 @@ export default function Home() {
     setTranscript("");
     setError("");
     setMatrixMatch(null);
+    setSynthesis(null);
     setStatus("Requesting microphone…");
     log("Requesting microphone access.");
     try {
@@ -179,8 +181,9 @@ export default function Home() {
       }
       setAdvisorText(data.advisorText || "");
       setMatrixMatch(data.matrixMatch || null);
+      setSynthesis(data.synthesis || null);
       setStatus("Advisor response ready. You may now generate Advisor Voice.");
-      log(`Advisor response returned ${String(data.advisorText || "").length} characters. Matrix: ${data.matrixMatch?.label || "None"}`);
+      log(`Advisor response returned ${String(data.advisorText || "").length} characters. Intent: ${data.synthesis?.detectedArtisanIntent || "unknown"}. Matrix applied: ${String(data.synthesis?.matrixApplied)}`);
     } catch (err) {
       setStatus("Advisor response failed");
       setError(err.message || String(err));
@@ -223,16 +226,41 @@ export default function Home() {
   function fillScenario() {
     setContext(defaultContext);
     setTranscript("The shot ran too fast and tasted thin. This is the second time it happened today. I am making this for my wife before church and I do not want to ruin the moment.");
+    setSynthesis(null);
     setStatus("Sample scenario loaded. Generate Advisor response when ready.");
     log("Loaded sample premium advisor scenario.");
+  }
+
+  function fillSystemCheck() {
+    setContext(defaultContext);
+    setTranscript("This is Jerry checking whether the Advisor is communicating with me in version six point one.");
+    setSynthesis(null);
+    setStatus("System-check transcript loaded. Generate Advisor response when ready.");
+    log("Loaded system-check scenario.");
+  }
+
+  function fillThinVoice() {
+    setContext(defaultContext);
+    setTranscript("A little thin.");
+    setSynthesis(null);
+    setStatus("Thin voice-note scenario loaded. Generate Advisor response when ready.");
+    log("Loaded thin voice-note scenario.");
+  }
+
+  function clearRequiredField() {
+    setContext((prev) => ({ ...prev, machine: "" }));
+    setTranscript("The shot ran fast and tasted thin.");
+    setSynthesis(null);
+    setStatus("Incomplete form scenario loaded. Generate Advisor response when ready.");
+    log("Loaded incomplete form scenario.");
   }
 
   return (
     <main className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Advisor Interaction Diagnostic v5</p>
-        <h1>Home Barista Occasion Simulator — One-Piece Prototype</h1>
-        <p>This puts the working pieces together: structured context, artisan voice capture, transcript, Recovery Matrix signals, Premium Advisor response, and Advisor Voice.</p>
+        <p className="eyebrow">Barista Doma Advisor Interaction Diagnostic v6.1</p>
+        <h1>Home Barista Occasion Simulator — Form + Voice Synthesis</h1>
+        <p>This refinement tests the real Advisor rule: the form grounds, the artisan voice clarifies, and the Advisor synthesizes both into guidance.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
@@ -261,7 +289,12 @@ export default function Home() {
         </div>
         <label className="label" htmlFor="desiredFeeling">Desired feeling / delight</label>
         <input id="desiredFeeling" value={context.desiredFeeling} onChange={(e) => updateContext("desiredFeeling", e.target.value)} />
-        <button className="secondary" onClick={fillScenario} type="button">Load Sample Fast Shot Scenario</button>
+        <div className="buttonRow">
+          <button className="secondary" onClick={fillScenario} type="button">Load Clear Fast Shot</button>
+          <button className="secondary" onClick={fillSystemCheck} type="button">Load System Check</button>
+          <button className="secondary" onClick={fillThinVoice} type="button">Load Thin Voice Note</button>
+          <button className="secondary" onClick={clearRequiredField} type="button">Load Incomplete Form</button>
+        </div>
       </section>
 
       <section className="card">
@@ -280,11 +313,12 @@ export default function Home() {
 
       <section className="card advisorCard">
         <h2>5. Premium Advisor Response</h2>
-        <p className="small">This is not a generic AI answer. It uses structured context + a starter Recovery Matrix + Barista Doma Advisor rules.</p>
+        <p className="small">This is not a generic AI answer. It blends the structured form + artisan voice, then applies the Recovery Matrix only when appropriate.</p>
         <button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy} type="button">
           {respondBusy ? "Generating…" : "Generate Advisor Response"}
         </button>
-        {matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : null}
+        {synthesis ? <SynthesisPanel synthesis={synthesis} /> : null}
+        {matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : <div className="noteBox"><strong>Matrix Match:</strong> None applied yet, or not appropriate for the artisan's intent.</div>}
         <label className="label" htmlFor="advisorText">Advisor response</label>
         <textarea id="advisorText" value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} placeholder="Advisor response will appear here." />
       </section>
@@ -308,8 +342,9 @@ export default function Home() {
 
       <section className="card principleCard">
         <h2>Product Principle Being Tested</h2>
-        <p><strong>The Recovery Matrix knows what can go wrong.</strong></p>
-        <p><strong>The Premium Advisor synthesizes structured context into refined, occasion-aware guidance.</strong></p>
+        <p><strong>The form grounds.</strong></p>
+        <p><strong>The artisan voice clarifies.</strong></p>
+        <p><strong>The Advisor synthesizes both, then uses the Recovery Matrix only when appropriate.</strong></p>
       </section>
 
       <section className="card">
@@ -317,6 +352,24 @@ export default function Home() {
         <div className="log">{logs.join("\n")}</div>
       </section>
     </main>
+  );
+}
+
+function SynthesisPanel({ synthesis }) {
+  return (
+    <div className="synthesisBox">
+      <h3>Advisor Understanding</h3>
+      <p><strong>Form complete:</strong> {String(synthesis.formComplete)}</p>
+      {synthesis.missingFields?.length ? <p><strong>Missing fields:</strong> {synthesis.missingFields.join(", ")}</p> : null}
+      <p><strong>Detected artisan intent:</strong> {synthesis.detectedArtisanIntent}</p>
+      <p><strong>Voice quality:</strong> {synthesis.voiceQuality}</p>
+      <p><strong>Primary live signal:</strong> {synthesis.primaryLiveSignal}</p>
+      <p><strong>Supporting context used:</strong> {synthesis.supportingContextUsed || "None"}</p>
+      <p><strong>Matrix applied:</strong> {String(synthesis.matrixApplied)}</p>
+      {synthesis.primaryMatrixSignal ? <p><strong>Primary matrix signal:</strong> {synthesis.primaryMatrixSignal.label}</p> : null}
+      {synthesis.secondaryMatrixSignal ? <p><strong>Secondary matrix signal:</strong> {synthesis.secondaryMatrixSignal.label}</p> : null}
+      {!synthesis.matrixApplied && synthesis.formOnlyPossibleSignal ? <p><strong>Form-only possible signal:</strong> {synthesis.formOnlyPossibleSignal.label}</p> : null}
+    </div>
   );
 }
 

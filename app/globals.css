@@ -32,3 +32,10 @@ audio { width: 100%; margin-top: 12px; }
   .grid { grid-template-columns: 1fr; }
   button { width: 100%; margin-right: 0; }
 }
+.noteBox, .synthesisBox { border-radius: 14px; padding: 14px; margin: 12px 0; }
+.noteBox { background: #1b1410; border: 1px dashed #8a674a; color: #ead9c7; }
+.synthesisBox { background: #16291d; border: 1px solid #6ca978; color: #e3ffe7; }
+.synthesisBox h3 { margin-top: 0; }
+.synthesisBox p { margin: 7px 0; }
+.buttonRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+@media (max-width: 720px) { .buttonRow { display: block; } }
