@@ -1,28 +1,23 @@
-# Barista Doma Home Barista Occasion Simulator — v6.1
+# Barista Doma Home Barista Occasion Simulator v7 — Integrated Flow Prototype
 
-This is a one-piece diagnostic prototype for the core Barista Doma interaction loop.
+This version puts the current working pieces into one flow so the Founder Program can be viewed as a connected experience:
 
-## Product principle
+- Founder dashboard
+- Doma Profile onboarding
+- Machine Passport / House Formula
+- Occasion setup
+- Voice capture and transcription
+- Form + voice synthesis
+- Recovery Matrix signals
+- Premium Advisor response
+- Advisor Voice playback
+- Doma Report creation
+- Local report history
 
-The form grounds. The artisan voice clarifies. The Advisor synthesizes.
+This remains a prototype. It uses browser localStorage for profile/report persistence and the existing Vercel API routes for OpenAI transcription, Advisor response generation, and Advisor Voice.
 
-## What v6.1 proves
+Upload the contents of this folder to GitHub over the existing repo and deploy with Vercel.
 
-- Structured form context is required for premium guidance.
-- Artisan voice is blended with the form rather than ignored or over-prioritized.
-- Incomplete forms trigger a completion request instead of a guess.
-- System-test comments are treated as system tests, not forced coffee diagnoses.
-- Thin or unclear voice notes trigger a clarifying response.
-- The Recovery Matrix is applied only when the form + voice indicate an actual recovery or occasion signal.
-- Advisor response can be spoken back with premium generated voice.
+Suggested commit message:
 
-## Routes
-
-- `/api/health`
-- `/api/transcribe`
-- `/api/respond`
-- `/api/speak`
-
-## Required environment variable
-
-`OPENAI_API_KEY` must be set in Vercel Production.
+`Deploy v7 integrated flow prototype`

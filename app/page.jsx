@@ -1,384 +1,250 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Generate an Advisor response to see the blended context.`;
-
-const defaultContext = {
+const defaultProfile = {
+  founderName: "Jerry",
+  roleIdentity: "Home barista in training",
   machine: "Breville Barista Express",
   grinder: "Built-in grinder",
-  dose: "18g",
-  yield: "36g",
-  shotTime: "About 18 seconds",
-  drink: "Cappuccino",
-  recurrence: "Second fast shot today",
-  occasion: "Before-church coffee at home",
-  guest: "My wife / family",
-  timePressure: "Guests or family waiting in about ten minutes",
-  desiredFeeling: "Steady, hospitable, warm, confident, and delightful"
+  beans: "House espresso beans",
+  experienceLevel: "Developing confidence",
+  preferredDrinks: "Cappuccino, espresso, milk drinks",
+  houseDose: "18g",
+  houseYield: "36g",
+  houseShotTime: "About 25-30 seconds when dialed in",
+  milkStyle: "Creamy microfoam for warmth and comfort"
 };
 
+const defaultOccasion = {
+  occasionName: "Before-church coffee at home",
+  drink: "Cappuccino",
+  guest: "My wife / family",
+  timePressure: "Guests or family waiting in about ten minutes",
+  desiredFeeling: "Steady, hospitable, warm, confident, and delightful",
+  recurrence: "Second fast shot today",
+  currentShotTime: "About 18 seconds",
+  momentIntent: "Serve a steady cup that preserves the morning and creates delight"
+};
+
+const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Capture a voice note or load a scenario, then generate an Advisor response.`;
+
 export default function Home() {
+  const [active, setActive] = useState("dashboard");
   const [status, setStatus] = useState("Ready");
-  const [transcript, setTranscript] = useState("");
+  const [health, setHealth] = useState(null);
+  const [error, setError] = useState("");
   const [logs, setLogs] = useState(["Ready."]);
+  const [profile, setProfile] = useState(defaultProfile);
+  const [occasion, setOccasion] = useState(defaultOccasion);
+  const [transcript, setTranscript] = useState("");
   const [recording, setRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState("");
-  const [error, setError] = useState("");
-  const [health, setHealth] = useState(null);
-  const [context, setContext] = useState(defaultContext);
   const [advisorText, setAdvisorText] = useState(advisorStarterText);
-  const [matrixMatch, setMatrixMatch] = useState(null);
-  const [advisorAudioUrl, setAdvisorAudioUrl] = useState("");
-  const [advisorVoice, setAdvisorVoice] = useState("sage");
   const [synthesis, setSynthesis] = useState(null);
-  const [advisorBusy, setAdvisorBusy] = useState(false);
+  const [matrixMatch, setMatrixMatch] = useState(null);
+  const [advisorVoice, setAdvisorVoice] = useState("sage");
+  const [advisorAudioUrl, setAdvisorAudioUrl] = useState("");
   const [respondBusy, setRespondBusy] = useState(false);
+  const [advisorBusy, setAdvisorBusy] = useState(false);
+  const [reports, setReports] = useState([]);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
+
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem("bd_profile_v7");
+      const savedOccasion = localStorage.getItem("bd_occasion_v7");
+      const savedReports = localStorage.getItem("bd_reports_v7");
+      if (savedProfile) setProfile(JSON.parse(savedProfile));
+      if (savedOccasion) setOccasion(JSON.parse(savedOccasion));
+      if (savedReports) setReports(JSON.parse(savedReports));
+    } catch {}
+  }, []);
+
+  useEffect(() => { try { localStorage.setItem("bd_profile_v7", JSON.stringify(profile)); } catch {} }, [profile]);
+  useEffect(() => { try { localStorage.setItem("bd_occasion_v7", JSON.stringify(occasion)); } catch {} }, [occasion]);
+  useEffect(() => { try { localStorage.setItem("bd_reports_v7", JSON.stringify(reports)); } catch {} }, [reports]);
+
+  const context = useMemo(() => ({
+    machine: profile.machine,
+    grinder: profile.grinder,
+    dose: profile.houseDose,
+    yield: profile.houseYield,
+    shotTime: occasion.currentShotTime,
+    drink: occasion.drink,
+    recurrence: occasion.recurrence,
+    occasion: occasion.occasionName,
+    guest: occasion.guest,
+    timePressure: occasion.timePressure,
+    desiredFeeling: occasion.desiredFeeling,
+    beans: profile.beans,
+    experienceLevel: profile.experienceLevel,
+    milkStyle: profile.milkStyle,
+    momentIntent: occasion.momentIntent
+  }), [profile, occasion]);
 
   function log(message) {
     const stamp = new Date().toLocaleTimeString();
     setLogs((prev) => [...prev, `[${stamp}] ${message}`]);
   }
-
-  function updateContext(field, value) {
-    setContext((prev) => ({ ...prev, [field]: value }));
-  }
+  function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: value })); }
+  function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
 
   async function checkServer() {
-    setError("");
-    setStatus("Checking server and API key…");
-    log("Checking /api/health.");
+    setError(""); setStatus("Checking server and API key…"); log("Checking /api/health.");
     try {
       const response = await fetch("/api/health", { cache: "no-store" });
       const data = await response.json();
       setHealth(data);
       if (!response.ok || !data.ok) throw new Error(data?.error || `Health check failed: ${response.status}`);
-      const keyMessage = data.hasOpenAIKey ? "OPENAI_API_KEY is present." : "OPENAI_API_KEY is MISSING.";
-      setStatus(`Server check complete. ${keyMessage}`);
+      setStatus(`Server check complete. ${data.hasOpenAIKey ? "OPENAI_API_KEY is present." : "OPENAI_API_KEY is MISSING."}`);
       log(`Health: ok=${data.ok}, hasOpenAIKey=${data.hasOpenAIKey}, node=${data.node}`);
-    } catch (err) {
-      setError(err.message);
-      setStatus("Server check failed");
-      log(`Health check failed: ${err.message}`);
-    }
+    } catch (err) { setError(err.message); setStatus("Server check failed"); log(`Health check failed: ${err.message}`); }
   }
 
   async function startRecording() {
-    setAudioUrl("");
-    chunksRef.current = [];
-    setTranscript("");
-    setError("");
-    setMatrixMatch(null);
-    setSynthesis(null);
-    setStatus("Requesting microphone…");
-    log("Requesting microphone access.");
+    setAudioUrl(""); chunksRef.current = []; setTranscript(""); setError(""); setMatrixMatch(null); setSynthesis(null);
+    setStatus("Requesting microphone…"); log("Requesting microphone access.");
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("This browser does not expose microphone recording APIs.");
-      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const preferredTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/mpeg"];
-      let selectedType = "";
-      if (typeof MediaRecorder !== "undefined") {
-        selectedType = preferredTypes.find((t) => MediaRecorder.isTypeSupported(t)) || "";
-      }
+      const selectedType = preferredTypes.find((t) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(t)) || "";
       const recorder = selectedType ? new MediaRecorder(stream, { mimeType: selectedType }) : new MediaRecorder(stream);
       recorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) chunksRef.current.push(event.data);
-      };
-      recorder.onstart = () => {
-        setRecording(true);
-        setStatus("Recording… speak now");
-        log(`Recording started. MIME: ${recorder.mimeType || "browser default"}`);
-      };
-      recorder.onerror = (event) => {
-        setStatus("Recording error");
-        setError(event?.error?.message || "Unknown recorder error");
-        log(`Recording error: ${event?.error?.message || "Unknown recorder error"}`);
-      };
+      recorder.ondataavailable = (event) => { if (event.data?.size > 0) chunksRef.current.push(event.data); };
+      recorder.onstart = () => { setRecording(true); setStatus("Recording… speak now"); log(`Recording started. MIME: ${recorder.mimeType || "browser default"}`); };
       recorder.onstop = async () => {
-        setRecording(false);
-        setStatus("Recording stopped. Preparing transcription…");
-        log("Recording stopped.");
+        setRecording(false); setStatus("Recording stopped. Preparing transcription…"); log("Recording stopped.");
         try { streamRef.current?.getTracks()?.forEach((track) => track.stop()); } catch {}
         const mimeType = recorder.mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: mimeType });
         log(`Audio blob created. Size: ${blob.size} bytes`);
-        if (!blob.size) {
-          setStatus("No audio was captured.");
-          setError("The browser stopped recording, but the audio file was empty.");
-          log("No audio chunks were captured.");
-          return;
-        }
-        const localUrl = URL.createObjectURL(blob);
-        setAudioUrl(localUrl);
+        if (!blob.size) throw new Error("The browser stopped recording, but the audio file was empty.");
+        setAudioUrl(URL.createObjectURL(blob));
         const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("mpeg") ? "mp3" : "webm";
-        const file = new File([blob], `barista-doma-voice.${ext}`, { type: mimeType });
         const form = new FormData();
-        form.append("audio", file);
-        setStatus("Sending audio for transcription…");
-        log("Sending audio to /api/transcribe.");
-        try {
-          const response = await fetch("/api/transcribe", { method: "POST", body: form });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            const message = [data?.error, data?.detail].filter(Boolean).join("\n");
-            throw new Error(message || `Transcription failed with HTTP ${response.status}`);
-          }
-          setTranscript(data.text || "");
-          setStatus("Transcription complete. Now generate Advisor response.");
-          log(`Transcription returned ${String(data.text || "").length} characters.`);
-        } catch (err) {
-          setStatus("Transcription failed");
-          setError(err.message || String(err));
-          log(`Transcription failed: ${err.message || String(err)}`);
-        }
+        form.append("audio", new File([blob], `barista-doma-voice.${ext}`, { type: mimeType }));
+        setStatus("Sending audio for transcription…"); log("Sending audio to /api/transcribe.");
+        const response = await fetch("/api/transcribe", { method: "POST", body: form });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Transcription failed with HTTP ${response.status}`);
+        setTranscript(data.text || ""); setStatus("Transcription complete. Generate Advisor response next."); log(`Transcription returned ${String(data.text || "").length} characters.`);
       };
       recorder.start();
-    } catch (err) {
-      setRecording(false);
-      setStatus(`Error: ${err.message}`);
-      setError(err.message);
-      log(`Start recording failed: ${err.name || "Error"} — ${err.message}`);
-      try { streamRef.current?.getTracks()?.forEach((track) => track.stop()); } catch {}
-    }
+    } catch (err) { setRecording(false); setStatus(`Error: ${err.message}`); setError(err.message); log(`Recording failed: ${err.message}`); }
   }
-
   function stopRecording() {
-    try {
-      if (recorderRef.current && recorderRef.current.state !== "inactive") {
-        recorderRef.current.stop();
-        setStatus("Stopping…");
-        log("Stop requested.");
-      }
-    } catch (err) {
-      setStatus(`Stop error: ${err.message}`);
-      setError(err.message);
-      log(`Stop failed: ${err.message}`);
-    }
+    try { if (recorderRef.current && recorderRef.current.state !== "inactive") { recorderRef.current.stop(); setStatus("Stopping…"); log("Stop requested."); } }
+    catch (err) { setError(err.message); log(`Stop failed: ${err.message}`); }
   }
 
   async function generateAdvisorResponse() {
-    setError("");
-    setRespondBusy(true);
-    setAdvisorAudioUrl("");
-    setStatus("Generating Premium Advisor response…");
-    log("Sending transcript + structured context to /api/respond.");
+    setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setStatus("Generating Premium Advisor response…"); log("Sending form + voice to /api/respond.");
     try {
-      const response = await fetch("/api/respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript, context })
-      });
+      const response = await fetch("/api/respond", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript, context }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor response failed with HTTP ${response.status}`);
-      }
-      setAdvisorText(data.advisorText || "");
-      setMatrixMatch(data.matrixMatch || null);
-      setSynthesis(data.synthesis || null);
-      setStatus("Advisor response ready. You may now generate Advisor Voice.");
-      log(`Advisor response returned ${String(data.advisorText || "").length} characters. Intent: ${data.synthesis?.detectedArtisanIntent || "unknown"}. Matrix applied: ${String(data.synthesis?.matrixApplied)}`);
-    } catch (err) {
-      setStatus("Advisor response failed");
-      setError(err.message || String(err));
-      log(`Advisor response failed: ${err.message || String(err)}`);
-    } finally {
-      setRespondBusy(false);
-    }
+      if (!response.ok) throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor response failed with HTTP ${response.status}`);
+      setAdvisorText(data.advisorText || ""); setMatrixMatch(data.matrixMatch || null); setSynthesis(data.synthesis || null);
+      setStatus("Advisor response ready. Generate Advisor Voice or create Doma Report.");
+      log(`Advisor response returned ${String(data.advisorText || "").length} chars. Intent: ${data.synthesis?.detectedArtisanIntent || "unknown"}.`);
+      setActive("simulator");
+    } catch (err) { setStatus("Advisor response failed"); setError(err.message || String(err)); log(`Advisor response failed: ${err.message || String(err)}`); }
+    finally { setRespondBusy(false); }
   }
 
   async function generateAdvisorVoice() {
-    setError("");
-    setAdvisorBusy(true);
-    setAdvisorAudioUrl("");
-    setStatus("Generating Advisor Voice…");
-    log("Sending Advisor response to /api/speak.");
+    setError(""); setAdvisorBusy(true); setAdvisorAudioUrl(""); setStatus("Generating Advisor Voice…"); log("Sending Advisor response to /api/speak.");
     try {
-      const response = await fetch("/api/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: advisorText, voice: advisorVoice })
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor Voice failed with HTTP ${response.status}`);
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setAdvisorAudioUrl(url);
-      setStatus("Advisor Voice ready");
-      log(`Advisor Voice returned audio: ${blob.size} bytes.`);
-    } catch (err) {
-      setStatus("Advisor Voice failed");
-      setError(err.message || String(err));
-      log(`Advisor Voice failed: ${err.message || String(err)}`);
-    } finally {
-      setAdvisorBusy(false);
-    }
+      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: advisorText, voice: advisorVoice }) });
+      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor Voice failed with HTTP ${response.status}`); }
+      const blob = await response.blob(); setAdvisorAudioUrl(URL.createObjectURL(blob)); setStatus("Advisor Voice ready"); log(`Advisor Voice returned audio: ${blob.size} bytes.`);
+    } catch (err) { setStatus("Advisor Voice failed"); setError(err.message || String(err)); log(`Advisor Voice failed: ${err.message || String(err)}`); }
+    finally { setAdvisorBusy(false); }
   }
 
-  function fillScenario() {
-    setContext(defaultContext);
-    setTranscript("The shot ran too fast and tasted thin. This is the second time it happened today. I am making this for my wife before church and I do not want to ruin the moment.");
-    setSynthesis(null);
-    setStatus("Sample scenario loaded. Generate Advisor response when ready.");
-    log("Loaded sample premium advisor scenario.");
+  function loadClearFastShot() {
+    setProfile(defaultProfile); setOccasion(defaultOccasion);
+    setTranscript("Good morning, Advisor. I need help with my family this morning. The shot ran too fast and tasted thin, and I do not want to ruin the moment before church.");
+    setStatus("Sample Occasion loaded."); log("Loaded integrated sample Occasion."); setActive("simulator");
   }
-
-  function fillSystemCheck() {
-    setContext(defaultContext);
-    setTranscript("This is Jerry checking whether the Advisor is communicating with me in version six point one.");
-    setSynthesis(null);
-    setStatus("System-check transcript loaded. Generate Advisor response when ready.");
-    log("Loaded system-check scenario.");
+  function createReport() {
+    const report = {
+      id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
+      drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
+      synthesis, matrixMatch, context
+    };
+    setReports((prev) => [report, ...prev]); setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
   }
-
-  function fillThinVoice() {
-    setContext(defaultContext);
-    setTranscript("A little thin.");
-    setSynthesis(null);
-    setStatus("Thin voice-note scenario loaded. Generate Advisor response when ready.");
-    log("Loaded thin voice-note scenario.");
-  }
-
-  function clearRequiredField() {
-    setContext((prev) => ({ ...prev, machine: "" }));
-    setTranscript("The shot ran fast and tasted thin.");
-    setSynthesis(null);
-    setStatus("Incomplete form scenario loaded. Generate Advisor response when ready.");
-    log("Loaded incomplete form scenario.");
-  }
+  function clearReports() { setReports([]); log("Cleared local reports."); }
 
   return (
     <main className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Advisor Interaction Diagnostic v6.1</p>
-        <h1>Home Barista Occasion Simulator — Form + Voice Synthesis</h1>
-        <p>This refinement tests the real Advisor rule: the form grounds, the artisan voice clarifies, and the Advisor synthesizes both into guidance.</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v7</p>
+        <h1>Home Barista Occasion Simulator — Integrated Flow</h1>
+        <p>This puts the experience together: onboarding, dashboard, Occasion setup, form + voice synthesis, Premium Advisor, Advisor Voice, and Doma Reports.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
-      </section>
-
-      <section className="card">
-        <h2>1. Server Check</h2>
-        <p className="small">Run this first. It confirms whether Vercel can see the OpenAI key.</p>
-        <button className="secondary" onClick={checkServer} type="button">Check Server / API Key</button>
-      </section>
-
-      <section className="card">
-        <h2>2. Structured Context</h2>
-        <p className="small">This is the beginning of the moat: the Advisor synthesizes from machine, house formula, occasion, and live artisan comments.</p>
-        <div className="grid">
-          <Field label="Machine" value={context.machine} onChange={(v) => updateContext("machine", v)} />
-          <Field label="Grinder" value={context.grinder} onChange={(v) => updateContext("grinder", v)} />
-          <Field label="Dose" value={context.dose} onChange={(v) => updateContext("dose", v)} />
-          <Field label="Yield" value={context.yield} onChange={(v) => updateContext("yield", v)} />
-          <Field label="Shot time" value={context.shotTime} onChange={(v) => updateContext("shotTime", v)} />
-          <Field label="Drink" value={context.drink} onChange={(v) => updateContext("drink", v)} />
-          <Field label="Recurrence / pattern" value={context.recurrence} onChange={(v) => updateContext("recurrence", v)} />
-          <Field label="Occasion" value={context.occasion} onChange={(v) => updateContext("occasion", v)} />
-          <Field label="Who is being served" value={context.guest} onChange={(v) => updateContext("guest", v)} />
-          <Field label="Time pressure" value={context.timePressure} onChange={(v) => updateContext("timePressure", v)} />
-        </div>
-        <label className="label" htmlFor="desiredFeeling">Desired feeling / delight</label>
-        <input id="desiredFeeling" value={context.desiredFeeling} onChange={(e) => updateContext("desiredFeeling", e.target.value)} />
-        <div className="buttonRow">
-          <button className="secondary" onClick={fillScenario} type="button">Load Clear Fast Shot</button>
-          <button className="secondary" onClick={fillSystemCheck} type="button">Load System Check</button>
-          <button className="secondary" onClick={fillThinVoice} type="button">Load Thin Voice Note</button>
-          <button className="secondary" onClick={clearRequiredField} type="button">Load Incomplete Form</button>
+        <div className="navBar">
+          {["dashboard", "onboarding", "occasion", "simulator", "reports", "matrix"].map((tab) => (
+            <button key={tab} className={active === tab ? "tab active" : "tab"} onClick={() => setActive(tab)} type="button">{tabLabel(tab)}</button>
+          ))}
         </div>
       </section>
 
-      <section className="card">
-        <h2>3. Artisan Voice Capture</h2>
-        <p className="small">Speak what happened with the cup, machine, room, guest, or occasion.</p>
-        <button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : startRecording} type="button">
-          {recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}
-        </button>
-        {audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}
-      </section>
-
-      <section className="card">
-        <h2>4. Artisan Transcript / Comment</h2>
-        <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Transcript will appear here. You can also type a scenario manually." />
-      </section>
-
-      <section className="card advisorCard">
-        <h2>5. Premium Advisor Response</h2>
-        <p className="small">This is not a generic AI answer. It blends the structured form + artisan voice, then applies the Recovery Matrix only when appropriate.</p>
-        <button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy} type="button">
-          {respondBusy ? "Generating…" : "Generate Advisor Response"}
-        </button>
-        {synthesis ? <SynthesisPanel synthesis={synthesis} /> : null}
-        {matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : <div className="noteBox"><strong>Matrix Match:</strong> None applied yet, or not appropriate for the artisan's intent.</div>}
-        <label className="label" htmlFor="advisorText">Advisor response</label>
-        <textarea id="advisorText" value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} placeholder="Advisor response will appear here." />
-      </section>
-
-      <section className="card advisorCard">
-        <h2>6. Advisor Voice</h2>
-        <p className="small">Generate premium audio from the Advisor response.</p>
-        <label className="label" htmlFor="advisorVoice">Advisor voice option</label>
-        <select id="advisorVoice" value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}>
-          <option value="alloy">Alloy — balanced and clear</option>
-          <option value="verse">Verse — expressive and warm</option>
-          <option value="sage">Sage — calm and composed</option>
-          <option value="coral">Coral — bright and friendly</option>
-          <option value="ash">Ash — steady and grounded</option>
-        </select>
-        <button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy || !advisorText} type="button">
-          {advisorBusy ? "Generating…" : "Generate Advisor Voice"}
-        </button>
-        {advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio controls autoPlay src={advisorAudioUrl} /></> : null}
-      </section>
+      {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} />}
+      {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
+      {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, createReport }} />}
+      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} />}
+      {active === "matrix" && <Matrix />}
 
       <section className="card principleCard">
-        <h2>Product Principle Being Tested</h2>
-        <p><strong>The form grounds.</strong></p>
-        <p><strong>The artisan voice clarifies.</strong></p>
-        <p><strong>The Advisor synthesizes both, then uses the Recovery Matrix only when appropriate.</strong></p>
+        <h2>Product Principle</h2>
+        <p><strong>The form grounds.</strong> The Doma Profile, Machine Passport, House Formula, and Occasion setup prevent generic answers.</p>
+        <p><strong>The artisan voice clarifies.</strong> The live comment adds nuance, emotion, uncertainty, and situational detail.</p>
+        <p><strong>The Advisor synthesizes.</strong> The Recovery Matrix grounds the diagnosis; the Premium Advisor preserves the occasion and speaks back with care, confidence, and delight.</p>
       </section>
 
-      <section className="card">
-        <h2>Diagnostic Log</h2>
-        <div className="log">{logs.join("\n")}</div>
-      </section>
+      <section className="card"><h2>Diagnostic Log</h2><div className="log">{logs.join("\n")}</div></section>
     </main>
   );
 }
 
-function SynthesisPanel({ synthesis }) {
-  return (
-    <div className="synthesisBox">
-      <h3>Advisor Understanding</h3>
-      <p><strong>Form complete:</strong> {String(synthesis.formComplete)}</p>
-      {synthesis.missingFields?.length ? <p><strong>Missing fields:</strong> {synthesis.missingFields.join(", ")}</p> : null}
-      <p><strong>Detected artisan intent:</strong> {synthesis.detectedArtisanIntent}</p>
-      <p><strong>Voice quality:</strong> {synthesis.voiceQuality}</p>
-      <p><strong>Primary live signal:</strong> {synthesis.primaryLiveSignal}</p>
-      <p><strong>Supporting context used:</strong> {synthesis.supportingContextUsed || "None"}</p>
-      <p><strong>Matrix applied:</strong> {String(synthesis.matrixApplied)}</p>
-      {synthesis.primaryMatrixSignal ? <p><strong>Primary matrix signal:</strong> {synthesis.primaryMatrixSignal.label}</p> : null}
-      {synthesis.secondaryMatrixSignal ? <p><strong>Secondary matrix signal:</strong> {synthesis.secondaryMatrixSignal.label}</p> : null}
-      {!synthesis.matrixApplied && synthesis.formOnlyPossibleSignal ? <p><strong>Form-only possible signal:</strong> {synthesis.formOnlyPossibleSignal.label}</p> : null}
-    </div>
-  );
+function tabLabel(tab) { return ({ dashboard: "Dashboard", onboarding: "Onboarding", occasion: "Occasion", simulator: "Simulator", reports: "Doma Reports", matrix: "Recovery Matrix" })[tab]; }
+
+function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health }) {
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasion")}>Set Up Occasion</button><button className="primary" onClick={loadClearFastShot}>Load Sample Full Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
+}
+function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
+
+function Onboarding({ profile, updateProfile, setActive }) {
+  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasion")}>Continue to Occasion Setup</button></section>;
 }
 
-function Field({ label, value, onChange }) {
-  const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  return (
-    <div>
-      <label className="label" htmlFor={id}>{label}</label>
-      <input id={id} value={value} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
+function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot }) {
+  return <section className="card"><h2>Occasion Setup</h2><p className="small">The product is not only about the cup. It prepares the barista for the moment.</p><div className="grid"><Field label="Occasion name" value={occasion.occasionName} onChange={(v) => updateOccasion("occasionName", v)} /><Field label="Drink" value={occasion.drink} onChange={(v) => updateOccasion("drink", v)} /><Field label="Who is being served" value={occasion.guest} onChange={(v) => updateOccasion("guest", v)} /><Field label="Time pressure" value={occasion.timePressure} onChange={(v) => updateOccasion("timePressure", v)} /><Field label="Current shot time" value={occasion.currentShotTime} onChange={(v) => updateOccasion("currentShotTime", v)} /><Field label="Recurrence / pattern" value={occasion.recurrence} onChange={(v) => updateOccasion("recurrence", v)} /></div><label className="label">Desired feeling / delight</label><input value={occasion.desiredFeeling} onChange={(e) => updateOccasion("desiredFeeling", e.target.value)} /><label className="label">Moment intent</label><textarea value={occasion.momentIntent} onChange={(e) => updateOccasion("momentIntent", e.target.value)} /><div className="buttonRow"><button className="secondary" onClick={loadClearFastShot}>Load Sample Before-Church Occasion</button><button className="primary" onClick={() => setActive("simulator")}>Begin Occasion Simulation</button></div></section>;
 }
+
+function Simulator(props) {
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, createReport } = props;
+  return <><section className="card"><h2>Occasion Simulator</h2><p className="small">Speak what is happening with the cup, machine, room, guest, or occasion. The form grounds; your voice clarifies.</p><button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : startRecording}>{recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}</button>{audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}<label className="label">Artisan transcript / comment</label><textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened." /><button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy}>{respondBusy ? "Generating…" : "Generate Advisor Response"}</button></section><section className="card advisorCard"><h2>Premium Advisor Response</h2>{synthesis ? <SynthesisPanel synthesis={synthesis} /> : <div className="noteBox">Advisor Understanding will appear here.</div>}{matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : <div className="noteBox"><strong>Matrix Match:</strong> None applied yet, or not appropriate for the artisan's intent.</div>}<label className="label">Advisor response</label><textarea value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} /><label className="label">Advisor voice option</label><select value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}><option value="alloy">Alloy — balanced and clear</option><option value="verse">Verse — expressive and warm</option><option value="sage">Sage — calm and composed</option><option value="coral">Coral — bright and friendly</option><option value="ash">Ash — steady and grounded</option></select><div className="buttonRow"><button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy || !advisorText}>{advisorBusy ? "Generating…" : "Generate Advisor Voice"}</button><button className="secondary" onClick={createReport} disabled={!advisorText || advisorText === advisorStarterText}>Create Doma Report</button></div>{advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio controls autoPlay src={advisorAudioUrl} /></> : null}</section></>;
+}
+
+function Reports({ reports, clearReports, setActive }) {
+  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">This is where each Occasion becomes memory: what happened, what the Advisor understood, what was recommended, and what can be refined later.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator and create a Doma Report.</div> : reports.map((r) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
+}
+
+function Matrix() {
+  const rows = [["Fast shot / low resistance", "Keep dose steady; grind one step finer; watch for slower, syrupy flow."], ["Guest waiting / time pressure", "Choose one stabilizing adjustment; preserve the occasion."], ["Thin body", "Check extraction strength, ratio, and milk texture for body."], ["System check / unclear voice", "Do not force recovery; confirm what the Advisor heard."], ["Incomplete form", "Ask the artisan to complete required context before guidance."]];
+  return <section className="card"><h2>Recovery Matrix Knowledge Base</h2><p className="small">In the real product this becomes the ever-expanding knowledge base. The Premium Advisor sits above it and interprets the moment.</p><div className="matrixList">{rows.map(([issue, move]) => <div className="matrixItem" key={issue}><strong>{issue}</strong><p>{move}</p></div>)}</div></section>;
+}
+
+function SynthesisPanel({ synthesis }) {
+  return <div className="synthesisBox"><h3>Advisor Understanding</h3><p><strong>Form complete:</strong> {String(synthesis.formComplete)}</p>{synthesis.missingFields?.length ? <p><strong>Missing fields:</strong> {synthesis.missingFields.join(", ")}</p> : null}<p><strong>Detected artisan intent:</strong> {synthesis.detectedArtisanIntent}</p><p><strong>Voice quality:</strong> {synthesis.voiceQuality}</p><p><strong>Primary live signal:</strong> {synthesis.primaryLiveSignal}</p><p><strong>Supporting context used:</strong> {synthesis.supportingContextUsed || "None"}</p><p><strong>Matrix applied:</strong> {String(synthesis.matrixApplied)}</p>{synthesis.primaryMatrixSignal ? <p><strong>Primary matrix signal:</strong> {synthesis.primaryMatrixSignal.label}</p> : null}{synthesis.secondaryMatrixSignal ? <p><strong>Secondary matrix signal:</strong> {synthesis.secondaryMatrixSignal.label}</p> : null}</div>;
+}
+function Field({ label, value, onChange }) { const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-"); return <div><label className="label" htmlFor={id}>{label}</label><input id={id} value={value} onChange={(e) => onChange(e.target.value)} /></div>; }
