@@ -1,32 +1,17 @@
-# Barista Doma Voice Transcription Test
+# Barista Doma Voice Diagnostic v3
 
-This is a clean-room hosted voice test for Barista Doma. It does not touch v15.
+This is a narrow diagnostic build. It does not modify the protected v15 Founder Program.
 
-## What it proves
+## Purpose
 
-Tap mic → record audio → send audio to `/api/transcribe` → OpenAI transcribes → transcript fills the field.
+Prove the hosted voice path:
 
-## Required Vercel environment variable
+Record audio on Android Chrome -> send to `/api/transcribe` -> call OpenAI transcription -> return text -> fill field.
 
-Create this environment variable in Vercel:
+## New in v3
 
-`OPENAI_API_KEY`
-
-Paste the OpenAI API key there. Do not put it into the code.
-
-## How to deploy
-
-1. Upload this project to GitHub.
-2. Import the GitHub repo into Vercel.
-3. In Vercel, add environment variable `OPENAI_API_KEY`.
-4. Deploy.
-5. Open the Vercel HTTPS URL on Android Chrome.
-6. Tap Start Recording.
-7. Speak.
-8. Tap Stop Recording.
-9. Confirm transcript appears in the field.
-
-## Notes
-
-This uses `MediaRecorder` in the browser and OpenAI transcription on the server.
-The OpenAI API key is never exposed to the browser.
+- Adds `/api/health` to confirm the server is running and whether `OPENAI_API_KEY` is visible to Vercel Production.
+- Removes the OpenAI SDK dependency and uses direct `fetch` to the OpenAI transcription endpoint.
+- Pins Next/React versions and requests Node 20.x via `package.json` engines.
+- Shows visible errors on the page instead of silently hanging.
+- Logs audio name/type/size on the server.
