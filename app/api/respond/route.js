@@ -8,59 +8,83 @@ function json(payload, status = 200) {
 const recoveryMatrix = [
   {
     id: "fast-shot-thin-body",
-    label: "Fast shot / thin body",
-    keywords: ["fast", "ran fast", "too fast", "thin", "watery", "gusher", "raced", "quick"],
+    label: "Fast shot / low resistance / thin body",
+    type: "technical",
+    priority: 100,
+    keywords: ["fast", "ran fast", "too fast", "thin", "watery", "gusher", "raced", "quick", "18 seconds", "short shot time", "low resistance"],
     diagnosis: "Likely low puck resistance, often caused by grind too coarse, uneven puck prep, channeling, or too little effective coffee resistance.",
-    oneNextMove: "Keep dose steady and move the grind one step finer. Watch for a slower, more syrupy flow before changing anything else."
+    oneNextMove: "Keep the dose steady and move the grind one step finer. Watch for a slower, more syrupy flow before changing anything else.",
+    guardrail: "For a fast shot, do not recommend a coarser grind as the primary move. The normal stabilizing move is finer grind while holding dose steady."
   },
   {
     id: "choked-shot",
-    label: "Choked or stalled shot",
-    keywords: ["choked", "stalled", "barely", "no flow", "slow", "dripping", "blocked"],
+    label: "Choked or stalled shot / high resistance",
+    type: "technical",
+    priority: 95,
+    keywords: ["choked", "stalled", "barely", "no flow", "slow", "dripping", "blocked", "too slow", "over resistance"],
     diagnosis: "Likely too much resistance, often from grind too fine, overdosing, over-tamping, or an unevenly dense puck.",
-    oneNextMove: "Keep the dose steady and move the grind one step coarser. Reset puck prep before changing multiple variables."
+    oneNextMove: "Keep the dose steady and move the grind one step coarser. Reset puck prep before changing multiple variables.",
+    guardrail: "For a choked shot, do not recommend finer grind as the primary move."
   },
   {
     id: "sour-cup",
     label: "Sour / sharp cup",
-    keywords: ["sour", "sharp", "acidic", "under", "tart", "lemon"],
+    type: "technical",
+    priority: 80,
+    keywords: ["sour", "sharp", "acidic", "under", "tart", "lemon", "underextracted", "under extracted"],
     diagnosis: "Likely under-extraction or insufficient sweetness development.",
-    oneNextMove: "Aim for slightly more extraction: grind a touch finer or extend yield modestly while keeping the workflow calm."
+    oneNextMove: "Aim for slightly more extraction: grind a touch finer or extend yield modestly while keeping the workflow calm.",
+    guardrail: "Keep the guidance modest and avoid changing dose, grind, yield, and temperature all at once."
   },
   {
     id: "bitter-cup",
     label: "Bitter / harsh cup",
-    keywords: ["bitter", "harsh", "burnt", "ashy", "dry", "over"],
+    type: "technical",
+    priority: 80,
+    keywords: ["bitter", "harsh", "burnt", "ashy", "dry", "over", "overextracted", "over extracted"],
     diagnosis: "Likely over-extraction, roast intensity, temperature pressure, or too much late-shot bitterness in the cup.",
-    oneNextMove: "Shorten the yield slightly or reduce extraction intensity before changing the whole recipe."
+    oneNextMove: "Shorten the yield slightly or reduce extraction intensity before changing the whole recipe.",
+    guardrail: "Avoid a full recipe reset unless the artisan is in private practice rather than a serving moment."
   },
   {
     id: "milk-too-foamy",
     label: "Milk too foamy / stiff",
-    keywords: ["milk", "foamy", "foam", "stiff", "bubbles", "froth", "too much air"],
+    type: "technical",
+    priority: 70,
+    keywords: ["milk", "foamy", "foam", "stiff", "bubbles", "froth", "too much air", "latte art"],
     diagnosis: "Likely too much aeration or not enough polishing after adding air.",
-    oneNextMove: "Add less air early, then keep the milk rolling and polishing until it looks glossy rather than bubbly."
+    oneNextMove: "Add less air early, then keep the milk rolling and polishing until it looks glossy rather than bubbly.",
+    guardrail: "Keep the milk advice practical and service-oriented."
   },
   {
     id: "channeling-messy-puck",
     label: "Channeling / messy puck",
-    keywords: ["channel", "channeling", "spray", "messy puck", "crack", "uneven", "side", "sputter"],
+    type: "technical",
+    priority: 85,
+    keywords: ["channel", "channeling", "spray", "messy puck", "crack", "uneven", "side", "sputter", "messy"],
     diagnosis: "Likely uneven distribution, puck fracture, or localized weak spots in the coffee bed.",
-    oneNextMove: "Reset distribution and tamp level. Do not chase grind until puck prep is calm and repeatable."
+    oneNextMove: "Reset distribution and tamp level. Do not chase grind until puck prep is calm and repeatable.",
+    guardrail: "Do not over-index on grind if the artisan reports spray, cracks, unevenness, or messy puck signs."
   },
   {
     id: "guest-time-pressure",
     label: "Guest waiting / time pressure",
-    keywords: ["guest", "guests", "waiting", "ten minutes", "in a hurry", "running late", "pressure", "nervous", "wife", "husband", "family"],
-    diagnosis: "The technical issue is now tied to occasion pressure. The recovery must preserve confidence and hospitality, not just optimize the shot.",
-    oneNextMove: "Choose one stabilizing adjustment only. Serve a steady, hospitable cup instead of chasing a perfect reset."
+    type: "occasion",
+    priority: 60,
+    keywords: ["guest", "guests", "waiting", "ten minutes", "in a hurry", "running late", "pressure", "nervous", "wife", "husband", "family", "before church", "serve", "serving"],
+    diagnosis: "The technical issue is tied to occasion pressure. The recovery must preserve confidence and hospitality, not just optimize the shot.",
+    oneNextMove: "Choose one stabilizing adjustment only. Serve a steady, hospitable cup instead of chasing a perfect reset.",
+    guardrail: "Do not let the Advisor turn a serving moment into an extended private dial-in session."
   },
   {
     id: "machine-not-ready",
     label: "Machine readiness / warm-up",
-    keywords: ["not ready", "cold", "warm up", "warming", "temperature", "temp", "steam", "purge"],
+    type: "technical",
+    priority: 75,
+    keywords: ["not ready", "cold", "warm up", "warming", "temperature", "temp", "steam", "purge", "not purged"],
     diagnosis: "The machine may not be in a stable ready state, which can affect flow, taste, and milk performance.",
-    oneNextMove: "Pause for readiness: warm the group, purge appropriately, and let the machine stabilize before the next pull."
+    oneNextMove: "Pause for readiness: warm the group, purge appropriately, and let the machine stabilize before the next pull.",
+    guardrail: "Prioritize machine readiness before fine taste interpretation if readiness is clearly missing."
   }
 ];
 
@@ -69,29 +93,52 @@ function scoreMatrixItem(text, item) {
   return item.keywords.reduce((score, keyword) => lower.includes(keyword.toLowerCase()) ? score + 1 : score, 0);
 }
 
-function selectMatrixMatch(text) {
+function selectMatrixSignals(text) {
   const scored = recoveryMatrix
     .map((item) => ({ ...item, score: scoreMatrixItem(text, item) }))
-    .sort((a, b) => b.score - a.score);
+    .filter((item) => item.score > 0)
+    .sort((a, b) => (b.score * b.priority) - (a.score * a.priority));
 
-  const best = scored[0];
-  if (!best || best.score === 0) {
-    return {
+  if (!scored.length) {
+    const fallback = {
       id: "general-occasion-advisory",
       label: "General occasion advisory",
-      diagnosis: "No specific recovery issue was confidently detected. The Advisor should focus on clarifying the moment, stabilizing the workflow, and guiding one calm next move.",
-      oneNextMove: "Ask what changed in the cup, then make only one adjustment at a time."
+      type: "general",
+      score: 0,
+      diagnosis: "No specific recovery issue was confidently detected. The Advisor should clarify the moment, stabilize the workflow, and guide one calm next move.",
+      oneNextMove: "Ask what changed in the cup, then make only one adjustment at a time.",
+      guardrail: "Do not invent technical certainty when the evidence is weak."
     };
+    return { primary: fallback, secondary: null, all: [fallback] };
   }
+
+  const primary = scored.find((item) => item.type === "technical") || scored[0];
+  const secondary = scored.find((item) => item.id !== primary.id && item.type === "occasion")
+    || scored.find((item) => item.id !== primary.id)
+    || null;
+
   return {
-    id: best.id,
-    label: best.label,
-    diagnosis: best.diagnosis,
-    oneNextMove: best.oneNextMove
+    primary: trimSignal(primary),
+    secondary: secondary ? trimSignal(secondary) : null,
+    all: scored.slice(0, 4).map(trimSignal)
   };
 }
 
-function buildPrompt({ transcript, context, matrixMatch }) {
+function trimSignal(item) {
+  return {
+    id: item.id,
+    label: item.label,
+    type: item.type,
+    score: item.score,
+    diagnosis: item.diagnosis,
+    oneNextMove: item.oneNextMove,
+    guardrail: item.guardrail
+  };
+}
+
+function buildPrompt({ transcript, context, matrixSignals }) {
+  const secondaryBlock = matrixSignals.secondary ? `\nSecondary Matrix signal:\n${matrixSignals.secondary.label}\nSecondary diagnosis:\n${matrixSignals.secondary.diagnosis}\nSecondary one-next-move:\n${matrixSignals.secondary.oneNextMove}\nSecondary guardrail:\n${matrixSignals.secondary.guardrail}` : "\nSecondary Matrix signal: None confidently detected.";
+
   return `You are the Barista Doma Premium Advisor inside The Home Barista Occasion Simulator.
 
 Your job is NOT to give a generic coffee answer. Your job is to synthesize structured context into refined, occasion-aware guidance for an artisan epicurean at home.
@@ -99,11 +146,18 @@ Your job is NOT to give a generic coffee answer. Your job is to synthesize struc
 Core doctrine:
 - The Recovery Matrix knows what can go wrong.
 - The Premium Advisor helps the home barista recover the cup and preserve the occasion.
+- You synthesize from structured context: Doma Profile, machine, grinder, house formula, occasion, live artisan comment, matrix signals, and eventually prior Doma Reports.
 - Give one next move, not a long troubleshooting lecture.
 - Respect the machine, the cup, the room, the guest, and the desired delight.
 - Sound warm, calm, composed, premium, practical, and advisory.
 - Do not sound like a help desk, chatbot, espresso forum, or machine manual.
 - Do not overpromise. If uncertain, say "likely" and guide one safe next move.
+
+Strict technical guardrails:
+- If the primary signal is fast shot / low resistance, the main move is grind one step finer while keeping dose steady. Do not recommend coarser grind for a fast shot.
+- If the primary signal is choked or stalled shot / high resistance, the main move is grind one step coarser while keeping dose steady.
+- If a guest/time-pressure signal is present, do not recommend a full reset. Preserve the occasion through one stabilizing adjustment.
+- The One Next Move section must contain one main action only. You may add one brief contingency, but do not list a menu of changes.
 
 Structured context:
 Machine: ${context.machine || "Not provided"}
@@ -121,14 +175,15 @@ Desired feeling / delight: ${context.desiredFeeling || "Not provided"}
 Artisan spoken comment:
 ${transcript || "No spoken comment provided."}
 
-Likely Recovery Matrix match:
-${matrixMatch.label}
-
-Matrix diagnosis:
-${matrixMatch.diagnosis}
-
-Matrix one-next-move:
-${matrixMatch.oneNextMove}
+Primary Recovery Matrix signal:
+${matrixSignals.primary.label}
+Primary diagnosis:
+${matrixSignals.primary.diagnosis}
+Primary one-next-move:
+${matrixSignals.primary.oneNextMove}
+Primary guardrail:
+${matrixSignals.primary.guardrail}
+${secondaryBlock}
 
 Write the Advisor response in this exact structure:
 
@@ -136,13 +191,13 @@ I heard:
 [One sentence that reflects the artisan's actual situation and mentions specific context where available.]
 
 Likely matrix match:
-[Use the matrix label and explain it briefly in plain language.]
+[Name Primary and Secondary if present. Explain them briefly in plain language.]
 
 Advisor interpretation:
 [Explain what this means in this occasion, connecting machine/cup/context/pressure.]
 
 One next move:
-[Give one clear action. If machine/dose/yield are available, include them.]
+[Give one clear main action. Include machine/dose/yield where useful.]
 
 Occasion guidance:
 [One or two sentences about preserving the moment, hospitality, rhythm, confidence, and/or delight.]
@@ -150,7 +205,7 @@ Occasion guidance:
 Advisor close:
 [A short premium closing line.]
 
-Keep the complete answer under 220 words.`;
+Keep the complete answer under 240 words.`;
 }
 
 function extractText(payload) {
@@ -176,8 +231,8 @@ export async function POST(request) {
     const context = body?.context || {};
 
     const combinedText = [transcript, ...Object.values(context).map((v) => String(v || ""))].join(" ");
-    const matrixMatch = selectMatrixMatch(combinedText);
-    const prompt = buildPrompt({ transcript, context, matrixMatch });
+    const matrixSignals = selectMatrixSignals(combinedText);
+    const prompt = buildPrompt({ transcript, context, matrixSignals });
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -188,8 +243,8 @@ export async function POST(request) {
       body: JSON.stringify({
         model: process.env.OPENAI_TEXT_MODEL || "gpt-4.1-mini",
         input: prompt,
-        temperature: 0.45,
-        max_output_tokens: 700
+        temperature: 0.32,
+        max_output_tokens: 800
       })
     });
 
@@ -201,16 +256,22 @@ export async function POST(request) {
       return json({
         error: `OpenAI Advisor response failed with HTTP ${response.status}.`,
         detail: parsed?.error?.message || parsed?.raw || raw || "No response body returned.",
-        matrixMatch
+        matrixSignals,
+        matrixMatch: matrixSignals.primary
       }, 500);
     }
 
     const advisorText = extractText(parsed);
     if (!advisorText) {
-      return json({ error: "The Advisor response came back empty.", matrixMatch, raw: parsed }, 500);
+      return json({ error: "The Advisor response came back empty.", matrixSignals, matrixMatch: matrixSignals.primary, raw: parsed }, 500);
     }
 
-    return json({ advisorText, matrixMatch });
+    const matrixMatch = {
+      ...matrixSignals.primary,
+      label: matrixSignals.secondary ? `Primary: ${matrixSignals.primary.label} | Secondary: ${matrixSignals.secondary.label}` : matrixSignals.primary.label
+    };
+
+    return json({ advisorText, matrixSignals, matrixMatch });
   } catch (error) {
     return json({
       error: "The Premium Advisor response route crashed.",

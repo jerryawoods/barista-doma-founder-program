@@ -1,30 +1,31 @@
-# Barista Doma Advisor Interaction Diagnostic v5
+# Barista Doma — Home Barista Occasion Simulator v6
 
-This diagnostic is separate from the protected v15 Founder Program.
+This is a one-piece prototype that gathers the proven working components into one deployable app.
 
-It proves the full premium interaction loop for The Home Barista Occasion Simulator:
+## What is included
 
-1. Structured context fields: machine, house formula, occasion, guest/time pressure, desired delight.
-2. Artisan voice capture and transcription.
-3. `/api/respond` Premium Advisor response using structured context + starter Recovery Matrix + Advisor rules.
-4. `/api/speak` premium Advisor Voice playback.
+- Server/API key health check
+- Structured context fields for Doma Profile / House Formula / Occasion context
+- Mobile and laptop voice capture
+- Voice-to-field transcription using `/api/transcribe`
+- Starter Recovery Matrix knowledge base
+- Multi-signal matrix detection through `/api/respond`
+- Premium Advisor response that synthesizes from structured context
+- Advisor Voice generation through `/api/speak`
+- Diagnostic log for deployment and testing
 
-## Included routes
-
-- `/api/health` — confirms server and OpenAI key
-- `/api/transcribe` — audio to transcript
-- `/api/respond` — structured-context Advisor response
-- `/api/speak` — Advisor response to premium voice audio
-
-## Required Vercel Environment Variable
-
-`OPENAI_API_KEY` must be added to Production.
-
-Optional:
-
-`OPENAI_TEXT_MODEL` can override the Advisor response model. Default is `gpt-4.1-mini`.
-
-## Core principle
+## Product principle being tested
 
 The Recovery Matrix knows what can go wrong.
+
 The Premium Advisor synthesizes structured context into refined, occasion-aware guidance.
+
+The Home Barista Occasion Simulator brings those together so the artisan can speak the occasion in and let the Advisor speak back with recovery, confidence, hospitality, and delight.
+
+## Notes
+
+This is still a prototype. It does not modify the protected v15 Founder Program. It is intended to let us step back and see the working pieces in one place before careful integration.
+
+Required Vercel environment variable:
+
+`OPENAI_API_KEY`

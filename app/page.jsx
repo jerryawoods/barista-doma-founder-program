@@ -231,8 +231,8 @@ export default function Home() {
     <main className="page">
       <section className="card hero">
         <p className="eyebrow">Barista Doma Advisor Interaction Diagnostic v5</p>
-        <h1>Speak the occasion in. Let the Advisor synthesize and speak back.</h1>
-        <p>This proves the premium loop: voice capture, transcript, structured context, Recovery Matrix match, Advisor response, and Advisor Voice.</p>
+        <h1>Home Barista Occasion Simulator — One-Piece Prototype</h1>
+        <p>This puts the working pieces together: structured context, artisan voice capture, transcript, Recovery Matrix signals, Premium Advisor response, and Advisor Voice.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
