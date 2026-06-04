@@ -1,5 +1,5 @@
 {
-  "name": "barista-doma-voice-transcription-v3",
+  "name": "barista-doma-voice-advisor-v4",
   "version": "1.0.0",
   "private": true,
   "engines": {
@@ -11,9 +11,8 @@
     "start": "next start"
   },
   "dependencies": {
-  "next": "14.2.23",
-  "openai": "^4.104.0",
-  "react": "18.2.0",
-  "react-dom": "18.2.0"
+    "next": "14.2.23",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }

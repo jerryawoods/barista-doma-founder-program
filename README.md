@@ -1,17 +1,16 @@
-# Barista Doma Voice Diagnostic v3
+# Barista Doma Voice Advisor Diagnostic v4
 
-This is a narrow diagnostic build. It does not modify the protected v15 Founder Program.
+This diagnostic keeps the working voice-to-field transcription path and adds a premium Advisor Voice test.
 
-## Purpose
+It is separate from the protected v15 Founder Program.
 
-Prove the hosted voice path:
+## Includes
 
-Record audio on Android Chrome -> send to `/api/transcribe` -> call OpenAI transcription -> return text -> fill field.
+- `/api/health` — confirms the server and OpenAI key
+- `/api/transcribe` — phone/laptop audio to transcript field
+- `/api/speak` — Advisor text to premium MP3 voice
+- Mobile-friendly diagnostic page
 
-## New in v3
+## Required Vercel Environment Variable
 
-- Adds `/api/health` to confirm the server is running and whether `OPENAI_API_KEY` is visible to Vercel Production.
-- Removes the OpenAI SDK dependency and uses direct `fetch` to the OpenAI transcription endpoint.
-- Pins Next/React versions and requests Node 20.x via `package.json` engines.
-- Shows visible errors on the page instead of silently hanging.
-- Logs audio name/type/size on the server.
+`OPENAI_API_KEY` must be added to Production.

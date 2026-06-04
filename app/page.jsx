@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 
+const advisorStarterText = `Good. Pause for a moment before you pull the shot. Let the machine finish becoming ready, let your hands settle, and look at the cup you are about to serve. You are not only making coffee. You are preparing the moment. Read the machine, read the room, and let the cup carry confidence, care, and delight.`;
+
 export default function Home() {
   const [status, setStatus] = useState("Ready");
   const [transcript, setTranscript] = useState("");
@@ -10,6 +12,10 @@ export default function Home() {
   const [audioUrl, setAudioUrl] = useState("");
   const [error, setError] = useState("");
   const [health, setHealth] = useState(null);
+  const [advisorText, setAdvisorText] = useState(advisorStarterText);
+  const [advisorAudioUrl, setAdvisorAudioUrl] = useState("");
+  const [advisorVoice, setAdvisorVoice] = useState("alloy");
+  const [advisorBusy, setAdvisorBusy] = useState(false);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -145,12 +151,42 @@ export default function Home() {
     );
   }
 
+  async function generateAdvisorVoice() {
+    setError("");
+    setAdvisorBusy(true);
+    setAdvisorAudioUrl("");
+    setStatus("Generating Advisor Voice…");
+    log("Sending Advisor text to /api/speak.");
+    try {
+      const response = await fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: advisorText, voice: advisorVoice })
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor Voice failed with HTTP ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setAdvisorAudioUrl(url);
+      setStatus("Advisor Voice ready");
+      log(`Advisor Voice returned audio: ${blob.size} bytes.`);
+    } catch (err) {
+      setStatus("Advisor Voice failed");
+      setError(err.message || String(err));
+      log(`Advisor Voice failed: ${err.message || String(err)}`);
+    } finally {
+      setAdvisorBusy(false);
+    }
+  }
+
   return (
     <main className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Voice Diagnostic v3</p>
-        <h1>Record voice. Transcribe it. Fill the field.</h1>
-        <p>This is separate from v15. Its only job is to prove the real voice path for the Founder Program.</p>
+        <p className="eyebrow">Barista Doma Voice Advisor Diagnostic v4</p>
+        <h1>Speak the cup in. Let the Advisor speak back.</h1>
+        <p>This keeps the working phone transcription proof and adds a premium Advisor Voice test for the Founder Program.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
@@ -158,12 +194,13 @@ export default function Home() {
 
       <section className="card">
         <h2>1. Server Check</h2>
-        <p className="small">Run this first after redeploying. It confirms whether Vercel can see the OpenAI key.</p>
+        <p className="small">Run this first. It confirms whether Vercel can see the OpenAI key.</p>
         <button className="secondary" onClick={checkServer} type="button">Check Server / API Key</button>
       </section>
 
       <section className="card">
         <h2>2. Voice Capture</h2>
+        <p className="small">This is the proven voice-to-field path for phone and laptop.</p>
         <button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : startRecording} type="button">
           {recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}
         </button>
@@ -174,6 +211,25 @@ export default function Home() {
         <h2>3. Transcript Field</h2>
         <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Transcript will appear here." />
         <button className="secondary" onClick={copyTranscript} type="button">Copy Transcript</button>
+      </section>
+
+      <section className="card advisorCard">
+        <h2>4. Premium Advisor Voice</h2>
+        <p className="small">This tests whether Barista Doma can speak back with a warmer, more refined voice than browser read-aloud.</p>
+        <label className="label" htmlFor="advisorVoice">Advisor voice option</label>
+        <select id="advisorVoice" value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}>
+          <option value="alloy">Alloy — balanced and clear</option>
+          <option value="verse">Verse — expressive and warm</option>
+          <option value="sage">Sage — calm and composed</option>
+          <option value="coral">Coral — bright and friendly</option>
+          <option value="ash">Ash — steady and grounded</option>
+        </select>
+        <label className="label" htmlFor="advisorText">Advisor script</label>
+        <textarea id="advisorText" value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} placeholder="Paste Mentor Mark / Advisor guidance here." />
+        <button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy} type="button">
+          {advisorBusy ? "Generating…" : "Generate Advisor Voice"}
+        </button>
+        {advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio controls autoPlay src={advisorAudioUrl} /></> : null}
       </section>
 
       <section className="card">
