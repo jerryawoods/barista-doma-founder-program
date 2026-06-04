@@ -89,3 +89,25 @@ audio { width: 100%; margin-top: 12px; }
 hr { border:0; border-top:1px solid #3f314d; margin:22px 0; }
 @media (max-width: 1100px) { .recoveryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 860px) { .appShell { grid-template-columns: 1fr; } .sideNav { position: static; height:auto; } .recoveryGrid { grid-template-columns: 1fr; } .recoveryControls { grid-template-columns: 1fr; } }
+
+/* v7.3 restored 15 Occasions and stagecraft walkthroughs */
+.occasionPage .heroMini { background: linear-gradient(135deg, #2a1c34, #17101d); border-color:#5b416c; }
+.occasionGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.occasionCard { background:#17101d; border: 1px solid #3f314d; border-radius: 18px; padding: 16px; min-height: 390px; display:flex; flex-direction:column; }
+.occasionTop { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom: 10px; }
+.occasionTop span, .occasionTop em { font-size: 11px; letter-spacing:.06em; text-transform: uppercase; color:#e7c37a; background:#24182b; border:1px solid #4b3859; border-radius:999px; padding:5px 8px; font-style: normal; }
+.occasionCard h3 { margin: 4px 0 8px; color:#fff3e7; }
+.occasionCard p { color:#cdbbd7; line-height:1.4; }
+.specs { border:1px solid #3f314d; border-radius:14px; padding:10px; margin: 10px 0; background:#110c16; }
+.specs p { display:flex; justify-content:space-between; gap:12px; margin:6px 0; font-size:13px; }
+.specs strong { color:#e7c37a; }
+.specs span { text-align:right; color:#fff3e7; }
+.scriptPreview, .scriptBox { background:#110c16; border:1px solid #4b3859; border-radius:14px; padding:12px; margin: 10px 0; }
+.scriptPreview strong, .scriptBox h3 { color:#e7c37a; margin-top:0; }
+.scriptPreview p, .scriptBox p { color:#fff3e7; font-style: italic; }
+.walkthroughHero { background: linear-gradient(135deg, #27182f, #17101d); border-color:#5b416c; }
+.stageStep h2 { font-size: 32px; }
+.twoColumn { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.scriptFull { white-space: pre-wrap; background:#100c09; border:1px solid #4a372b; border-radius:14px; padding:16px; color:#fff3e7; line-height:1.5; max-height:420px; overflow:auto; }
+@media (max-width: 1150px) { .occasionGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .occasionGrid, .twoColumn { grid-template-columns: 1fr; } .occasionCard { min-height: auto; } }

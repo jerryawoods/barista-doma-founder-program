@@ -28,6 +28,428 @@ const defaultOccasion = {
 };
 
 
+const founderOccasions = [
+  {
+    id: "first-cup-diagnostic",
+    name: "The First Cup Diagnostic",
+    tag: "Orientation",
+    purpose: "Establish the artisan's baseline and begin reading the machine as an instrument.",
+    drink: "Espresso",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec target",
+    grindVessel: "medium-fine · demitasse",
+    desiredFeeling: "clear, calm, observant, confident",
+    artisanOpening: "This first cup is not about perfection. I am learning how this machine speaks today, and I am going to listen carefully.",
+    reportPrompt: "What did the first cup reveal about flow, taste, rhythm, and confidence?",
+    steps: [
+      { title: "Name the intention", advisor: "Begin by stating that this is a diagnostic cup, not a performance test. Your job is to observe without panic.", script: "I am starting with a clear baseline so I can understand the machine before I try to impress it." },
+      { title: "Prepare the counter", advisor: "Clear the immediate workspace. Put cup, towel, scale, beans, tamper, and milk pitcher where your hands can move calmly.", script: "The counter is set. I am giving the cup a clean place to begin." },
+      { title: "Warm the machine and cup", advisor: "Confirm the machine is ready, purge briefly, and warm the vessel. A cold start can distort the cup.", script: "I am warming the cup so the coffee lands in a ready vessel." },
+      { title: "Dose with discipline", advisor: "Use the house dose. Do not improvise yet. A stable dose lets the Advisor understand what changed.", script: "I am keeping the dose steady so I can learn from one variable at a time." },
+      { title: "Prepare the puck", advisor: "Distribute evenly, tamp level, and check the rim. Puck preparation is the first act of stagecraft.", script: "I am preparing the coffee bed carefully so the water can move with intention." },
+      { title: "Pull and observe", advisor: "Watch first drops, flow color, speed, and body. Record what happened without judging yourself.", script: "I am watching the flow and letting the machine show me where we are." },
+      { title: "Taste for direction", advisor: "Taste for sour, bitter, thin, balanced, or pleasant. Do not chase every note; identify the next useful direction.", script: "This taste is information. I am not failing; I am learning the path." },
+      { title: "Use Recovery if needed", advisor: "If the cup chokes, runs fast, tastes sour, or feels thin, open the Recovery Library before guessing.", script: "If something goes wrong, I will recover with one clear move rather than panic." },
+      { title: "Capture the Doma Report", advisor: "Speak a quick note: dose, yield, time, taste, feeling, and one next move.", script: "I am saving what this cup taught me so the next cup can become more confident." }
+    ]
+  },
+  {
+    id: "quiet-table",
+    name: "The Quiet Table",
+    tag: "Soft connection",
+    purpose: "Serve a calm, low-noise coffee moment for a person who needs quiet presence more than performance.",
+    drink: "Cappuccino",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · warm ceramic cup",
+    desiredFeeling: "soft, steady, gentle, cared for",
+    artisanOpening: "I made this one quietly, just to create a little room for you to settle.",
+    reportPrompt: "Did the cup lower the room's noise and create a softer moment?",
+    steps: [
+      { title: "Read the room", advisor: "Notice whether the person wants conversation or quiet. Do not over-explain the coffee.", script: "No rush. This is just a quiet cup for a quiet moment." },
+      { title: "Soften the setup", advisor: "Reduce clatter. Set tools down gently. The sound of preparation is part of the occasion.", script: "I am keeping the counter calm so the cup feels peaceful before it is served." },
+      { title: "Choose a comforting drink", advisor: "A cappuccino or milk drink can carry warmth without demanding analysis.", script: "I chose something soft and warm rather than something that asks for attention." },
+      { title: "Confirm the house formula", advisor: "Use the familiar recipe. This is not the moment for experimentation.", script: "I am keeping the recipe familiar so the moment can stay easy." },
+      { title: "Pull with steady pace", advisor: "Watch the shot, but do not let the machine pull your emotional rhythm faster than the room.", script: "The coffee can take its time. So can we." },
+      { title: "Texture the milk softly", advisor: "Aim for glossy, quiet milk texture. Avoid large bubbles and harsh steaming sounds where possible.", script: "I am giving this cup a softer texture for a softer moment." },
+      { title: "Present without performance", advisor: "Serve simply. Let the cup be an offering, not a demonstration.", script: "Here you go. Just something warm to sit with for a minute." },
+      { title: "Recover quietly", advisor: "If the shot is imperfect, do not announce failure. Use the Recovery Library only if the issue would harm the moment.", script: "If I need to adjust, I will do it calmly and keep the room steady." },
+      { title: "Report the felt outcome", advisor: "Capture whether the moment felt calmer, not only whether the extraction was ideal.", script: "I am remembering whether this cup brought peace, not just whether it hit numbers." }
+    ]
+  },
+  {
+    id: "welcome-home-cup",
+    name: "The Welcome Home Cup",
+    tag: "Homecoming",
+    purpose: "Use coffee to mark arrival, warmth, and belonging when someone returns home.",
+    drink: "Latte or cappuccino",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · favorite home cup",
+    desiredFeeling: "welcoming, warm, relieving, familiar",
+    artisanOpening: "Welcome home. I made this so the day can soften a little as you come in.",
+    reportPrompt: "Did the cup help the person feel received by the home?",
+    steps: [
+      { title: "Prepare before arrival", advisor: "If possible, set the station before the person enters. The welcome should feel effortless.", script: "I wanted this ready close to when you walked in." },
+      { title: "Choose the right cup", advisor: "Use a familiar vessel. Homecoming is about recognition.", script: "I chose the cup that feels most like home." },
+      { title: "Set the atmosphere", advisor: "Lower clutter, create counter space, and let the machine feel like a hearth rather than an appliance.", script: "The counter is ready. The house gets to welcome you too." },
+      { title: "Pull the espresso", advisor: "Keep the shot reliable. This is a service moment, not a dial-in experiment.", script: "I am keeping this cup steady and familiar." },
+      { title: "Steam for comfort", advisor: "Texture milk for sweetness and warmth. Avoid chasing complex latte art if it slows the welcome.", script: "I am making this soft enough to land gently." },
+      { title: "Serve with eye contact", advisor: "Presentation is human before it is visual. Let the guest feel seen.", script: "Here you go. I am glad you are home." },
+      { title: "Use Recovery gracefully", advisor: "If something misbehaves, choose the simplest recovery. The welcome matters more than perfection.", script: "If this one needs a small correction, I will keep the welcome intact." },
+      { title: "Invite the pause", advisor: "Give the person permission to sit, breathe, or talk.", script: "Take a minute. The rest can wait." },
+      { title: "Capture what worked", advisor: "Report the guest reaction and the rhythm of the welcome.", script: "I am noting whether the cup helped the home feel like home." }
+    ]
+  },
+  {
+    id: "morning-launch",
+    name: "The Morning Launch",
+    tag: "Confidence",
+    purpose: "Start the day with a coffee ritual that creates momentum without rushing the artisan or the household.",
+    drink: "Americano or cappuccino",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · travel or breakfast cup",
+    desiredFeeling: "focused, capable, ordered, optimistic",
+    artisanOpening: "This cup is here to help us begin the day with steadiness instead of scramble.",
+    reportPrompt: "Did the cup create momentum, order, and confidence for the day?",
+    steps: [
+      { title: "Choose the morning outcome", advisor: "Decide whether the cup needs speed, softness, or focus. Let the occasion choose the drink.", script: "This cup is for a better start, not just more speed." },
+      { title: "Stage the essentials", advisor: "Put only what you need on the counter. Morning complexity causes mistakes.", script: "I am keeping the station simple so the morning can move cleanly." },
+      { title: "Confirm machine readiness", advisor: "Warm the machine and cup. A hurried cold pull can sabotage confidence.", script: "I am giving the machine a fair start so it can give us a steady cup." },
+      { title: "Use the house formula", advisor: "Use your reliable dose and yield. Morning launch is not the place for excessive experimentation.", script: "I am choosing the known path this morning." },
+      { title: "Pull and watch the pace", advisor: "If it runs fast or slow, note it. Make one adjustment only if time allows.", script: "I am watching the flow without letting it rush me." },
+      { title: "Finish for the day ahead", advisor: "If milk is involved, texture for comfort. If black coffee, serve cleanly and promptly.", script: "This cup is ready to move with us into the day." },
+      { title: "Recovery path", advisor: "If something goes wrong, open the Matrix and choose the fastest stabilizing move.", script: "One calm recovery is better than a frantic perfect cup." },
+      { title: "Serve the launch", advisor: "Hand the cup over as a signal that the day can begin with care.", script: "Here is a steady start for the morning." },
+      { title: "Report the rhythm", advisor: "Log whether the workflow helped or hurt the morning.", script: "I am saving what made the morning smoother." }
+    ]
+  },
+  {
+    id: "listening-cup",
+    name: "The Listening Cup",
+    tag: "Conversation",
+    purpose: "Create low-pressure ground for conversation, reflection, or reconciliation.",
+    drink: "Pour-over, Americano, or gentle milk drink",
+    dose: "18g espresso or 20g brew",
+    yield: "36g espresso or 300g brew",
+    time: "espresso 25–32 sec · brew 3:00–4:00",
+    grindVessel: "method-appropriate · shared table cup",
+    desiredFeeling: "open, unhurried, safe, attentive",
+    artisanOpening: "I made this so we could have something warm between us while we talk.",
+    reportPrompt: "Did the cup create low-pressure space for listening?",
+    steps: [
+      { title: "Name the human purpose", advisor: "This is not a beverage flex. It is a container for listening.", script: "No pressure. I just thought coffee might give us a gentle place to start." },
+      { title: "Choose a non-demanding drink", advisor: "Select a drink that does not require the guest to analyze flavor.", script: "I kept this simple so the conversation can lead." },
+      { title: "Set seating before service", advisor: "Know where the cup will land. The table is part of the stage.", script: "I set this here so we can sit comfortably." },
+      { title: "Prepare with quiet rhythm", advisor: "Let your movements show care and patience.", script: "I am not rushing this cup." },
+      { title: "Serve as an invitation", advisor: "Offer the cup without forcing the conversation.", script: "Here you go. We can talk, or just sit for a minute." },
+      { title: "Let silence work", advisor: "Do not fill every pause. Coffee can hold the threshold.", script: "We do not have to rush the words." },
+      { title: "Recovery if needed", advisor: "If the cup is imperfect, do not make the moment about the mistake.", script: "This cup is here to support the moment, not dominate it." },
+      { title: "Close gently", advisor: "Let the cup end with appreciation rather than a verdict.", script: "Thank you for sitting with me." },
+      { title: "Report the threshold", advisor: "Capture whether trust, calm, or openness increased.", script: "I am noting how the cup helped the conversation begin." }
+    ]
+  },
+  {
+    id: "apology-cup",
+    name: "The Apology Cup",
+    tag: "Repair",
+    purpose: "Offer coffee as a humble gesture of repair without using it to avoid accountability.",
+    drink: "Warm latte or gentle cappuccino",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · simple cup",
+    desiredFeeling: "humble, sincere, warm, safe",
+    artisanOpening: "I made this as a small gesture. The apology matters more than the coffee, but I wanted to bring care with it.",
+    reportPrompt: "Did the cup support humility and repair without becoming a distraction?",
+    steps: [
+      { title: "Check your posture", advisor: "Do not use the cup as a performance to earn forgiveness. Use it as a vessel of care.", script: "This is just a small gesture. What I need to say matters more." },
+      { title: "Keep the drink simple", advisor: "Avoid flamboyance. Repair calls for humility.", script: "I kept this simple because I do not want to make this about me." },
+      { title: "Prepare calmly", advisor: "Let your pace settle you before you speak.", script: "I am slowing down before I come to you." },
+      { title: "Serve before explaining", advisor: "Hand the cup gently, then speak plainly.", script: "Here. I made this for you, and I also owe you an apology." },
+      { title: "Say the apology", advisor: "Be specific. Do not hide behind the coffee.", script: "I am sorry for what I did. I understand it affected you." },
+      { title: "Do not demand response", advisor: "The cup is an offering, not a transaction.", script: "You do not have to respond right now." },
+      { title: "Recovery if coffee fails", advisor: "If the drink is imperfect, keep the apology centered.", script: "The coffee may not be perfect, but the care is real." },
+      { title: "Close with respect", advisor: "Let the other person lead the next moment.", script: "Thank you for hearing me." },
+      { title: "Report with honesty", advisor: "Capture what the cup helped and what the conversation still needs.", script: "I am recording the lesson, not scoring the person." }
+    ]
+  },
+  {
+    id: "celebration-cup",
+    name: "The Celebration Cup",
+    tag: "Joy",
+    purpose: "Mark good news with a cup that feels intentional, elevated, and shared.",
+    drink: "Signature milk drink or espresso tonic",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · clear or favorite celebratory cup",
+    desiredFeeling: "joyful, bright, proud, delightful",
+    artisanOpening: "This cup is for the good news. I wanted the moment to have a little ceremony.",
+    reportPrompt: "Did the cup help make the celebration feel remembered?",
+    steps: [
+      { title: "Name the celebration", advisor: "Know exactly what the cup is honoring.", script: "This is for what just happened. It deserves a little ceremony." },
+      { title: "Choose a festive format", advisor: "A signature drink, garnish, or special cup can elevate the moment.", script: "I made this one a little special for the occasion." },
+      { title: "Set visual stagecraft", advisor: "Use a tray, cloth, garnish, or clear glass if it adds delight.", script: "I wanted it to look like the good news feels." },
+      { title: "Pull the base carefully", advisor: "A bright moment still needs a stable cup. Keep dose and yield known.", script: "The base is steady so the celebration can shine." },
+      { title: "Build the signature touch", advisor: "Add the celebratory element without overcomplicating the drink.", script: "This is the little extra for today." },
+      { title: "Serve with words", advisor: "Say what is being celebrated. Let the cup become a marker.", script: "To this moment — and to what it means." },
+      { title: "Recovery path", advisor: "If the drink stumbles, simplify and preserve joy.", script: "If I need to adjust, I will keep the celebration moving." },
+      { title: "Invite a toast or pause", advisor: "Let the cup hold the recognition.", script: "Let's take one sip before we rush past it." },
+      { title: "Report the memory", advisor: "Capture what made the cup feel celebratory.", script: "I am saving the details that made this feel like a real moment." }
+    ]
+  },
+  {
+    id: "boss-coming-over",
+    name: "The Boss Is Coming Over",
+    tag: "Hospitality",
+    purpose: "Prepare a confident, polished coffee moment for a high-stakes guest without becoming stiff or performative.",
+    drink: "Cappuccino, latte, or clean espresso",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · polished ceramic cup",
+    desiredFeeling: "composed, credible, generous, refined",
+    artisanOpening: "I made this as a small welcome. I hope it gives us a good place to begin.",
+    reportPrompt: "Did the cup support confidence and gracious hosting?",
+    steps: [
+      { title: "Lower the stakes internally", advisor: "You are hosting a person, not auditioning for a café job.", script: "This is hospitality, not a performance exam." },
+      { title: "Choose a reliable drink", advisor: "Select the drink you can make consistently under pressure.", script: "I chose something familiar so I can serve it well." },
+      { title: "Prepare the room", advisor: "Clear seating, cup placement, napkin, water, and counter visibility.", script: "I set things up so we can just enjoy the coffee." },
+      { title: "Use known settings", advisor: "Do not attempt a new recipe. Let confidence come from repetition.", script: "I am staying with the house formula today." },
+      { title: "Pull with composure", advisor: "If flow is off, make one controlled recovery, not a string of nervous changes.", script: "I am keeping the process steady." },
+      { title: "Serve with ease", advisor: "Avoid apologizing for small imperfections. Offer the cup warmly.", script: "Here you go. I hope this brings a little warmth to the conversation." },
+      { title: "Recovery path", advisor: "If something fails, use the Matrix and simplify to a drink you can complete gracefully.", script: "If I need to reset, I will do it calmly and keep the welcome intact." },
+      { title: "Let conversation lead", advisor: "After serving, stop performing. Be present.", script: "Please enjoy. I am glad you could come by." },
+      { title: "Report the host rhythm", advisor: "Capture what helped you feel composed.", script: "I am noting how I hosted, not just how the shot ran." }
+    ]
+  },
+  {
+    id: "neighbor-cup",
+    name: "The Neighbor Cup",
+    tag: "Community",
+    purpose: "Use coffee to build simple local connection without overformalizing the moment.",
+    drink: "Americano, latte, or batch-style coffee",
+    dose: "18g espresso or 20g brew",
+    yield: "36g or 300g brew",
+    time: "espresso 25–32 sec · brew 3:00–4:00",
+    grindVessel: "method-appropriate · casual mug",
+    desiredFeeling: "friendly, generous, easy, connected",
+    artisanOpening: "I made a little extra and thought you might enjoy a cup.",
+    reportPrompt: "Did the cup create an easy bridge to community?",
+    steps: [
+      { title: "Keep it neighborly", advisor: "Do not make the invitation feel elaborate or burdensome.", script: "No big production. I just thought you might like some coffee." },
+      { title: "Choose an accessible drink", advisor: "Select something broadly enjoyable and easy to accept.", script: "I made something simple and warm." },
+      { title: "Prepare an extra cup", advisor: "Have a second cup ready before offering so the gesture feels natural.", script: "I already had enough for one more." },
+      { title: "Serve without pressure", advisor: "Offer, then let them decline easily if needed.", script: "Only if you want one — no pressure at all." },
+      { title: "Read the response", advisor: "If they linger, conversation may open. If not, the gesture still worked.", script: "I am glad to share it either way." },
+      { title: "Recovery path", advisor: "If the coffee is not perfect, let generosity carry the moment.", script: "It is a simple cup, but it comes with good will." },
+      { title: "Create the bridge", advisor: "Use the cup to make future connection easier.", script: "Maybe next time we can sit for a few minutes." },
+      { title: "Report community signal", advisor: "Capture whether the cup made the relationship warmer.", script: "I am remembering how coffee helped us connect." }
+    ]
+  },
+  {
+    id: "late-night-counter",
+    name: "The Late-Night Counter",
+    tag: "Reflection",
+    purpose: "Make coffee or decaf as a reflective counter moment when the house is quieter.",
+    drink: "Decaf espresso, cortado, or warm milk drink",
+    dose: "17–18g",
+    yield: "34–36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · small ceramic cup",
+    desiredFeeling: "quiet, reflective, settled, grateful",
+    artisanOpening: "This is just a small cup to close the day with a little care.",
+    reportPrompt: "Did the cup help the day land softly?",
+    steps: [
+      { title: "Choose gentleness", advisor: "Late-night coffee should not disturb the body or the room.", script: "I am making this gentle because the day is closing." },
+      { title: "Lower the sound", advisor: "Keep grinder, cups, and cleanup as quiet as possible.", script: "I am keeping the counter quiet tonight." },
+      { title: "Use decaf or small format", advisor: "Match the cup to rest, not stimulation.", script: "This is for reflection, not a second workday." },
+      { title: "Prepare slowly", advisor: "Let the ritual help you settle.", script: "I am letting the process slow me down." },
+      { title: "Serve to self or loved one", advisor: "If sharing, keep words soft and brief.", script: "Here is something small and warm before we close the day." },
+      { title: "Recovery path", advisor: "If the shot is off, do not chase multiple pulls late at night. Simplify.", script: "A simple cup is enough tonight." },
+      { title: "Reflect with the cup", advisor: "Let the cup hold gratitude, not analysis.", script: "One sip, one breath, and the day can rest." },
+      { title: "Report the closure", advisor: "Capture whether the ritual helped the transition to rest.", script: "I am noting what helped the day end well." }
+    ]
+  },
+  {
+    id: "parent-visit",
+    name: "The Parent Visit",
+    tag: "Familiarity",
+    purpose: "Serve family with dignity, familiarity, and care without overcomplicating the cup.",
+    drink: "Latte, drip-style coffee, or cappuccino",
+    dose: "18g or familiar brew ratio",
+    yield: "36g or full cup",
+    time: "25–32 sec espresso · brew as needed",
+    grindVessel: "familiar mug",
+    desiredFeeling: "honoring, familiar, comfortable, generous",
+    artisanOpening: "I made this the way I thought you might enjoy it — familiar and warm.",
+    reportPrompt: "Did the cup honor the guest rather than the artisan's ego?",
+    steps: [
+      { title: "Start with their preference", advisor: "Family hospitality often means serving what they enjoy, not what you want to showcase.", script: "I made this closer to how you like it." },
+      { title: "Choose familiarity", advisor: "Use a drink style and cup that feels recognizable.", script: "Nothing complicated — just something warm for you." },
+      { title: "Prepare with respect", advisor: "Let your movements show care rather than impatience.", script: "I wanted to take a little care with this one." },
+      { title: "Adjust sweetness or milk thoughtfully", advisor: "Do not shame preferences. Hospitality honors the person.", script: "I can add a little more milk or sweetness if you prefer." },
+      { title: "Serve with memory", advisor: "Connect the cup to family warmth, not performance.", script: "This reminded me of the kind of coffee we would sit with." },
+      { title: "Recovery path", advisor: "If the machine misbehaves, simplify quickly. The visit matters more.", script: "I will keep this easy and make sure you have a cup you enjoy." },
+      { title: "Invite comfort", advisor: "Make the guest feel they can relax.", script: "Sit down. I will bring it over." },
+      { title: "Report preference", advisor: "Capture what they actually liked for next time.", script: "I am remembering your preference so the next cup feels even more like yours." }
+    ]
+  },
+  {
+    id: "friend-needs-lift",
+    name: "The Friend Who Needs a Lift",
+    tag: "Encouragement",
+    purpose: "Use coffee as a gentle lift for someone discouraged, tired, or emotionally low.",
+    drink: "Mocha, latte, or comforting cappuccino",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · comforting mug",
+    desiredFeeling: "encouraging, warm, seen, hopeful",
+    artisanOpening: "I made this because sometimes a warm cup helps the next few minutes feel possible.",
+    reportPrompt: "Did the cup help lift the friend's spirit without forcing cheer?",
+    steps: [
+      { title: "Do not force positivity", advisor: "A lift is not denial. Offer warmth without minimizing their feeling.", script: "I know today is a lot. I made this for right now." },
+      { title: "Choose comfort", advisor: "A slightly sweeter or milk-based drink may serve the emotional moment.", script: "I made this one a little comforting." },
+      { title: "Prepare with care", advisor: "Let the ritual communicate attention.", script: "I took a little time with this because you matter." },
+      { title: "Serve gently", advisor: "Place the cup as support, not a demand to feel better.", script: "No need to talk unless you want to. Here is something warm." },
+      { title: "Let the cup work", advisor: "Allow quiet. The cup can be the first bridge.", script: "We can just sit for a minute." },
+      { title: "Recovery path", advisor: "If the drink is imperfect, the kindness still matters. Simplify.", script: "The cup is simple, but the care behind it is real." },
+      { title: "Encourage lightly", advisor: "Use one sincere line, not a speech.", script: "I am with you. We can take the next step slowly." },
+      { title: "Report the lift", advisor: "Capture whether warmth, presence, or conversation emerged.", script: "I am noting how the cup helped create a little lift." }
+    ]
+  },
+  {
+    id: "deep-work-cup",
+    name: "The Deep Work Cup",
+    tag: "Focus",
+    purpose: "Create a focused cup that supports serious work without becoming a distraction.",
+    drink: "Americano, espresso, or pour-over",
+    dose: "18g espresso or 20g brew",
+    yield: "36g espresso or 300g brew",
+    time: "espresso 25–32 sec · brew 3:00–4:00",
+    grindVessel: "method-appropriate · desk-safe cup",
+    desiredFeeling: "focused, clear, sustained, capable",
+    artisanOpening: "This cup is to help me enter focused work with clarity and steadiness.",
+    reportPrompt: "Did the cup support focus without pulling attention away from the work?",
+    steps: [
+      { title: "Define the work block", advisor: "Name the work before making the coffee. The cup serves the work.", script: "This cup is for one focused block, not endless distraction." },
+      { title: "Choose clean energy", advisor: "Avoid over-rich drinks if they slow the body or mind.", script: "I am choosing clarity over comfort this time." },
+      { title: "Set the desk stage", advisor: "Prepare water, notebook, and cup placement before brewing.", script: "The workspace is ready before the coffee arrives." },
+      { title: "Brew reliably", advisor: "Use a known recipe. Deep work does not need a dial-in detour.", script: "I am keeping the cup simple so the work can be complex." },
+      { title: "Serve to self", advisor: "Place the cup where it supports rhythm without becoming fidgeting.", script: "This cup marks the start." },
+      { title: "Recovery path", advisor: "If the cup fails, do not sacrifice the work block. Simplify quickly.", script: "A decent cup and a strong work block beat a perfect cup and lost focus." },
+      { title: "Begin immediately", advisor: "The first sip should lead into action.", script: "Sip, breathe, begin." },
+      { title: "Report effectiveness", advisor: "Capture whether the cup helped focus, clarity, and momentum.", script: "I am noting whether this cup helped me do the work." }
+    ]
+  },
+  {
+    id: "after-dinner-cup",
+    name: "The After-Dinner Cup",
+    tag: "Closure",
+    purpose: "Close a meal with warmth, conversation, and a sense of completion.",
+    drink: "Decaf espresso, cortado, affogato, or small cappuccino",
+    dose: "17–18g",
+    yield: "34–36g",
+    time: "25–32 sec",
+    grindVessel: "small cup or dessert vessel",
+    desiredFeeling: "complete, warm, lingering, satisfied",
+    artisanOpening: "I made this as a small closing note for the meal.",
+    reportPrompt: "Did the cup help the meal end with warmth and completion?",
+    steps: [
+      { title: "Read the meal's energy", advisor: "Decide whether the close should be bright, sweet, quiet, or celebratory.", script: "This is just a little finish for the table." },
+      { title: "Choose the closing drink", advisor: "Select small and elegant rather than large and heavy.", script: "I kept it small so it can close the meal, not restart it." },
+      { title: "Prepare dessert pairing if needed", advisor: "If pairing with dessert, let coffee support sweetness and texture.", script: "This should sit nicely with the last bite." },
+      { title: "Pull with care", advisor: "A small drink magnifies flaws, so keep the recipe stable.", script: "I am keeping this clean and simple." },
+      { title: "Serve at the table", advisor: "Bring the cup as part of the meal's final rhythm.", script: "Here is the closing cup." },
+      { title: "Recovery path", advisor: "If extraction is off, use milk, dessert, or smaller serving to preserve the close.", script: "I will adjust the finish without making the table wait." },
+      { title: "Invite lingering", advisor: "Let the cup extend conversation without dragging the evening.", script: "We can linger for a few minutes." },
+      { title: "Report the close", advisor: "Capture pairing, timing, and emotional finish.", script: "I am remembering how the meal ended through the cup." }
+    ]
+  },
+  {
+    id: "first-guest-cup",
+    name: "The First Guest Cup",
+    tag: "Hospitality rehearsal",
+    purpose: "Practice serving a guest with confidence, composure, and a simple beverage path.",
+    drink: "Cappuccino or latte",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "medium-fine · reliable cup",
+    desiredFeeling: "prepared, welcoming, composed, delighted",
+    artisanOpening: "I made this as my first real guest cup, so I am keeping it warm, simple, and cared for.",
+    reportPrompt: "Did the artisan feel prepared to serve a real guest?",
+    steps: [
+      { title: "Choose the guest path", advisor: "Select a drink you can complete confidently. Do not attempt your hardest drink first.", script: "I am starting with a cup I can serve well." },
+      { title: "Prepare the guest area", advisor: "Set a place for the guest before starting the machine.", script: "I made a place for you so the coffee can come to you easily." },
+      { title: "Rehearse the opening", advisor: "Know what you will say before the cup is in your hand.", script: "I made this for you. I hope it brings a little warmth." },
+      { title: "Run the house formula", advisor: "Use your known dose, yield, and timing. Predictability creates confidence.", script: "I am using my reliable recipe for this one." },
+      { title: "Finish with care", advisor: "If milk is involved, prioritize texture and temperature over art complexity.", script: "I kept the texture soft so it is easy to enjoy." },
+      { title: "Serve without apology", advisor: "Do not lead with technical disclaimers. Lead with hospitality.", script: "Here you go. I am glad to make this for you." },
+      { title: "Recovery path", advisor: "If something goes wrong, open the Recovery Library and choose one clear move.", script: "If I need to adjust, I will do it calmly and keep the guest experience steady." },
+      { title: "Ask lightly", advisor: "Invite feedback without interrogating the guest.", script: "Tell me if you would like it stronger, softer, or warmer next time." },
+      { title: "Report guest response", advisor: "Capture what the guest liked, what you felt, and what to refine.", script: "I am saving what I learned from serving someone else." }
+    ]
+  },
+  {
+    id: "milk-rescue",
+    name: "The Milk Rescue",
+    tag: "Recovery",
+    purpose: "Recover gracefully when milk texture, temperature, or foam goes wrong during an occasion.",
+    drink: "Cappuccino or latte",
+    dose: "18g",
+    yield: "36g",
+    time: "25–32 sec",
+    grindVessel: "milk pitcher · ceramic cup",
+    desiredFeeling: "recovered, calm, warm, competent",
+    artisanOpening: "The milk did not land perfectly, so I am going to recover the cup with calm hands.",
+    reportPrompt: "Did the artisan recover the milk issue without losing the moment?",
+    steps: [
+      { title: "Name the milk issue", advisor: "Identify whether it is too foamy, too flat, overheated, or separated.", script: "I am naming the issue so I can recover it clearly." },
+      { title: "Protect the espresso", advisor: "If the espresso is good, do not waste it while chasing perfect milk.", script: "The base is usable. I am going to protect the cup." },
+      { title: "Choose rescue or restart", advisor: "If milk is scorched, restart. If texture is imperfect but drinkable, rescue.", script: "I am choosing the cleanest recovery path." },
+      { title: "Polish if possible", advisor: "Swirl, tap, and integrate texture. Pour for comfort, not competition art.", script: "I am smoothing the texture so it can still serve the moment." },
+      { title: "Serve honestly but calmly", advisor: "Do not over-apologize. Keep the guest at ease.", script: "This one is soft and warm. I hope it feels good." },
+      { title: "Open Recovery Library", advisor: "Use the milk category if you need specific correction steps.", script: "I can recover milk issues one step at a time." },
+      { title: "Capture the correction", advisor: "Record milk type, aeration time, temperature, and result.", script: "I am saving what happened so the next milk texture improves." },
+      { title: "Close with confidence", advisor: "A rescued cup can still carry care and delight.", script: "Recovered with care is still hospitality." }
+    ]
+  },
+  {
+    id: "founders-performance",
+    name: "The Founder's Performance",
+    tag: "Showcase",
+    purpose: "Bring story, technique, recovery, and report capture together as a signature home barista performance.",
+    drink: "Chosen signature drink",
+    dose: "18g or chosen formula",
+    yield: "36g or chosen formula",
+    time: "25–32 sec or chosen target",
+    grindVessel: "chosen vessel · staged presentation",
+    desiredFeeling: "expressive, confident, hospitable, delightful",
+    artisanOpening: "This cup has a story. I made it to express care, memory, and a little craft at the counter.",
+    reportPrompt: "Did the performance integrate story, cup, service, recovery, and delight?",
+    steps: [
+      { title: "Choose the story", advisor: "Name the feeling, memory, person, or place the drink will express.", script: "This cup is about a feeling I wanted to bring into the room." },
+      { title: "Design the drink", advisor: "Choose ingredients, vessel, dose, yield, and finishing touch in service of the story.", script: "Every part of this drink is here for a reason." },
+      { title: "Stage the counter", advisor: "Arrange tools and ingredients so the performance flows visibly and calmly.", script: "I prepared the counter so the cup could unfold clearly." },
+      { title: "Rehearse the spoken opening", advisor: "Say the first line before starting. The story should guide the movement.", script: "Before I make it, let me tell you what this cup is meant to hold." },
+      { title: "Execute the base", advisor: "Pull the espresso or brew foundation with known discipline.", script: "The base carries the structure of the drink." },
+      { title: "Build the signature element", advisor: "Add the special element with restraint. It should clarify the story, not clutter it.", script: "This is the note that connects the cup to the moment." },
+      { title: "Present the cup", advisor: "Serve with the vessel facing the guest, and speak the final line clearly.", script: "The cup holds the promise; the sip releases the joy." },
+      { title: "Use Recovery if needed", advisor: "If something misfires, narrate calmly and choose one recovery path.", script: "I am going to steady this part so the cup can still land." },
+      { title: "Invite the sip", advisor: "Give the guest a simple way to experience the drink.", script: "Take the first sip slowly; this one is meant to open gently." },
+      { title: "Capture the performance report", advisor: "Record story, recipe, movement, guest response, and next refinement.", script: "I am saving the performance so the next one becomes more intentional." }
+    ]
+  }
+];
+
 const recoveryMatrixCatalog = [
   { category:"Espresso Flow & Resistance", issue:"Shot choking / barely dripping", symptoms:"Shot barely drips, pump strains, flow is slow or stops.", likelyCause:"Grind likely too fine, dose too high, puck too compact, basket overloaded, or screen restricted.", advisor:"Stop if needed. Go slightly coarser, confirm dose, distribute evenly, and avoid changing milk or recipe at the same time.", oneNextMove:"Keep the dose steady and move the grind one small step coarser.", stagecraft:"Do not turn the moment into a repair session; make one clean resistance adjustment.", solutionSteps:["Stop the shot if it is not producing usable liquid.","Confirm your dose is not above the basket's comfortable range.","Move the grind one small step coarser.","Distribute evenly, tamp level, and repeat the same yield target.","If serving someone, narrate calmly: 'This one is tight, so I’m giving the coffee a little more room to flow.'"] },
   { category:"Espresso Flow & Resistance", issue:"Shot runs too fast", symptoms:"Shot finishes quickly, watery stream, thin body, pale crema, short contact time.", likelyCause:"Grind likely too coarse, dose too low, stale beans, channeling, or weak puck resistance.", advisor:"Go finer one notch, confirm dose, improve distribution, and repeat the same ratio.", oneNextMove:"Keep the dose steady and move the grind one step finer. Watch for a slower, more syrupy flow before changing anything else.", stagecraft:"Do not let the machine rush your presence. Reset calmly and preserve the occasion.", solutionSteps:["Let the shot finish only if it is useful for tasting; otherwise stop and mark it as fast.","Confirm the dose was not low and the basket was dry before dosing.","Move the grind one small step finer; do not change dose, yield, and grind all at once.","Improve distribution, tamp level, and repeat the same yield target.","Tell the guest: 'This one opened too quickly, so next I’m giving the coffee bed a little more resistance.'"] },
@@ -67,6 +489,8 @@ const advisorStarterText = `The form grounds. The artisan voice clarifies. The A
 
 export default function Home() {
   const [active, setActive] = useState("dashboard");
+  const [selectedOccasionId, setSelectedOccasionId] = useState(founderOccasions[0].id);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [status, setStatus] = useState("Ready");
   const [health, setHealth] = useState(null);
   const [error, setError] = useState("");
@@ -121,12 +545,30 @@ export default function Home() {
     momentIntent: occasion.momentIntent
   }), [profile, occasion]);
 
+  const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
+
   function log(message) {
     const stamp = new Date().toLocaleTimeString();
     setLogs((prev) => [...prev, `[${stamp}] ${message}`]);
   }
   function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: value })); }
   function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
+  function openFounderOccasion(item) {
+    setSelectedOccasionId(item.id);
+    setCurrentStepIndex(0);
+    setOccasion((prev) => ({
+      ...prev,
+      occasionName: item.name,
+      drink: item.drink,
+      desiredFeeling: item.desiredFeeling,
+      momentIntent: item.purpose,
+      recurrence: "Selected Occasion: " + item.name,
+      currentShotTime: item.time
+    }));
+    setTranscript(item.artisanOpening || "");
+    setActive("walkthrough");
+    log(`Opened Occasion: ${item.name}`);
+  }
 
   async function checkServer() {
     setError(""); setStatus("Checking server and API key…"); log("Checking /api/health.");
@@ -219,22 +661,22 @@ export default function Home() {
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.2</small></div></div>
-        {["dashboard", "onboarding", "occasion", "simulator", "matrix", "reports"].map((tab) => (
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.3</small></div></div>
+        {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
-        <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 30 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 4)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
+        <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 15 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 7)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v7</p>
-        <h1>Home Barista Occasion Simulator — Integrated Flow</h1>
-        <p>This puts the experience together: onboarding, dashboard, Occasion setup, form + voice synthesis, Premium Advisor, Advisor Voice, and Doma Reports.</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v7.3</p>
+        <h1>Home Barista Occasion Simulator — 15 Occasions + Stagecraft</h1>
+        <p>This restores the intended flow: onboarding, dashboard, 15 selectable Occasions, detailed stagecraft walkthroughs, Artisan Stagecraft Scripts, Recovery Library, Premium Advisor, Advisor Voice, and Doma Reports.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
         <div className="navBar">
-          {["dashboard", "onboarding", "occasion", "simulator", "reports", "matrix"].map((tab) => (
+          {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "reports", "matrix"].map((tab) => (
             <button key={tab} className={active === tab ? "tab active" : "tab"} onClick={() => setActive(tab)} type="button">{tabLabel(tab)}</button>
           ))}
         </div>
@@ -243,6 +685,8 @@ export default function Home() {
       {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} />}
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} />}
+      {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} />}
+      {active === "walkthrough" && <OccasionWalkthrough occasionItem={selectedFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, createReport }} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
@@ -260,16 +704,67 @@ export default function Home() {
   );
 }
 
-function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasion: "Occasion Setup", simulator: "Advisor Session", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
-function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasion: "🎭", simulator: "🎙️", reports: "📊", matrix: "🛠️" })[tab]; }
+function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "15 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", simulator: "Advisor Session", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
+function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", simulator: "🎙️", reports: "📊", matrix: "🛠️" })[tab]; }
 
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health }) {
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasion")}>Set Up Occasion</button><button className="primary" onClick={loadClearFastShot}>Load Sample Full Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 15 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
 function Onboarding({ profile, updateProfile, setActive }) {
-  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasion")}>Continue to Occasion Setup</button></section>;
+  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasions")}>Continue to 15 Occasions</button></section>;
+}
+
+
+function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
+  return <section className="occasionPage">
+    <section className="card heroMini">
+      <p className="eyebrow">15 Founder Occasions</p>
+      <h2>Fifteen stagecraft occasions, not thirty generic drills.</h2>
+      <p className="small">Each Occasion opens into a detailed home coffee stagecraft walkthrough with beverage targets, Advisor guidance, an Artisan Stagecraft Script, recovery access, voice capture, and Doma Report capture.</p>
+    </section>
+    <div className="occasionGrid">
+      {founderOccasions.map((item, index) => <article className="occasionCard" key={item.id}>
+        <div className="occasionTop"><span>Occasion {index + 1}</span><em>{item.tag}</em></div>
+        <h3>{item.name}</h3>
+        <p>{item.purpose}</p>
+        <div className="specs"><p><strong>Drink</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Time / Ratio</strong><span>{item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
+        <div className="scriptPreview"><strong>Artisan opening to guest</strong><p>{item.artisanOpening}</p></div>
+        <div className="buttonRow"><button className="primary" onClick={() => openFounderOccasion(item)}>Open Occasion</button><button className="secondary" onClick={() => openFounderOccasion(item)}>Begin Stagecraft</button></div>
+      </article>)}
+    </div>
+  </section>;
+}
+
+function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport }) {
+  const step = occasionItem.steps[currentStepIndex] || occasionItem.steps[0];
+  const progress = Math.round(((currentStepIndex + 1) / occasionItem.steps.length) * 100);
+  const scriptText = occasionItem.steps.map((s, i) => `${i + 1}. ${s.title}: ${s.script}`).join("\n");
+  return <section className="walkthroughPage">
+    <section className="card walkthroughHero">
+      <p className="eyebrow">Selected Occasion</p>
+      <h2>{occasionItem.name}</h2>
+      <p>{occasionItem.purpose}</p>
+      <div className="tiles"><Tile title="Drink" value={occasionItem.drink} /><Tile title="Dose → Yield" value={`${occasionItem.dose} → ${occasionItem.yield}`} /><Tile title="Time" value={occasionItem.time} /><Tile title="Desired delight" value={occasionItem.desiredFeeling} /></div>
+      <div className="pathTrack"><span style={{ width: `${progress}%` }} /></div><p className="small">Step {currentStepIndex + 1} of {occasionItem.steps.length} · {progress}% complete</p>
+    </section>
+    <section className="card stageStep">
+      <p className="eyebrow">Stagecraft Step {currentStepIndex + 1}</p>
+      <h2>{step.title}</h2>
+      <div className="twoColumn">
+        <div className="noteBox"><h3>Advisor guidance</h3><p>{step.advisor}</p></div>
+        <div className="scriptBox"><h3>Artisan Stagecraft Script</h3><p>{step.script}</p></div>
+      </div>
+      <div className="buttonRow"><button className="secondary" onClick={() => setCurrentStepIndex(Math.max(0, currentStepIndex - 1))} disabled={currentStepIndex === 0}>Previous Step</button><button className="primary" onClick={() => setCurrentStepIndex(Math.min(occasionItem.steps.length - 1, currentStepIndex + 1))} disabled={currentStepIndex >= occasionItem.steps.length - 1}>Next Step</button><button className="secondary" onClick={() => setActive("matrix")}>Open Recovery Library</button><button className="primary" onClick={() => { setTranscript(`I am working through the ${occasionItem.name}. Current stagecraft step: ${step.title}. Advisor guidance: ${step.advisor}. Artisan script: ${step.script}. Please synthesize this Occasion with my form and any voice note.`); setActive("simulator"); }}>Speak / Ask Advisor</button></div>
+    </section>
+    <section className="card">
+      <h2>Full Occasion Stagecraft Script</h2>
+      <p className="small">This is the artisan-facing script to rehearse and follow. It is separate from Advisor guidance.</p>
+      <pre className="scriptFull">{scriptText}</pre>
+      <div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Back to 15 Occasions</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div>
+    </section>
+  </section>;
 }
 
 function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot }) {
