@@ -1144,9 +1144,103 @@ function Simulator(props) {
 }
 
 function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV }) {
-  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">Reports now preserve machine, dosing, confidence, trend, tasting, Guest Resonance, tempo, transcript, Advisor response, and export/print actions.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div> : reports.map((r, idx) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><div className="reportGrid"><div className="noteBox"><strong>Machine + Formula</strong><br/>Machine: {r.machineInfo?.machine || r.context?.machine || "Not captured"}<br/>Grinder: {r.machineInfo?.grinder || r.context?.grinder || "Not captured"}<br/>Beans: {r.machineInfo?.beans || r.context?.beans || "Not captured"}<br/>Dose → Yield: {r.dosingInfo?.dose || r.context?.dose || "?"} → {r.dosingInfo?.yield || r.context?.yield || "?"}<br/>House time: {r.dosingInfo?.houseShotTime || "Not captured"}<br/>Actual/observed time: {r.dosingInfo?.currentShotTime || r.context?.shotTime || "Not captured"}</div><div className="successBox"><strong>Confidence + Trend</strong><br/>Machine Confidence: {r.confidenceMetrics?.machineConfidence ?? r.sensoryScores?.machineConfidence ?? "—"}<br/>Taste Clarity: {r.confidenceMetrics?.tasteClarity ?? r.sensoryScores?.tasteClarity ?? "—"}<br/>Stagecraft: {r.confidenceMetrics?.stagecraft ?? r.sensoryScores?.stagecraft ?? "—"}<br/>Recovery Confidence: {r.confidenceMetrics?.recoveryConfidence ?? r.sensoryScores?.recoveryConfidence ?? "—"}<br/>Trend: {r.trendSummary || "First report or no prior comparison."}</div></div><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>{r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}{r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}{r.sensoryScores ? <MiniReportCharts scores={r.sensoryScores} /> : null}<details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details><div className="buttonRow"><button className="primary" onClick={() => printReport(r)}>Print Report</button></div></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
+  const latest = reports[0] || null;
+  const previous = reports[1] || null;
+  return <section className="reportsPage">
+    <section className="card reportHero">
+      <p className="eyebrow">Doma Reports / Second Coffee Brain</p>
+      <h1>Performance reporting for the cup, the machine, and the Occasion.</h1>
+      <p>Barista Doma should become the one true source for the artisan’s machine, recipes, dosing, recoveries, tasting notes, charts, Guest Resonance, and Occasion performance.</p>
+      <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div>
+    </section>
+
+    {latest ? <section className="card"><h2>Current Performance Dashboard</h2><p className="small">Radar for balance, bar chart for category comparison, and a Decent-inspired plot for nerd-minded progression.</p><DomaPerformanceDashboard report={latest} previous={previous} reports={reports} /></section> : <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div>}
+
+    {reports.map((r, idx) => <article className="report" key={r.id}>
+      <h3>{r.title}</h3>
+      <p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p>
+      <div className="reportGrid">
+        <div className="noteBox"><strong>Machine + Formula</strong><br/>Machine: {r.machineInfo?.machine || r.context?.machine || "Not captured"}<br/>Grinder: {r.machineInfo?.grinder || r.context?.grinder || "Not captured"}<br/>Beans: {r.machineInfo?.beans || r.context?.beans || "Not captured"}<br/>Dose → Yield: {r.dosingInfo?.dose || r.context?.dose || "?"} → {r.dosingInfo?.yield || r.context?.yield || "?"}<br/>House time: {r.dosingInfo?.houseShotTime || "Not captured"}<br/>Actual/observed time: {r.dosingInfo?.currentShotTime || r.context?.shotTime || "Not captured"}</div>
+        <div className="successBox"><strong>Confidence + Trend</strong><br/>Machine Confidence: {r.confidenceMetrics?.machineConfidence ?? r.sensoryScores?.machineConfidence ?? "—"}<br/>Taste Clarity: {r.confidenceMetrics?.tasteClarity ?? r.sensoryScores?.tasteClarity ?? "—"}<br/>Stagecraft: {r.confidenceMetrics?.stagecraft ?? r.sensoryScores?.stagecraft ?? "—"}<br/>Recovery Confidence: {r.confidenceMetrics?.recoveryConfidence ?? r.sensoryScores?.recoveryConfidence ?? "—"}<br/>Trend: {r.trendSummary || "First report or no prior comparison."}</div>
+      </div>
+      <DomaPerformanceDashboard report={r} previous={reports[idx + 1]} reports={reports.slice(idx)} compact />
+      <p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p>
+      <p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p>
+      <p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>
+      {r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}
+      {r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}
+      <details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details>
+      <details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details>
+      <div className="buttonRow"><button className="primary" onClick={() => printReport(r)}>Print Report</button></div>
+    </article>)}
+  </section>;
 }
 
+
+
+
+function getReportMetric(report, key) {
+  const score = report?.sensoryScores?.[key] ?? report?.confidenceMetrics?.[key];
+  return Number.isFinite(Number(score)) ? Number(score) : 0;
+}
+
+function getReportSeconds(report) {
+  return Number(report?.timingMetrics?.totalActualSeconds || report?.confidenceMetrics?.occasionTempo || 0);
+}
+
+function parseShotSeconds(value) {
+  const match = String(value || "").match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function reportDashboardRows(report, previous) {
+  const rows = [
+    ["Machine", "machineConfidence"],
+    ["Taste", "tasteClarity"],
+    ["Stagecraft", "stagecraft"],
+    ["Resonance", "guestResonance"],
+    ["Recovery", "recoveryConfidence"]
+  ];
+  return rows.map(([label, key]) => ({ label, current: getReportMetric(report, key), previous: previous ? getReportMetric(previous, key) : null }));
+}
+
+function DomaPerformanceDashboard({ report, previous, reports, compact = false }) {
+  const rows = reportDashboardRows(report, previous);
+  const trendReports = [...(reports || [])].slice(0, 8).reverse();
+  return <div className={compact ? "performanceDashboard compact" : "performanceDashboard"}>
+    <RadarChart scores={{ machineConfidence: getReportMetric(report,"machineConfidence"), tasteClarity: getReportMetric(report,"tasteClarity"), stagecraft: getReportMetric(report,"stagecraft"), guestResonance: getReportMetric(report,"guestResonance"), recoveryConfidence: getReportMetric(report,"recoveryConfidence") }} />
+    <ReportBarChart rows={rows} />
+    <ReportTrendPlot reports={trendReports} />
+    <div className="noteBox"><strong>Machine + dose record</strong><br/>Machine: {report.machineInfo?.machine || report.context?.machine || "Not captured"}<br/>Grinder: {report.machineInfo?.grinder || report.context?.grinder || "Not captured"}<br/>Beans: {report.machineInfo?.beans || report.context?.beans || "Not captured"}<br/>Dose → Yield: {report.dosingInfo?.dose || report.context?.dose || "?"} → {report.dosingInfo?.yield || report.context?.yield || "?"}<br/>Observed shot time: {report.dosingInfo?.currentShotTime || report.context?.shotTime || "Not captured"}<br/>Actual Occasion tempo: {getReportSeconds(report) ? formatSeconds(getReportSeconds(report)) : "Not captured"}</div>
+  </div>;
+}
+
+function ReportBarChart({ rows }) {
+  return <div className="chartCard"><h3>Category Bar Chart</h3><p className="small">Current report scores with previous attempt comparison where available.</p><div className="barChart">{rows.map((row) => <div className="barRow compare" key={row.label}><span>{row.label}</span><div className="barTrack"><div className="barFill" style={{ width: `${Math.max(0, Math.min(10, row.current))*10}%` }} />{row.previous !== null ? <div className="barMarker" style={{ left: `${Math.max(0, Math.min(10, row.previous))*10}%` }} title={`Previous: ${row.previous}`} /> : null}</div><strong>{row.current}</strong></div>)}</div><p className="small">Thin marker = previous attempt when available.</p></div>;
+}
+
+function ReportTrendPlot({ reports }) {
+  const w = 360, h = 210, pad = 36;
+  const safeReports = reports?.length ? reports : [];
+  const count = Math.max(1, safeReports.length - 1);
+  const pts = safeReports.map((report, i) => {
+    const taste = getReportMetric(report, "tasteClarity");
+    const resonance = getReportMetric(report, "guestResonance");
+    const confidence = getReportMetric(report, "machineConfidence");
+    const composite = Math.max(0, Math.min(10, (taste + resonance + confidence) / 3));
+    const x = pad + i * ((w - pad*2) / count);
+    const y = h - pad - (composite / 10) * (h - pad*2);
+    return { x, y, label: report.title || `Report ${i + 1}`, composite, shotSeconds: parseShotSeconds(report.dosingInfo?.currentShotTime || report.context?.shotTime) };
+  });
+  const shotPts = safeReports.map((report, i) => {
+    const seconds = parseShotSeconds(report.dosingInfo?.currentShotTime || report.context?.shotTime);
+    const normalized = seconds ? Math.max(0, Math.min(10, (seconds / 35) * 10)) : 0;
+    const x = pad + i * ((w - pad*2) / count);
+    const y = h - pad - (normalized / 10) * (h - pad*2);
+    return { x, y, seconds };
+  });
+  return <div className="chartCard"><h3>Cup Profile Plot</h3><p className="small">A lightweight Decent-inspired trend view: performance composite plus observed shot-time movement.</p><svg viewBox={`0 0 ${w} ${h}`} className="lineSvg"><line x1={pad} y1={h-pad} x2={w-pad} y2={h-pad} className="chartAxis" /><line x1={pad} y1={pad} x2={pad} y2={h-pad} className="chartAxis" />{[2,4,6,8,10].map((g)=><line key={g} x1={pad} y1={h-pad-(g/10)*(h-pad*2)} x2={w-pad} y2={h-pad-(g/10)*(h-pad*2)} className="radarGrid" />)}<polyline points={pts.map((p)=>`${p.x},${p.y}`).join(" ")} className="linePath" />{shotPts.some((p)=>p.seconds) ? <polyline points={shotPts.map((p)=>`${p.x},${p.y}`).join(" ")} className="linePath secondaryLine" /> : null}{pts.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r="5" className="lineDot" /><text x={p.x} y={h-8} textAnchor="middle" className="tinyLabel">{i+1}</text></g>)}</svg><p className="small"><span className="legendLine">Gold</span> = performance composite. <span className="legendLine secondary">Light line</span> = observed shot-time trend when available.</p></div>;
+}
 
 
 function TastingStudio({ selectedFlavorNotes, toggleFlavor, sensoryScores, updateSensoryScore, tastingNote, setTastingNote, guestResonance, setGuestResonance, setActive, createReport }) {
@@ -1240,11 +1334,20 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
     const haystack = `${item.category} ${item.issue} ${item.symptoms} ${item.likelyCause} ${item.advisor} ${item.oneNextMove} ${item.stagecraft} ${item.solutionSteps?.join(" ")}`.toLowerCase();
     return matchesCategory && (!q || haystack.includes(q));
   });
+  const topMatches = filtered.slice(0, 6);
   function useIssue(item) {
     setTranscript(`I selected this What Went Wrong Matrix issue: ${item.issue}. Likely cause: ${item.likelyCause}. Advisor note: ${item.advisor}. Please blend this selected issue with my form and any voice note, then guide me with one next move while preserving the occasion.`);
     updateOccasion("recurrence", item.issue);
     updateOccasion("momentIntent", item.stagecraft);
     setSelectedIssue(null);
+    setActive("simulator");
+  }
+  function useTypedIssue() {
+    const typed = query.trim();
+    if (!typed) return;
+    setTranscript(`The artisan typed this What Went Wrong description: ${typed}. Please search the Recovery Matrix, identify the closest issue, and blend this with the form and any voice note before advising.`);
+    updateOccasion("recurrence", `Typed issue: ${typed}`);
+    updateOccasion("momentIntent", "Typed What Went Wrong note should be synthesized with the Occasion context.");
     setActive("simulator");
   }
   async function readText(text) {
@@ -1266,12 +1369,17 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
       <p className="eyebrow">Recovery Library</p>
       <div className="matrixHeader"><div><h1>When the machine speaks, the Advisor helps interpret.</h1><p>This is the searchable What Went Wrong Matrix: a practical recovery knowledge base for real coffee occasions. Search an issue, open the Moment Recovery Engine, read guidance aloud, or send the issue back into the current Advisor Session.</p></div><button className="primary" onClick={() => setActive("occasion")}>Return to Occasion</button></div>
     </div>
-    <section className="card recoveryControls"><label className="label">Describe or search what went wrong</label><input list="matrixIssueList" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type: few drops, sour, milk too foamy, shot fast, no crema…" /><datalist id="matrixIssueList">{recoveryMatrixCatalog.map((item) => <option key={item.issue} value={item.issue} />)}</datalist><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><div className="buttonRow"><button className="secondary green" disabled={!filtered[0]} onClick={() => filtered[0] && useIssue(filtered[0])}>Use best match in Advisor Session</button></div><p className="small"><strong>{filtered.length}</strong> issues shown. Keep the browse list, but type-ahead search helps on the phone when the library grows.</p></section>
+    <section className="card recoveryControls v8Search"><label className="label">Type or describe what went wrong</label><textarea className="matrixSearchBox" value={query} onChange={(e) => setQuery(e.target.value)} onInput={(e) => setQuery(e.currentTarget.value)} placeholder="Type naturally: only a few drops came out, sour cup, milk too foamy, shot ran fast, no crema…" rows={3} />
+      <label className="label">Browse by category</label><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+      <div className="quickMatches"><strong>Quick matches</strong>{topMatches.length ? topMatches.map((item) => <button type="button" key={item.issue} className="chip" onClick={() => setSelectedIssue(item)}>{item.issue}</button>) : <span className="small">No exact Matrix match yet. You can still send the typed description to the Advisor.</span>}</div>
+      <div className="buttonRow"><button className="secondary green" disabled={!filtered[0]} onClick={() => filtered[0] && useIssue(filtered[0])}>Use best match in Advisor Session</button><button className="secondary" disabled={!query.trim()} onClick={useTypedIssue}>Use typed description</button><button className="secondary" onClick={() => setQuery("")}>Clear Search</button></div>
+      <p className="small"><strong>{filtered.length}</strong> issues shown. The search box is a real mobile text area; the browse list remains below for discovery.</p></section>
     <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button></div></article>)}</div>
     {readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null}
-    {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
+    {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><p><strong>One next move:</strong> {selectedIssue.oneNextMove}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary" onClick={() => readText(recoveryText(selectedIssue))} disabled={readBusy}>Read quick recovery</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
   </section>;
 }
+
 
 function SynthesisPanel({ synthesis }) {
   return <div className="synthesisBox"><h3>Advisor Understanding</h3><p><strong>Form complete:</strong> {String(synthesis.formComplete)}</p>{synthesis.missingFields?.length ? <p><strong>Missing fields:</strong> {synthesis.missingFields.join(", ")}</p> : null}<p><strong>Detected artisan intent:</strong> {synthesis.detectedArtisanIntent}</p><p><strong>Voice quality:</strong> {synthesis.voiceQuality}</p><p><strong>Primary live signal:</strong> {synthesis.primaryLiveSignal}</p><p><strong>Supporting context used:</strong> {synthesis.supportingContextUsed || "None"}</p><p><strong>Matrix applied:</strong> {String(synthesis.matrixApplied)}</p>{synthesis.primaryMatrixSignal ? <p><strong>Primary matrix signal:</strong> {synthesis.primaryMatrixSignal.label}</p> : null}{synthesis.secondaryMatrixSignal ? <p><strong>Secondary matrix signal:</strong> {synthesis.secondaryMatrixSignal.label}</p> : null}</div>;

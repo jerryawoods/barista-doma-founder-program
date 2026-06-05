@@ -1,22 +1,17 @@
-# Barista Doma Home Barista Occasion Simulator v7.9
+# Barista Doma / Occasions.coffee v8 — Stabilization + Performance Reporting
 
-Additive refinement patch over v7.8.
+Additive patch over v7.9.
 
-Adds:
-- Occasion quick-select menu and search/filter so artisans do not have to scroll all 21 Occasions on mobile.
-- What Went Wrong type-ahead search while preserving the browseable Recovery Matrix list.
-- Setup gate before live Advisor sessions: Doma Profile, Machine Passport, House Formula, and Occasion setup must be present.
-- Richer Doma Reports with machine info, dosing info, house formula, confidence metrics, trend summary, Guest Resonance, Occasion Tempo, tasting notes, and Advisor response.
-- Print Report action.
-- CSV export for saved local reports.
+## Adds / restores
+- Real mobile-friendly What Went Wrong text search field.
+- Type-ahead style quick matches while preserving the full Recovery Matrix browse list.
+- Ability to send a typed issue description into the Advisor when no exact match is chosen.
+- Stronger Doma Reports / Second Coffee Brain positioning.
+- Current Performance Dashboard with radar/spider chart, category bar chart, and Decent-inspired trend plot.
+- Machine, grinder, beans, dose, yield, shot-time, Occasion Tempo, Guest Resonance, and trend data remain included in reports.
 
-Preserves:
-- 21 Occasions
-- Recovery Library / Moment Recovery Engine
-- Voice capture
-- Advisor voice
-- Form + voice synthesis
-- Correction flow
-- Flavor wheel
-- Radar/spider chart, bar chart, line graph
-- Doma Reports
+## Preserves
+- 21 Occasions, including 6 Next-Gen Sensory Occasions.
+- Recovery Library / Moment Recovery Engine.
+- Voice capture, Advisor response, Advisor Voice, correction loop.
+- Tasting Studio, flavor wheel, sensory scoring, Doma Reports, print, and CSV export.
