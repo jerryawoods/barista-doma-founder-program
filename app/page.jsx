@@ -373,55 +373,8 @@ const founderOccasions = [
       { title: "Report the close", advisor: "Capture pairing, timing, and emotional finish.", script: "I am remembering how the meal ended through the cup." }
     ]
   },
-  {
-    id: "first-guest-cup",
-    name: "The First Guest Cup",
-    tag: "Hospitality rehearsal",
-    purpose: "Practice serving a guest with confidence, composure, and a simple beverage path.",
-    drink: "Cappuccino or latte",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · reliable cup",
-    desiredFeeling: "prepared, welcoming, composed, delighted",
-    artisanOpening: "I made this as my first real guest cup, so I am keeping it warm, simple, and cared for.",
-    reportPrompt: "Did the artisan feel prepared to serve a real guest?",
-    steps: [
-      { title: "Choose the guest path", advisor: "Select a drink you can complete confidently. Do not attempt your hardest drink first.", script: "I am starting with a cup I can serve well." },
-      { title: "Prepare the guest area", advisor: "Set a place for the guest before starting the machine.", script: "I made a place for you so the coffee can come to you easily." },
-      { title: "Rehearse the opening", advisor: "Know what you will say before the cup is in your hand.", script: "I made this for you. I hope it brings a little warmth." },
-      { title: "Run the house formula", advisor: "Use your known dose, yield, and timing. Predictability creates confidence.", script: "I am using my reliable recipe for this one." },
-      { title: "Finish with care", advisor: "If milk is involved, prioritize texture and temperature over art complexity.", script: "I kept the texture soft so it is easy to enjoy." },
-      { title: "Serve without apology", advisor: "Do not lead with technical disclaimers. Lead with hospitality.", script: "Here you go. I am glad to make this for you." },
-      { title: "Recovery path", advisor: "If something goes wrong, open the Recovery Library and choose one clear move.", script: "If I need to adjust, I will do it calmly and keep the guest experience steady." },
-      { title: "Ask lightly", advisor: "Invite feedback without interrogating the guest.", script: "Tell me if you would like it stronger, softer, or warmer next time." },
-      { title: "Report guest response", advisor: "Capture what the guest liked, what you felt, and what to refine.", script: "I am saving what I learned from serving someone else." }
-    ]
-  },
-  {
-    id: "milk-rescue",
-    name: "The Milk Rescue",
-    tag: "Recovery",
-    purpose: "Recover gracefully when milk texture, temperature, or foam goes wrong during an occasion.",
-    drink: "Cappuccino or latte",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "milk pitcher · ceramic cup",
-    desiredFeeling: "recovered, calm, warm, competent",
-    artisanOpening: "The milk did not land perfectly, so I am going to recover the cup with calm hands.",
-    reportPrompt: "Did the artisan recover the milk issue without losing the moment?",
-    steps: [
-      { title: "Name the milk issue", advisor: "Identify whether it is too foamy, too flat, overheated, or separated.", script: "I am naming the issue so I can recover it clearly." },
-      { title: "Protect the espresso", advisor: "If the espresso is good, do not waste it while chasing perfect milk.", script: "The base is usable. I am going to protect the cup." },
-      { title: "Choose rescue or restart", advisor: "If milk is scorched, restart. If texture is imperfect but drinkable, rescue.", script: "I am choosing the cleanest recovery path." },
-      { title: "Polish if possible", advisor: "Swirl, tap, and integrate texture. Pour for comfort, not competition art.", script: "I am smoothing the texture so it can still serve the moment." },
-      { title: "Serve honestly but calmly", advisor: "Do not over-apologize. Keep the guest at ease.", script: "This one is soft and warm. I hope it feels good." },
-      { title: "Open Recovery Library", advisor: "Use the milk category if you need specific correction steps.", script: "I can recover milk issues one step at a time." },
-      { title: "Capture the correction", advisor: "Record milk type, aeration time, temperature, and result.", script: "I am saving what happened so the next milk texture improves." },
-      { title: "Close with confidence", advisor: "A rescued cup can still carry care and delight.", script: "Recovered with care is still hospitality." }
-    ]
-  },
+
+
   {
     id: "founders-performance",
     name: "The Founder's Performance",
@@ -488,7 +441,7 @@ const recoveryMatrixCatalog = [
 const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Capture a voice note or load a scenario, then generate an Advisor response.`;
 
 export default function Home() {
-  const [active, setActive] = useState("dashboard");
+  const [active, setActive] = useState("occasions");
   const [selectedOccasionId, setSelectedOccasionId] = useState(founderOccasions[0].id);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [status, setStatus] = useState("Ready");
@@ -661,7 +614,7 @@ export default function Home() {
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.3</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.5</small></div></div>
         {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -669,9 +622,9 @@ export default function Home() {
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v7.3</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v7.5</p>
         <h1>Home Barista Occasion Simulator — 15 Occasions + Stagecraft</h1>
-        <p>This restores the intended flow: onboarding, dashboard, 15 selectable Occasions, detailed stagecraft walkthroughs, Artisan Stagecraft Scripts, Recovery Library, Premium Advisor, Advisor Voice, and Doma Reports.</p>
+        <p>This starts with the 15 selectable Occasions because this is the heart of the product: detailed stagecraft walkthroughs, beverage targets, Artisan Stagecraft Scripts, Recovery Library access, Premium Advisor synthesis, Advisor Voice, and Doma Reports.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
@@ -731,7 +684,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
         <p>{item.purpose}</p>
         <div className="specs"><p><strong>Drink</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Time / Ratio</strong><span>{item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
         <div className="scriptPreview"><strong>Artisan opening to guest</strong><p>{item.artisanOpening}</p></div>
-        <div className="buttonRow"><button className="primary" onClick={() => openFounderOccasion(item)}>Open Occasion</button><button className="secondary" onClick={() => openFounderOccasion(item)}>Begin Stagecraft</button></div>
+        <div className="buttonRow"><button className="primary" onClick={() => openFounderOccasion(item)}>Open Occasion</button><button className="secondary" onClick={() => openFounderOccasion(item)}>Mark Complete</button></div>
       </article>)}
     </div>
   </section>;
