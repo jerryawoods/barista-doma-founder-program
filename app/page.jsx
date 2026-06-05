@@ -682,6 +682,16 @@ function flatFlavorNotes() {
 
 const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Capture a voice note or load a scenario, then generate an Advisor response.`;
 
+function findOccasionById(id) {
+  return founderOccasions.find((item) => item.id === id) || null;
+}
+
+function findOccasionByName(name) {
+  const normalized = String(name || "").trim().toLowerCase();
+  if (!normalized) return null;
+  return founderOccasions.find((item) => item.name.toLowerCase() === normalized) || null;
+}
+
 export default function Home() {
   const [active, setActive] = useState("occasions");
   const [selectedOccasionId, setSelectedOccasionId] = useState(founderOccasions[0].id);
@@ -724,8 +734,16 @@ export default function Home() {
       const savedScores = localStorage.getItem("bd_scores_v77");
       const savedTastingNote = localStorage.getItem("bd_tasting_note_v77");
       const savedGuestResonance = localStorage.getItem("bd_guest_resonance_v78");
+      const savedSelectedOccasionId = localStorage.getItem("bd_selected_occasion_v82");
+      const parsedOccasion = savedOccasion ? JSON.parse(savedOccasion) : null;
       if (savedProfile) setProfile(JSON.parse(savedProfile));
-      if (savedOccasion) setOccasion(JSON.parse(savedOccasion));
+      if (parsedOccasion) setOccasion(parsedOccasion);
+      if (savedSelectedOccasionId && findOccasionById(savedSelectedOccasionId)) {
+        setSelectedOccasionId(savedSelectedOccasionId);
+      } else {
+        const matched = findOccasionByName(parsedOccasion?.occasionName);
+        if (matched) setSelectedOccasionId(matched.id);
+      }
       if (savedReports) setReports(JSON.parse(savedReports));
       if (savedFlavors) setSelectedFlavorNotes(JSON.parse(savedFlavors));
       if (savedScores) setSensoryScores(JSON.parse(savedScores));
@@ -737,6 +755,7 @@ export default function Home() {
   useEffect(() => { try { localStorage.setItem("bd_profile_v7", JSON.stringify(profile)); } catch {} }, [profile]);
   useEffect(() => { try { localStorage.setItem("bd_occasion_v7", JSON.stringify(occasion)); } catch {} }, [occasion]);
   useEffect(() => { try { localStorage.setItem("bd_reports_v7", JSON.stringify(reports)); } catch {} }, [reports]);
+  useEffect(() => { try { localStorage.setItem("bd_selected_occasion_v82", selectedOccasionId); } catch {} }, [selectedOccasionId]);
   useEffect(() => { try { localStorage.setItem("bd_flavors_v77", JSON.stringify(selectedFlavorNotes)); } catch {} }, [selectedFlavorNotes]);
   useEffect(() => { try { localStorage.setItem("bd_scores_v77", JSON.stringify(sensoryScores)); } catch {} }, [sensoryScores]);
   useEffect(() => { try { localStorage.setItem("bd_tasting_note_v77", tastingNote); } catch {} }, [tastingNote]);
@@ -760,6 +779,13 @@ export default function Home() {
   }), [profile, occasion]);
 
   const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
+  useEffect(() => {
+    const matched = findOccasionByName(occasion?.occasionName);
+    if (matched && matched.id !== selectedOccasionId) {
+      setSelectedOccasionId(matched.id);
+      log(`Synced Stagecraft Walkthrough to selected Occasion: ${matched.name}`);
+    }
+  }, [occasion?.occasionName]);
   const setupMissing = useMemo(() => getSetupMissing(profile, occasion), [profile, occasion]);
   const setupComplete = setupMissing.length === 0;
 
@@ -1321,6 +1347,73 @@ function LineChart({ scores }) {
 
 function labelize(value) { return String(value).replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase()); }
 
+
+
+function normalizeMatrixText(value) {
+  return String(value || "").toLowerCase().replace(/[’']/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+const matrixNaturalTriggers = {
+  "Shot choking / barely dripping": [
+    "only a few drops", "few drops", "just a few drops", "just drips", "only drips", "barely dripping",
+    "barely drips", "nothing came out", "nothing coming out", "no coffee came out", "no flow", "not flowing",
+    "bottom of the cup", "pump is struggling", "machine is struggling", "puck too tight", "grind too tight",
+    "too fine", "choked", "choking", "stalled", "blocked", "over pressure", "pressure but no flow"
+  ],
+  "No flow at all": [
+    "no flow", "nothing comes through", "nothing came through", "nothing came out", "no coffee", "blocked",
+    "pump runs but nothing", "pressure builds", "water not coming", "portafilter locked and nothing"
+  ],
+  "Shot runs too fast": [
+    "ran fast", "runs fast", "too fast", "gushing", "gusher", "like water", "waterfall", "finished quickly",
+    "quick shot", "pale crema", "thin stream", "low resistance", "opened too quickly"
+  ],
+  "Watery / thin body": [
+    "watery", "thin", "weak", "flat", "no body", "disappears under milk", "little sweetness", "hollow"
+  ],
+  "Sour taste": ["sour", "sharp", "acidic", "tart", "green", "salty", "under extracted", "underextracted"],
+  "Bitter / harsh taste": ["bitter", "harsh", "burnt", "ashy", "dry finish", "over extracted", "overextracted"],
+  "Spraying / channeling": ["spraying", "spray", "channeling", "channel", "sideways", "spurting", "messy flow", "bottomless"],
+  "Milk too foamy": ["milk too foamy", "too much foam", "big bubbles", "bubbly milk", "stiff foam", "dry foam"],
+  "Milk will not foam": ["milk will not foam", "no foam", "milk flat", "wont foam", "won't foam"],
+  "Machine not warmed up": ["not warmed", "cold machine", "machine cold", "not hot", "temperature unstable", "warm up"],
+  "Guest is waiting / pressure rises": ["guest waiting", "guests waiting", "family waiting", "wife waiting", "husband waiting", "ten minutes", "in a hurry", "pressure", "nervous", "before church"]
+};
+
+function matrixMatchScore(item, rawQuery) {
+  const q = normalizeMatrixText(rawQuery);
+  if (!q) return 1;
+  const haystack = normalizeMatrixText(`${item.category} ${item.issue} ${item.symptoms} ${item.likelyCause} ${item.advisor} ${item.oneNextMove} ${item.stagecraft} ${(item.solutionSteps || []).join(" ")}`);
+  let score = 0;
+  if (haystack.includes(q)) score += 30;
+  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  score += words.filter((w) => haystack.includes(w)).length;
+  const triggers = matrixNaturalTriggers[item.issue] || [];
+  for (const phrase of triggers) {
+    const normalizedPhrase = normalizeMatrixText(phrase);
+    if (q.includes(normalizedPhrase) || normalizedPhrase.includes(q)) score += 50;
+  }
+  // Hard guardrail: common natural-language no-flow phrases must favor choking/no-flow before fast-shot entries.
+  if (/few drops|only drips|just drips|barely dripp|nothing came|nothing coming|no coffee|no flow|bottom of the cup|puck too tight|grind too tight|pressure but no flow|chok|stall/.test(q)) {
+    if (item.issue === "Shot choking / barely dripping") score += 200;
+    if (item.issue === "No flow at all") score += 150;
+    if (item.issue === "Shot runs too fast") score -= 100;
+  }
+  // Opposite guardrail: fast/gushing language should favor low resistance, not choking, unless no-flow language is present.
+  if (/ran fast|runs fast|too fast|gushing|gusher|like water|finished quickly|quick shot|opened too quickly/.test(q) && !/few drops|barely|nothing|no flow|chok|stall/.test(q)) {
+    if (item.issue === "Shot runs too fast") score += 200;
+    if (item.issue === "Shot choking / barely dripping") score -= 100;
+  }
+  return score;
+}
+
+function matrixConfidence(score) {
+  if (score >= 150) return "high";
+  if (score >= 50) return "medium";
+  if (score > 0) return "low";
+  return "none";
+}
+
 function Matrix({ setActive, setTranscript, updateOccasion }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
@@ -1328,13 +1421,16 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
   const [readBusy, setReadBusy] = useState(false);
   const [readAudioUrl, setReadAudioUrl] = useState("");
   const categories = ["All", ...Array.from(new Set(recoveryMatrixCatalog.map((item) => item.category)))];
-  const filtered = recoveryMatrixCatalog.filter((item) => {
-    const q = query.trim().toLowerCase();
-    const matchesCategory = category === "All" || item.category === category;
-    const haystack = `${item.category} ${item.issue} ${item.symptoms} ${item.likelyCause} ${item.advisor} ${item.oneNextMove} ${item.stagecraft} ${item.solutionSteps?.join(" ")}`.toLowerCase();
-    return matchesCategory && (!q || haystack.includes(q));
-  });
-  const topMatches = filtered.slice(0, 6);
+  const scoredMatches = recoveryMatrixCatalog
+    .map((item) => ({ item, score: matrixMatchScore(item, query) }))
+    .filter(({ item, score }) => {
+      const matchesCategory = category === "All" || item.category === category;
+      return matchesCategory && (!query.trim() || score > 0);
+    })
+    .sort((a, b) => b.score - a.score || a.item.issue.localeCompare(b.item.issue));
+  const filtered = scoredMatches.map(({ item }) => item);
+  const topMatches = scoredMatches.slice(0, 6);
+  const bestMatch = scoredMatches[0];
   function useIssue(item) {
     setTranscript(`I selected this What Went Wrong Matrix issue: ${item.issue}. Likely cause: ${item.likelyCause}. Advisor note: ${item.advisor}. Please blend this selected issue with my form and any voice note, then guide me with one next move while preserving the occasion.`);
     updateOccasion("recurrence", item.issue);
@@ -1367,13 +1463,14 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
   return <section className="recoveryPage">
     <div className="recoveryHero card">
       <p className="eyebrow">Recovery Library</p>
-      <div className="matrixHeader"><div><h1>When the machine speaks, the Advisor helps interpret.</h1><p>This is the searchable What Went Wrong Matrix: a practical recovery knowledge base for real coffee occasions. Search an issue, open the Moment Recovery Engine, read guidance aloud, or send the issue back into the current Advisor Session.</p></div><button className="primary" onClick={() => setActive("occasion")}>Return to Occasion</button></div>
+      <div className="matrixHeader"><div><h1>When the machine speaks, the Advisor helps interpret.</h1><p>This is the searchable What Went Wrong Matrix: a practical recovery knowledge base for real coffee occasions. Search an issue, open the Moment Recovery Engine, read guidance aloud, or send the issue back into the current Advisor Session.</p></div><button className="primary" onClick={() => setActive("walkthrough")}>Return to Selected Occasion</button></div>
     </div>
     <section className="card recoveryControls v8Search"><label className="label">Type or describe what went wrong</label><textarea className="matrixSearchBox" value={query} onChange={(e) => setQuery(e.target.value)} onInput={(e) => setQuery(e.currentTarget.value)} placeholder="Type naturally: only a few drops came out, sour cup, milk too foamy, shot ran fast, no crema…" rows={3} />
       <label className="label">Browse by category</label><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select>
-      <div className="quickMatches"><strong>Quick matches</strong>{topMatches.length ? topMatches.map((item) => <button type="button" key={item.issue} className="chip" onClick={() => setSelectedIssue(item)}>{item.issue}</button>) : <span className="small">No exact Matrix match yet. You can still send the typed description to the Advisor.</span>}</div>
-      <div className="buttonRow"><button className="secondary green" disabled={!filtered[0]} onClick={() => filtered[0] && useIssue(filtered[0])}>Use best match in Advisor Session</button><button className="secondary" disabled={!query.trim()} onClick={useTypedIssue}>Use typed description</button><button className="secondary" onClick={() => setQuery("")}>Clear Search</button></div>
-      <p className="small"><strong>{filtered.length}</strong> issues shown. The search box is a real mobile text area; the browse list remains below for discovery.</p></section>
+      <div className="quickMatches"><strong>Quick matches</strong>{topMatches.length ? topMatches.map(({ item, score }) => <button type="button" key={item.issue} className="chip" onClick={() => setSelectedIssue(item)}>{item.issue} <span className="small">({matrixConfidence(score)})</span></button>) : <span className="small">No Matrix match yet. You can still send the typed description to the Advisor.</span>}</div>
+      {bestMatch ? <div className="successBox"><strong>Best match:</strong> {bestMatch.item.issue}<br/><strong>Confidence:</strong> {matrixConfidence(bestMatch.score)}<br/><strong>One next move:</strong> {bestMatch.item.oneNextMove}</div> : null}
+      <div className="buttonRow"><button className="secondary green" disabled={!bestMatch} onClick={() => bestMatch && useIssue(bestMatch.item)}>Use best match in Advisor Session</button><button className="secondary" disabled={!query.trim()} onClick={useTypedIssue}>Use typed description</button><button className="secondary" onClick={() => setQuery("")}>Clear Search</button></div>
+      <p className="small"><strong>{filtered.length}</strong> issues shown. Natural-language matching is active; the browse list remains below for discovery.</p></section>
     <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button></div></article>)}</div>
     {readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null}
     {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><p><strong>One next move:</strong> {selectedIssue.oneNextMove}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary" onClick={() => readText(recoveryText(selectedIssue))} disabled={readBusy}>Read quick recovery</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
