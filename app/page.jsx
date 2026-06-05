@@ -28,6 +28,41 @@ const defaultOccasion = {
   suggestedTempo: "8–11 minutes"
 };
 
+const setupRequiredFields = [
+  ["profile.machine", "Machine Passport: machine"],
+  ["profile.grinder", "Machine Passport: grinder"],
+  ["profile.houseDose", "House Formula: dose"],
+  ["profile.houseYield", "House Formula: yield"],
+  ["profile.houseShotTime", "House Formula: shot time"],
+  ["occasion.occasionName", "Occasion setup: occasion name"],
+  ["occasion.drink", "Occasion setup: drink or drink set"],
+  ["occasion.guest", "Occasion setup: guest / who is served"],
+  ["occasion.desiredFeeling", "Occasion setup: desired feeling / delight"],
+  ["occasion.momentIntent", "Occasion setup: moment intent"]
+];
+
+function getByPath(root, path) {
+  return path.split(".").reduce((obj, key) => obj?.[key], root);
+}
+
+function getSetupMissing(profile, occasion) {
+  const root = { profile, occasion };
+  return setupRequiredFields.filter(([path]) => !String(getByPath(root, path) || "").trim()).map(([, label]) => label);
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function reportTrendSummary(previous, currentScores, guestResonance) {
+  if (!previous) return "First saved report in this browser. Future reports will show trend and confidence movement.";
+  const prior = previous.sensoryScores || {};
+  const keys = ["machineConfidence", "tasteClarity", "stagecraft", "recoveryConfidence"];
+  const deltas = keys.map((k) => `${labelize(k)} ${Number(currentScores?.[k] || 0) - Number(prior?.[k] || 0) >= 0 ? "+" : ""}${Number(currentScores?.[k] || 0) - Number(prior?.[k] || 0)}`).join(" · ");
+  return `Compared with prior local report: ${deltas}. Guest Resonance now ${guestResonance?.score || "not captured"}/5.`;
+}
+
 
 const founderOccasions = [
   {
@@ -725,6 +760,8 @@ export default function Home() {
   }), [profile, occasion]);
 
   const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
+  const setupMissing = useMemo(() => getSetupMissing(profile, occasion), [profile, occasion]);
+  const setupComplete = setupMissing.length === 0;
 
   function log(message) {
     const stamp = new Date().toLocaleTimeString();
@@ -732,6 +769,19 @@ export default function Home() {
   }
   function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: value })); }
   function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
+  function requireSetupThen(nextActive) {
+    const missing = getSetupMissing(profile, occasion);
+    if (missing.length) {
+      setError(`Setup must be completed before starting a live Advisor Session. Missing: ${missing.join(", ")}`);
+      setStatus("Setup gate: complete Doma Profile, Machine Passport, House Formula, and Occasion setup first.");
+      log(`Setup gate blocked session. Missing: ${missing.join(", ")}`);
+      setActive("onboarding");
+      return false;
+    }
+    setError("");
+    setActive(nextActive);
+    return true;
+  }
   function openFounderOccasion(item) {
     setSelectedOccasionId(item.id);
     setCurrentStepIndex(0);
@@ -829,6 +879,14 @@ Correction / added detail: ${newText}`.trim() : newText);
   }
 
   async function generateAdvisorResponse() {
+    const missing = getSetupMissing(profile, occasion);
+    if (missing.length) {
+      setError(`Before the Advisor responds, complete the required setup: ${missing.join(", ")}`);
+      setStatus("Advisor paused until setup is complete.");
+      log(`Advisor setup gate blocked response. Missing: ${missing.join(", ")}`);
+      setActive("onboarding");
+      return;
+    }
     setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setStatus("Assessing Matrix + generating Advisor response…"); log("Sending form + voice to /api/respond.");
     try {
       const response = await fetch("/api/respond", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript, context }) });
@@ -858,14 +916,40 @@ Correction / added detail: ${newText}`.trim() : newText);
     setStatus("Sample Occasion loaded."); log("Loaded integrated sample Occasion."); setActive("simulator");
   }
   function createReport() {
+    const timingMetrics = buildTimingMetrics(selectedFounderOccasion, stepTimings, occasionStartTime);
+    const priorReport = reports[0] || null;
     const report = {
       id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
       drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
-      synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics: buildTimingMetrics(selectedFounderOccasion, stepTimings, occasionStartTime)
+      synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics,
+      profileSnapshot: { ...profile },
+      occasionSnapshot: { ...occasion },
+      machineInfo: { machine: profile.machine, grinder: profile.grinder, beans: profile.beans, experienceLevel: profile.experienceLevel, milkStyle: profile.milkStyle },
+      dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, currentShotTime: occasion.currentShotTime, drink: occasion.drink },
+      confidenceMetrics: { machineConfidence: sensoryScores.machineConfidence, tasteClarity: sensoryScores.tasteClarity, stagecraft: sensoryScores.stagecraft, recoveryConfidence: sensoryScores.recoveryConfidence, guestResonance: guestResonance.score, occasionTempo: timingMetrics.totalActualSeconds },
+      trendSummary: reportTrendSummary(priorReport, sensoryScores, guestResonance)
     };
     setReports((prev) => [report, ...prev]); setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
   }
   function clearReports() { setReports([]); log("Cleared local reports."); }
+  function printReport(report) {
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const html = `<!doctype html><html><head><title>Doma Report</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.45;color:#1c140f} h1{color:#3a2318} .box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0} pre{white-space:pre-wrap;background:#f7f3ee;padding:12px;border-radius:10px}</style></head><body><h1>Doma Report — ${report.title}</h1><p>${report.createdAt}</p><div class=box><h2>Machine + Formula</h2><p><strong>Machine:</strong> ${report.machineInfo?.machine || ""}<br/><strong>Grinder:</strong> ${report.machineInfo?.grinder || ""}<br/><strong>Beans:</strong> ${report.machineInfo?.beans || ""}<br/><strong>Dose → Yield:</strong> ${report.dosingInfo?.dose || ""} → ${report.dosingInfo?.yield || ""}<br/><strong>House shot time:</strong> ${report.dosingInfo?.houseShotTime || ""}<br/><strong>Current shot time:</strong> ${report.dosingInfo?.currentShotTime || ""}</p></div><div class=box><h2>Occasion</h2><p><strong>Drink:</strong> ${report.drink}<br/><strong>Served to:</strong> ${report.guest}<br/><strong>Matrix:</strong> ${report.matrixMatch?.label || "None"}</p><p><strong>Trend:</strong> ${report.trendSummary || ""}</p></div><div class=box><h2>Confidence Metrics</h2><p>Machine Confidence: ${report.confidenceMetrics?.machineConfidence ?? ""}<br/>Taste Clarity: ${report.confidenceMetrics?.tasteClarity ?? ""}<br/>Stagecraft: ${report.confidenceMetrics?.stagecraft ?? ""}<br/>Recovery Confidence: ${report.confidenceMetrics?.recoveryConfidence ?? ""}<br/>Guest Resonance: ${report.confidenceMetrics?.guestResonance ?? ""}/5</p></div><div class=box><h2>Flavor + Sensory</h2><p>${(report.selectedFlavorNotes || []).join(", ")}</p><p>${report.tastingNote || ""}</p></div><div class=box><h2>Artisan Transcript</h2><pre>${report.transcript || ""}</pre></div><div class=box><h2>Advisor Response</h2><pre>${report.advisorText || ""}</pre></div><script>window.print()</script></body></html>`;
+    w.document.write(html);
+    w.document.close();
+  }
+  function exportReportsCSV() {
+    const headers = ["Created", "Occasion", "Drink", "Guest", "Machine", "Grinder", "Beans", "Dose", "Yield", "House Shot Time", "Current Shot Time", "Matrix", "Machine Confidence", "Taste Clarity", "Stagecraft", "Recovery Confidence", "Guest Resonance", "Flavor Notes", "Actual Tempo Seconds", "Trend Summary", "Transcript", "Advisor Response"];
+    const rows = reports.map((r) => [r.createdAt, r.title, r.drink, r.guest, r.machineInfo?.machine || r.context?.machine || "", r.machineInfo?.grinder || r.context?.grinder || "", r.machineInfo?.beans || r.context?.beans || "", r.dosingInfo?.dose || r.context?.dose || "", r.dosingInfo?.yield || r.context?.yield || "", r.dosingInfo?.houseShotTime || "", r.dosingInfo?.currentShotTime || r.context?.shotTime || "", r.matrixMatch?.label || "", r.confidenceMetrics?.machineConfidence ?? r.sensoryScores?.machineConfidence ?? "", r.confidenceMetrics?.tasteClarity ?? r.sensoryScores?.tasteClarity ?? "", r.confidenceMetrics?.stagecraft ?? r.sensoryScores?.stagecraft ?? "", r.confidenceMetrics?.recoveryConfidence ?? r.sensoryScores?.recoveryConfidence ?? "", r.guestResonance?.score ?? "", (r.selectedFlavorNotes || []).join("; "), r.timingMetrics?.totalActualSeconds ?? "", r.trendSummary || "", r.transcript || "", r.advisorText || ""]);
+    const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `barista-doma-doma-reports-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    log("Exported Doma Reports CSV.");
+  }
   function toggleFlavor(note) {
     setSelectedFlavorNotes((prev) => prev.includes(note) ? prev.filter((n) => n !== note) : [...prev, note]);
   }
@@ -876,7 +960,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.8</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.9</small></div></div>
         {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -884,8 +968,8 @@ Correction / added detail: ${newText}`.trim() : newText);
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v7.8</p>
-        <h1>Home Barista Occasion Simulator — 21 Occasions + Performance Model + Tasting Reports</h1>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v7.9</p>
+        <h1>Home Barista Occasion Simulator — 21 Occasions + Reports, Export + Setup Gate</h1>
         <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
@@ -897,14 +981,14 @@ Correction / added detail: ${newText}`.trim() : newText);
         </div>
       </section>
 
-      {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} />}
+      {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
-      {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} />}
+      {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={selectedFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
-      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} />}
+      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
 
       <section className="card principleCard">
@@ -923,8 +1007,9 @@ Correction / added detail: ${newText}`.trim() : newText);
 function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", simulator: "Advisor Session", tasting: "Tasting Studio", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
 function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", simulator: "🎙️", tasting: "🍯", reports: "📊", matrix: "🛠️" })[tab]; }
 
-function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health }) {
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
+function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen }) {
+  const setupComplete = !setupMissing?.length;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button></div></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
@@ -934,15 +1019,31 @@ function Onboarding({ profile, updateProfile, setActive }) {
 
 
 function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
+  const [query, setQuery] = useState("");
+  const [familyFilter, setFamilyFilter] = useState("All");
+  const [quickPick, setQuickPick] = useState(founderOccasions[0]?.id || "");
+  const families = ["All", "Core Occasions", "Next-Gen Sensory Occasions"];
+  const filtered = founderOccasions.filter((item) => {
+    const q = query.trim().toLowerCase();
+    const familyName = item.family || "Core Occasions";
+    const haystack = `${item.name} ${item.tag} ${item.family || "Core Occasions"} ${item.purpose} ${item.drink} ${item.desiredFeeling}`.toLowerCase();
+    return (familyFilter === "All" || familyFilter === familyName) && (!q || haystack.includes(q));
+  });
+  const selected = founderOccasions.find((item) => item.id === quickPick) || founderOccasions[0];
   return <section className="occasionPage">
     <section className="card heroMini">
       <p className="eyebrow">21 Founder Occasions</p>
       <h2>Twenty-one stagecraft Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions.</h2>
-      <p className="small">Each Occasion opens into a detailed home coffee stagecraft walkthrough with beverage targets, suggested Occasion tempo, Advisor guidance, an Artisan Stagecraft Script, First Sip Direction, Guest Resonance Check, recovery access, voice capture, and Doma Report capture.</p>
+      <p className="small">Use the quick selector to jump directly into an Occasion on mobile, or browse the full card library below.</p>
+      <div className="selectorPanel">
+        <label className="label">Occasion quick-select menu</label>
+        <div className="selectorRow"><select value={quickPick} onChange={(e) => setQuickPick(e.target.value)}>{founderOccasions.map((item, i) => <option key={item.id} value={item.id}>{i + 1}. {item.name} — {item.drink}</option>)}</select><button className="primary" onClick={() => openFounderOccasion(selected)}>Open Selected Occasion</button></div>
+        <div className="selectorRow"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find an occasion: matcha, guest, cold, apology, social…" /><select value={familyFilter} onChange={(e) => setFamilyFilter(e.target.value)}>{families.map((f) => <option key={f} value={f}>{f}</option>)}</select></div>
+      </div>
     </section>
     <div className="occasionGrid">
-      {founderOccasions.map((item, index) => <article className="occasionCard" key={item.id}>
-        <div className="occasionTop"><span>Occasion {index + 1}</span><em>{item.family || item.tag}</em></div>
+      {filtered.map((item, index) => <article className="occasionCard" key={item.id}>
+        <div className="occasionTop"><span>Occasion {founderOccasions.findIndex((x)=>x.id===item.id) + 1}</span><em>{item.family || item.tag}</em></div>
         <h3>{item.name}</h3>
         <p>{item.purpose}</p>
         <div className="specs"><p><strong>Drink / drink set</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Suggested Tempo</strong><span>{item.suggestedTempo || item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
@@ -1002,8 +1103,9 @@ function buildTimingMetrics(occasionItem, stepTimings, occasionStartTime) {
 }
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }
 
-function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot }) {
-  return <section className="card"><h2>Occasion Setup</h2><p className="small">The product is not only about the cup. It prepares the barista for the moment.</p><div className="grid"><Field label="Occasion name" value={occasion.occasionName} onChange={(v) => updateOccasion("occasionName", v)} /><Field label="Drink" value={occasion.drink} onChange={(v) => updateOccasion("drink", v)} /><Field label="Who is being served" value={occasion.guest} onChange={(v) => updateOccasion("guest", v)} /><Field label="Time pressure" value={occasion.timePressure} onChange={(v) => updateOccasion("timePressure", v)} /><Field label="Current shot time" value={occasion.currentShotTime} onChange={(v) => updateOccasion("currentShotTime", v)} /><Field label="Suggested total Occasion tempo" value={occasion.suggestedTempo || ""} onChange={(v) => updateOccasion("suggestedTempo", v)} /><Field label="Recurrence / pattern" value={occasion.recurrence} onChange={(v) => updateOccasion("recurrence", v)} /></div><label className="label">Desired feeling / delight</label><input value={occasion.desiredFeeling} onChange={(e) => updateOccasion("desiredFeeling", e.target.value)} /><label className="label">Moment intent</label><textarea value={occasion.momentIntent} onChange={(e) => updateOccasion("momentIntent", e.target.value)} /><div className="buttonRow"><button className="secondary" onClick={loadClearFastShot}>Load Sample Before-Church Occasion</button><button className="secondary" onClick={() => setActive("matrix")}>Open What Went Wrong Matrix</button><button className="primary" onClick={() => setActive("simulator")}>Begin Occasion Simulation</button></div></section>;
+function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot, setupMissing, requireSetupThen }) {
+  const setupComplete = !setupMissing?.length;
+  return <section className="card"><h2>Occasion Setup</h2><p className="small">The product is not only about the cup. It prepares the barista for the moment.</p>{setupComplete ? <div className="successBox"><strong>Setup complete.</strong> You can begin a live Advisor Session.</div> : <div className="errorBox"><strong>Setup incomplete.</strong> Complete before beginning: {setupMissing.join(", ")}</div>}<div className="grid"><Field label="Occasion name" value={occasion.occasionName} onChange={(v) => updateOccasion("occasionName", v)} /><Field label="Drink" value={occasion.drink} onChange={(v) => updateOccasion("drink", v)} /><Field label="Who is being served" value={occasion.guest} onChange={(v) => updateOccasion("guest", v)} /><Field label="Time pressure" value={occasion.timePressure} onChange={(v) => updateOccasion("timePressure", v)} /><Field label="Current shot time" value={occasion.currentShotTime} onChange={(v) => updateOccasion("currentShotTime", v)} /><Field label="Suggested total Occasion tempo" value={occasion.suggestedTempo || ""} onChange={(v) => updateOccasion("suggestedTempo", v)} /><Field label="Recurrence / pattern" value={occasion.recurrence} onChange={(v) => updateOccasion("recurrence", v)} /></div><label className="label">Desired feeling / delight</label><input value={occasion.desiredFeeling} onChange={(e) => updateOccasion("desiredFeeling", e.target.value)} /><label className="label">Moment intent</label><textarea value={occasion.momentIntent} onChange={(e) => updateOccasion("momentIntent", e.target.value)} /><div className="buttonRow"><button className="secondary" onClick={loadClearFastShot}>Load Sample Before-Church Occasion</button><button className="secondary" onClick={() => setActive("matrix")}>Open What Went Wrong Matrix</button><button className="primary" onClick={() => requireSetupThen("simulator")}>Begin Occasion Simulation</button></div></section>;
 }
 
 function Simulator(props) {
@@ -1041,8 +1143,8 @@ function Simulator(props) {
   </>;
 }
 
-function Reports({ reports, clearReports, setActive }) {
-  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">This is where each Occasion becomes memory: what happened, what the Advisor understood, what was recommended, what the artisan tasted, and how the sensory profile changed.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div> : reports.map((r) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>{r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}{r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}{r.sensoryScores ? <MiniReportCharts scores={r.sensoryScores} /> : null}<details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
+function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV }) {
+  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">Reports now preserve machine, dosing, confidence, trend, tasting, Guest Resonance, tempo, transcript, Advisor response, and export/print actions.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div> : reports.map((r, idx) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><div className="reportGrid"><div className="noteBox"><strong>Machine + Formula</strong><br/>Machine: {r.machineInfo?.machine || r.context?.machine || "Not captured"}<br/>Grinder: {r.machineInfo?.grinder || r.context?.grinder || "Not captured"}<br/>Beans: {r.machineInfo?.beans || r.context?.beans || "Not captured"}<br/>Dose → Yield: {r.dosingInfo?.dose || r.context?.dose || "?"} → {r.dosingInfo?.yield || r.context?.yield || "?"}<br/>House time: {r.dosingInfo?.houseShotTime || "Not captured"}<br/>Actual/observed time: {r.dosingInfo?.currentShotTime || r.context?.shotTime || "Not captured"}</div><div className="successBox"><strong>Confidence + Trend</strong><br/>Machine Confidence: {r.confidenceMetrics?.machineConfidence ?? r.sensoryScores?.machineConfidence ?? "—"}<br/>Taste Clarity: {r.confidenceMetrics?.tasteClarity ?? r.sensoryScores?.tasteClarity ?? "—"}<br/>Stagecraft: {r.confidenceMetrics?.stagecraft ?? r.sensoryScores?.stagecraft ?? "—"}<br/>Recovery Confidence: {r.confidenceMetrics?.recoveryConfidence ?? r.sensoryScores?.recoveryConfidence ?? "—"}<br/>Trend: {r.trendSummary || "First report or no prior comparison."}</div></div><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>{r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}{r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}{r.sensoryScores ? <MiniReportCharts scores={r.sensoryScores} /> : null}<details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details><div className="buttonRow"><button className="primary" onClick={() => printReport(r)}>Print Report</button></div></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
 }
 
 
@@ -1164,7 +1266,7 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
       <p className="eyebrow">Recovery Library</p>
       <div className="matrixHeader"><div><h1>When the machine speaks, the Advisor helps interpret.</h1><p>This is the searchable What Went Wrong Matrix: a practical recovery knowledge base for real coffee occasions. Search an issue, open the Moment Recovery Engine, read guidance aloud, or send the issue back into the current Advisor Session.</p></div><button className="primary" onClick={() => setActive("occasion")}>Return to Occasion</button></div>
     </div>
-    <section className="card recoveryControls"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search: sour, milk, choking, grinder, water, puck…" /><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><p className="small"><strong>{filtered.length}</strong> issues shown. This library should keep expanding as the Barista Doma knowledge base grows.</p></section>
+    <section className="card recoveryControls"><label className="label">Describe or search what went wrong</label><input list="matrixIssueList" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Type: few drops, sour, milk too foamy, shot fast, no crema…" /><datalist id="matrixIssueList">{recoveryMatrixCatalog.map((item) => <option key={item.issue} value={item.issue} />)}</datalist><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><div className="buttonRow"><button className="secondary green" disabled={!filtered[0]} onClick={() => filtered[0] && useIssue(filtered[0])}>Use best match in Advisor Session</button></div><p className="small"><strong>{filtered.length}</strong> issues shown. Keep the browse list, but type-ahead search helps on the phone when the library grows.</p></section>
     <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button></div></article>)}</div>
     {readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null}
     {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
