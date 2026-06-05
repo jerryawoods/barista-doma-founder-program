@@ -695,6 +695,7 @@ function findOccasionByName(name) {
 export default function Home() {
   const [active, setActive] = useState("occasions");
   const [selectedOccasionId, setSelectedOccasionId] = useState(founderOccasions[0].id);
+  const [walkthroughOccasionId, setWalkthroughOccasionId] = useState(founderOccasions[0].id);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [status, setStatus] = useState("Ready");
   const [health, setHealth] = useState(null);
@@ -734,16 +735,16 @@ export default function Home() {
       const savedScores = localStorage.getItem("bd_scores_v77");
       const savedTastingNote = localStorage.getItem("bd_tasting_note_v77");
       const savedGuestResonance = localStorage.getItem("bd_guest_resonance_v78");
-      const savedSelectedOccasionId = localStorage.getItem("bd_selected_occasion_v82");
+      const savedSelectedOccasionId = localStorage.getItem("bd_selected_occasion_v83");
+      const savedWalkthroughOccasionId = localStorage.getItem("bd_walkthrough_occasion_v83");
       const parsedOccasion = savedOccasion ? JSON.parse(savedOccasion) : null;
       if (savedProfile) setProfile(JSON.parse(savedProfile));
       if (parsedOccasion) setOccasion(parsedOccasion);
-      if (savedSelectedOccasionId && findOccasionById(savedSelectedOccasionId)) {
-        setSelectedOccasionId(savedSelectedOccasionId);
-      } else {
-        const matched = findOccasionByName(parsedOccasion?.occasionName);
-        if (matched) setSelectedOccasionId(matched.id);
-      }
+      const matchedFromOccasion = findOccasionByName(parsedOccasion?.occasionName);
+      const initialSelected = (savedSelectedOccasionId && findOccasionById(savedSelectedOccasionId)) ? savedSelectedOccasionId : (matchedFromOccasion?.id || founderOccasions[0].id);
+      const initialWalkthrough = (savedWalkthroughOccasionId && findOccasionById(savedWalkthroughOccasionId)) ? savedWalkthroughOccasionId : initialSelected;
+      setSelectedOccasionId(initialSelected);
+      setWalkthroughOccasionId(initialWalkthrough);
       if (savedReports) setReports(JSON.parse(savedReports));
       if (savedFlavors) setSelectedFlavorNotes(JSON.parse(savedFlavors));
       if (savedScores) setSensoryScores(JSON.parse(savedScores));
@@ -755,7 +756,8 @@ export default function Home() {
   useEffect(() => { try { localStorage.setItem("bd_profile_v7", JSON.stringify(profile)); } catch {} }, [profile]);
   useEffect(() => { try { localStorage.setItem("bd_occasion_v7", JSON.stringify(occasion)); } catch {} }, [occasion]);
   useEffect(() => { try { localStorage.setItem("bd_reports_v7", JSON.stringify(reports)); } catch {} }, [reports]);
-  useEffect(() => { try { localStorage.setItem("bd_selected_occasion_v82", selectedOccasionId); } catch {} }, [selectedOccasionId]);
+  useEffect(() => { try { localStorage.setItem("bd_selected_occasion_v83", selectedOccasionId); } catch {} }, [selectedOccasionId]);
+  useEffect(() => { try { localStorage.setItem("bd_walkthrough_occasion_v83", walkthroughOccasionId); } catch {} }, [walkthroughOccasionId]);
   useEffect(() => { try { localStorage.setItem("bd_flavors_v77", JSON.stringify(selectedFlavorNotes)); } catch {} }, [selectedFlavorNotes]);
   useEffect(() => { try { localStorage.setItem("bd_scores_v77", JSON.stringify(sensoryScores)); } catch {} }, [sensoryScores]);
   useEffect(() => { try { localStorage.setItem("bd_tasting_note_v77", tastingNote); } catch {} }, [tastingNote]);
@@ -779,13 +781,7 @@ export default function Home() {
   }), [profile, occasion]);
 
   const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
-  useEffect(() => {
-    const matched = findOccasionByName(occasion?.occasionName);
-    if (matched && matched.id !== selectedOccasionId) {
-      setSelectedOccasionId(matched.id);
-      log(`Synced Stagecraft Walkthrough to selected Occasion: ${matched.name}`);
-    }
-  }, [occasion?.occasionName]);
+  const walkthroughFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === walkthroughOccasionId) || selectedFounderOccasion || founderOccasions[0], [walkthroughOccasionId, selectedFounderOccasion]);
   const setupMissing = useMemo(() => getSetupMissing(profile, occasion), [profile, occasion]);
   const setupComplete = setupMissing.length === 0;
 
@@ -810,6 +806,8 @@ export default function Home() {
   }
   function openFounderOccasion(item) {
     setSelectedOccasionId(item.id);
+    setWalkthroughOccasionId(item.id);
+    try { localStorage.setItem("bd_selected_occasion_v83", item.id); localStorage.setItem("bd_walkthrough_occasion_v83", item.id); } catch {}
     setCurrentStepIndex(0);
     setStepTimings({});
     setOccasionStartTime(Date.now());
@@ -1011,7 +1009,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} />}
-      {active === "walkthrough" && <OccasionWalkthrough occasionItem={selectedFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
+      {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} />}
@@ -1104,6 +1102,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     <section className="card heroMini">
       <p className="eyebrow">{occasionItem.family || "Core Occasion"}</p>
       <h2>{occasionItem.name}</h2>
+      <p className="successBox"><strong>Active walkthrough:</strong> {occasionItem.name}. This page walks through the selected Occasion step by step.</p>
       <p>{occasionItem.purpose}</p>
       <div className="specs"><p><strong>Drink / drink set</strong><span>{occasionItem.drink}</span></p><p><strong>Suggested total Occasion tempo</strong><span>{occasionItem.suggestedTempo || occasionItem.time}</span></p><p><strong>Intention</strong><span>{occasionItem.desiredFeeling}</span></p><p><strong>Guest Resonance prompt</strong><span>{occasionItem.guestResonancePrompt || "Did the cup and moment land with the guest?"}</span></p></div>
       <div className="noteBox"><strong>Preparation begins with Mise en Place.</strong> The goal is not speed. The goal is calm, repeatable readiness.</div>
