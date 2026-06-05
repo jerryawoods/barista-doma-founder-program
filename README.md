@@ -1,16 +1,19 @@
-# Barista Doma Home Barista Occasion Simulator v7.5
+# Barista Doma / Occasions.coffee v7.8 — Occasion Performance Model
 
-Restores the 15 Occasions as the visible starting point of the app. This keeps the integrated flow while making the Occasions grid central again:
+Additive patch only. Preserves the working Founder prototype structure, voice capture, Advisor Voice, Recovery Library, Tasting Studio, Flavor Wheel, spider/radar chart, bar chart, line chart, reports, 15 Core Occasions, and stagecraft walkthroughs.
 
-- Starts on the 15 Founder Occasions page, not a diagnostic page.
-- 15 selectable Occasions, not 30 LIFE SCENES.
-- Each Occasion card shows beverage specs and the Artisan opening/script.
-- Each Occasion opens into a detailed stagecraft walkthrough with Advisor guidance and Artisan Stagecraft Script.
-- Full Recovery Library / Moment Recovery Engine remains available.
-- Form + Voice Synthesis Advisor remains connected.
-- Advisor Voice, Doma Reports, and local report history remain connected.
+## v7.8 additions
 
-Commit suggestion: `Restore visible 15 Occasions v7.5`
+- Adds Guest Resonance as a required Doma Report dimension.
+- Restores Mise en Place as the first act inside Preparation.
+- Expands Founder release from 15 Core Occasions to 21 total Occasions:
+  - 15 Core Occasions
+  - 6 Next-Gen Sensory Occasions
+- Adds drink / drink set callouts on Occasion cards and walkthroughs.
+- Adds suggested total Occasion tempo and step-level suggested tempo.
+- Adds step Start / Complete behavior and actual step time capture.
+- Adds visible Tempo Guide with Hide Timer option.
+- Adds Doma Report timing metrics and Founder Benchmark placeholders.
+- Adds Guest Resonance fields: score, reaction, first thing noticed, quote/observation, would serve again, next adjustment.
 
-
-Smoke-test note: corrected to exactly 15 Founder Occasions; removed legacy overflow items so the visible Occasion grid matches the intended product architecture.
+Core principle: The machine makes the beverage. The home barista prepares the moment. The Occasion is not complete when the drink is made. It is complete when the drink is received.

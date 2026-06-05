@@ -24,7 +24,8 @@ const defaultOccasion = {
   desiredFeeling: "Steady, hospitable, warm, confident, and delightful",
   recurrence: "Second fast shot today",
   currentShotTime: "About 18 seconds",
-  momentIntent: "Serve a steady cup that preserves the morning and creates delight"
+  momentIntent: "Serve a steady cup that preserves the morning and creates delight",
+  suggestedTempo: "8–11 minutes"
 };
 
 
@@ -400,6 +401,171 @@ const founderOccasions = [
       { title: "Invite the sip", advisor: "Give the guest a simple way to experience the drink.", script: "Take the first sip slowly; this one is meant to open gently." },
       { title: "Capture the performance report", advisor: "Record story, recipe, movement, guest response, and next refinement.", script: "I am saving the performance so the next one becomes more intentional." }
     ]
+  },
+  {
+    id: "first-sip-flex",
+    family: "Next-Gen Sensory Occasions",
+    name: "The First Sip Flex",
+    tag: "Next-Gen Sensory",
+    purpose: "For the guest who thinks they do not like serious coffee.",
+    drink: "Chilled espresso tonic with citrus + berry lift",
+    dose: "18g espresso base",
+    yield: "36g espresso + tonic build",
+    time: "8–11 min Occasion tempo",
+    suggestedTempo: "8–11 minutes",
+    grindVessel: "medium-fine · tall chilled glass",
+    desiredFeeling: "bright, social, refreshing, not rushed",
+    artisanOpening: "I made this as a chilled espresso tonic with citrus, a little floral lift, and a bright berry finish. Try the first sip without stirring it — the top is lighter and sparkling, then the espresso comes through underneath.",
+    guestResonancePrompt: "Did it feel more like coffee, soda, or a mocktail?",
+    reportPrompt: "Did the guest understand the sparkling coffee idea and respond with curiosity or delight?",
+    steps: [
+      { title: "Intention", suggestedTempo:"30 sec", advisor:"Invite curiosity, not coffee expertise.", script:"This one is made to be bright and easy to approach." },
+      { title: "Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Preparation begins with Mise en Place: espresso base, tonic, citrus, berry accent, glass, ice, spoon, towel, and serving path.", script:"I have the glass, ice, citrus, berry lift, and espresso ready before I start." },
+      { title: "Machine readiness", suggestedTempo:"60 sec", advisor:"Warm and purge the machine before the espresso base.", script:"I am giving the espresso a stable start before it meets the tonic." },
+      { title: "Build the chilled vessel", suggestedTempo:"60 sec", advisor:"Chill the glass, add ice, and prepare the sensory accent.", script:"The glass is cold so the first sip feels lifted." },
+      { title: "Pull the espresso", suggestedTempo:"90 sec", advisor:"Pull a clean espresso base. Keep the shot steady and avoid over-explaining.", script:"The espresso is the anchor underneath the sparkle." },
+      { title: "Layer tonic + espresso", suggestedTempo:"90 sec", advisor:"Pour carefully so the guest experiences layers.", script:"Try the first sip without stirring so you can notice the layers." },
+      { title: "First Sip Direction", suggestedTempo:"30 sec", advisor:"Guide the guest toward the first sip experience.", script:"The top should feel lighter and sparkling, then the espresso comes through underneath." },
+      { title: "Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether it landed as coffee, soda, or mocktail.", script:"Did it feel more like coffee, soda, or a mocktail?" },
+      { title: "Doma Report", suggestedTempo:"60 sec", advisor:"Capture taste, guest reaction, tempo, and next adjustment.", script:"I am saving what landed, not just what I made." }
+    ]
+  },
+  {
+    id: "matcha-bridge",
+    family: "Next-Gen Sensory Occasions",
+    name: "The Matcha Bridge",
+    tag: "Next-Gen Sensory",
+    purpose: "For matcha, tea, and café-drink lovers.",
+    drink: "Iced matcha latte with espresso float or espresso sidecar",
+    dose: "18g espresso sidecar or float",
+    yield: "36g espresso + matcha latte build",
+    time: "8–12 min Occasion tempo",
+    suggestedTempo: "8–12 minutes",
+    grindVessel: "medium-fine · clear iced glass + sidecar cup",
+    desiredFeeling: "bridging, soft, rounded, curious",
+    artisanOpening: "I made this as a matcha-espresso bridge. The matcha gives it that soft green tea sweetness, and the espresso adds a deeper roasted note underneath. Sip it from the edge first, then stir it once and notice how the flavors become rounder.",
+    guestResonancePrompt: "Did the espresso make it richer, or did you prefer the matcha before stirring?",
+    reportPrompt: "Did the guest experience the espresso as a bridge or an interruption?",
+    steps: [
+      { title:"Intention", suggestedTempo:"30 sec", advisor:"This Occasion invites tea lovers into coffee without forcing espresso seriousness.", script:"This is a bridge between matcha softness and espresso depth." },
+      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set matcha, milk, ice, espresso vessel, whisk, glass, towel, and serving path.", script:"I have the matcha, espresso, glass, ice, and sidecar ready." },
+      { title:"Prepare matcha base", suggestedTempo:"120 sec", advisor:"Whisk matcha smoothly before espresso enters the story.", script:"The matcha should feel soft before the espresso deepens it." },
+      { title:"Machine readiness", suggestedTempo:"60 sec", advisor:"Purge and stabilize before pulling the espresso element.", script:"The espresso needs to be clean because it is the contrast note." },
+      { title:"Pull espresso", suggestedTempo:"90 sec", advisor:"Pull a balanced espresso base or sidecar.", script:"This espresso is here to add depth, not dominate." },
+      { title:"Float or sidecar", suggestedTempo:"60 sec", advisor:"Choose float for visual drama or sidecar for control.", script:"Sip it from the edge first, then stir once and notice the rounder flavor." },
+      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Invite comparison before and after stirring.", script:"Notice whether the espresso makes it richer or if you prefer the matcha first." },
+      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask which version landed.", script:"Did the espresso make it richer, or did you prefer it before stirring?" },
+      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture preference, texture, and guest resonance.", script:"I am saving whether this bridge actually worked for you." }
+    ]
+  },
+  {
+    id: "cold-foam-little-treat",
+    family: "Next-Gen Sensory Occasions",
+    name: "The Cold Foam Little Treat",
+    tag: "Next-Gen Sensory",
+    purpose: "A small indulgence without turning it into a sugar bomb.",
+    drink: "Iced latte or cold brew with lightly flavored cold foam",
+    dose: "18g espresso or cold brew base",
+    yield: "drink build by vessel",
+    time: "7–10 min Occasion tempo",
+    suggestedTempo: "7–10 minutes",
+    grindVessel: "cold glass · foam-ready top",
+    desiredFeeling: "soft, creamy, playful, lightly indulgent",
+    artisanOpening: "I made this one with a cold foam top so the first sip feels soft before the coffee opens up. You should get creaminess first, then sweetness, then the coffee underneath. Try it without the straw first.",
+    guestResonancePrompt: "Did the texture change how you experienced the coffee?",
+    reportPrompt: "Did cold foam improve texture, delight, and guest interest?",
+    steps: [
+      { title:"Intention", suggestedTempo:"30 sec", advisor:"This is a texture-first Occasion, not a sugar bomb.", script:"This is a small treat, but I kept it coffee-centered." },
+      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set coffee base, milk/foam base, flavor accent, glass, ice, frother, and serving path.", script:"The foam, coffee, ice, and glass are ready before I build." },
+      { title:"Prepare coffee base", suggestedTempo:"90 sec", advisor:"Use espresso or cold brew as the foundation.", script:"The coffee underneath should still be clear." },
+      { title:"Make cold foam", suggestedTempo:"90 sec", advisor:"Keep foam light, soft, and restrained.", script:"The foam should soften the first sip without burying the coffee." },
+      { title:"Build the drink", suggestedTempo:"60 sec", advisor:"Layer coffee, ice, and foam cleanly.", script:"You should get creaminess first, then sweetness, then coffee." },
+      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Ask for strawless first sip to feel texture.", script:"Try the first sip without the straw so the texture lands first." },
+      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether texture changed perception.", script:"Did the texture change how you experienced the coffee?" },
+      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture texture, sweetness, coffee clarity, and guest reaction.", script:"I am saving whether texture created delight." }
+    ]
+  },
+  {
+    id: "zero-proof-coffee-social",
+    family: "Next-Gen Sensory Occasions",
+    name: "The Zero-Proof Coffee Social",
+    tag: "Next-Gen Sensory",
+    purpose: "Evening gathering, party, sober-curious moment, or social alternative to alcohol.",
+    drink: "Coffee mocktail, espresso tonic, or cold brew spritz",
+    dose: "espresso or cold brew base",
+    yield: "sparkling social build",
+    time: "8–12 min Occasion tempo",
+    suggestedTempo: "8–12 minutes",
+    grindVessel: "clear social glass · garnish-ready",
+    desiredFeeling: "social, bright, elevated, zero-proof",
+    artisanOpening: "I made this like a zero-proof coffee cocktail — sparkling, bright, and meant to feel social without being heavy. Take the first sip before stirring so you get the lift on top.",
+    guestResonancePrompt: "Would this work for you instead of a cocktail?",
+    reportPrompt: "Did it feel socially complete without alcohol?",
+    steps: [
+      { title:"Intention", suggestedTempo:"30 sec", advisor:"This Occasion gives the guest a social drink without alcohol heaviness.", script:"This is meant to feel social without being heavy." },
+      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set base coffee, sparkling element, citrus/garnish, glass, ice, stirrer, and serving path.", script:"The social build is staged before the first pour." },
+      { title:"Prepare coffee base", suggestedTempo:"90 sec", advisor:"Use a clean espresso or cold brew base.", script:"The coffee should carry flavor without making the drink heavy." },
+      { title:"Build sparkling layer", suggestedTempo:"60 sec", advisor:"Pour for lift and visual clarity.", script:"The sparkle is part of the hospitality." },
+      { title:"Add garnish/accent", suggestedTempo:"45 sec", advisor:"Use garnish as sensory cue, not clutter.", script:"This little accent tells you where the sip is going." },
+      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Invite first sip before stirring.", script:"Take the first sip before stirring so you get the lift on top." },
+      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether it could replace a cocktail.", script:"Would this work for you instead of a cocktail?" },
+      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture social fit, sweetness, brightness, and delight.", script:"I am saving whether this drink worked socially." }
+    ]
+  },
+  {
+    id: "afternoon-reset",
+    family: "Next-Gen Sensory Occasions",
+    name: "The Afternoon Reset",
+    tag: "Next-Gen Sensory",
+    purpose: "Energy without heaviness.",
+    drink: "Lighter iced coffee, citrus cold brew, or sparkling coffee refresher",
+    dose: "espresso or cold brew base",
+    yield: "lighter iced/sparkling build",
+    time: "6–9 min Occasion tempo",
+    suggestedTempo: "6–9 minutes",
+    grindVessel: "iced glass · refreshing presentation",
+    desiredFeeling: "refreshing, bright, clean, energizing",
+    artisanOpening: "I made this as an afternoon reset — bright, cold, and lighter than a latte. Try it before stirring; the citrus lifts first, then the coffee gives it a clean finish.",
+    guestResonancePrompt: "Does this feel more refreshing or more energizing?",
+    reportPrompt: "Did it restore energy without heaviness?",
+    steps: [
+      { title:"Intention", suggestedTempo:"30 sec", advisor:"This should reset energy, not weigh the guest down.", script:"This is a light reset for the afternoon." },
+      { title:"Home Coffee Mise en Place", suggestedTempo:"75 sec", advisor:"Set coffee base, ice, citrus, glass, garnish, towel, and serving path.", script:"The reset is staged to move cleanly and calmly." },
+      { title:"Prepare the base", suggestedTempo:"90 sec", advisor:"Keep the base clean and bright.", script:"The coffee should finish clean, not heavy." },
+      { title:"Build cold refreshment", suggestedTempo:"60 sec", advisor:"Use ice, citrus, and dilution intentionally.", script:"The citrus lifts first, then the coffee finishes clean." },
+      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Ask guest to taste before stirring.", script:"Try it before stirring; the citrus lifts first." },
+      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask refreshing vs energizing.", script:"Does this feel more refreshing or more energizing?" },
+      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture energy, refreshment, and tempo.", script:"I am saving whether this reset actually reset the afternoon." },
+      { title:"Next adjustment", suggestedTempo:"30 sec", advisor:"Tune brighter, colder, softer, or stronger next time.", script:"Next time I can make it brighter, colder, softer, or stronger." }
+    ]
+  },
+  {
+    id: "flavor-layer-flight",
+    family: "Next-Gen Sensory Occasions",
+    name: "The Flavor Layer Flight",
+    tag: "Next-Gen Sensory",
+    purpose: "Group tasting, hangout, family gathering, or curiosity moment.",
+    drink: "Three mini drinks from one coffee — creamy, sparkling, and soft/sweet",
+    dose: "shared coffee base split across three builds",
+    yield: "three mini servings",
+    time: "12–16 min Occasion tempo",
+    suggestedTempo: "12–16 minutes",
+    grindVessel: "three small cups/glasses · left-to-right flight",
+    desiredFeeling: "curious, playful, comparative, personal",
+    artisanOpening: "I made three small versions from the same coffee. One is creamy, one is sparkling, and one is soft and sweet on top. Taste them left to right and tell me which one feels most like you.",
+    guestResonancePrompt: "Which one felt most like you — refreshing, comforting, surprising, or most personal?",
+    reportPrompt: "Which version created the strongest guest resonance?",
+    steps: [
+      { title:"Intention", suggestedTempo:"30 sec", advisor:"This is a tasting moment designed for identity and curiosity.", script:"These are three expressions of the same coffee." },
+      { title:"Home Coffee Mise en Place", suggestedTempo:"120 sec", advisor:"Prepare three vessels, base coffee, cream/foam, sparkling element, sweet accent, labels, and serving path.", script:"The flight is staged left to right before I begin." },
+      { title:"Prepare coffee base", suggestedTempo:"120 sec", advisor:"Create a stable base so the variations are meaningful.", script:"The same coffee is going to show three sides." },
+      { title:"Build creamy version", suggestedTempo:"60 sec", advisor:"Make comfort and texture visible.", script:"This one is the creamy version." },
+      { title:"Build sparkling version", suggestedTempo:"60 sec", advisor:"Build refreshment and lift.", script:"This one is the sparkling version." },
+      { title:"Build soft/sweet version", suggestedTempo:"60 sec", advisor:"Make sweetness gentle, not overwhelming.", script:"This one is soft and sweet on top." },
+      { title:"First Sip Direction", suggestedTempo:"45 sec", advisor:"Guide left to right tasting.", script:"Taste them left to right and tell me which one feels most like you." },
+      { title:"Guest Resonance Check", suggestedTempo:"60 sec", advisor:"Capture personal connection to the version.", script:"Which one felt most like you — refreshing, comforting, surprising, or most personal?" },
+      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Record preference, notes, and guest quote.", script:"I am saving which version became personal." }
+    ]
   }
 ];
 
@@ -438,6 +604,47 @@ const recoveryMatrixCatalog = [
   { category:"Occasion Pressure", issue:"Need complete restart", symptoms:"Multiple errors stacked; cup cannot be rescued; room needs calm.", likelyCause:"Too many variables failed at once or the workflow collapsed.", advisor:"Use Reset the Moment: clean, purge, confirm water, reset dose, and make one simpler cup.", oneNextMove:"Reset the station and simplify the drink.", stagecraft:"A graceful restart is premium behavior.", solutionSteps:["Clear the counter.","Purge and wipe machine surfaces.","Confirm water, beans, dose, and cup.","Choose the simplest drink path.","Tell the guest: 'I’m resetting this so the cup lands right.'"] }
 ];
 
+
+const flavorWheelGroups = [
+  { group: "Fruity", notes: ["berry", "citrus", "stone fruit", "apple", "dried fruit"] },
+  { group: "Floral", notes: ["jasmine", "rose", "tea-like", "honey blossom"] },
+  { group: "Sweet", notes: ["caramel", "brown sugar", "honey", "vanilla", "maple"] },
+  { group: "Nutty / Cocoa", notes: ["almond", "hazelnut", "peanut", "cocoa", "dark chocolate"] },
+  { group: "Spice", notes: ["cinnamon", "clove", "pepper", "baking spice"] },
+  { group: "Roast", notes: ["toast", "smoke", "roasted", "molasses"] },
+  { group: "Earth / Green", notes: ["earthy", "herbal", "grassy", "woody"] },
+  { group: "Defects / Warning", notes: ["sour", "bitter", "ashy", "rubbery", "papery"] }
+];
+
+const defaultSensoryScores = {
+  aroma: 6,
+  sweetness: 5,
+  acidity: 5,
+  body: 5,
+  balance: 5,
+  finish: 5,
+  delight: 6,
+  guestResonance: 6,
+  occasionTempo: 5,
+  recoveryConfidence: 5,
+  stagecraft: 6,
+  machineConfidence: 6,
+  tasteClarity: 5
+};
+
+const defaultGuestResonance = {
+  score: 3,
+  reaction: "delighted",
+  firstThingNoticed: "texture",
+  quote: "",
+  wouldServeAgain: "adjust",
+  nextAdjustment: "sweeter"
+};
+
+function flatFlavorNotes() {
+  return flavorWheelGroups.flatMap((g) => g.notes.map((note) => ({ note, group: g.group })));
+}
+
 const advisorStarterText = `The form grounds. The artisan voice clarifies. The Advisor synthesizes. Capture a voice note or load a scenario, then generate an Advisor response.`;
 
 export default function Home() {
@@ -458,27 +665,46 @@ export default function Home() {
   const [matrixMatch, setMatrixMatch] = useState(null);
   const [advisorVoice, setAdvisorVoice] = useState("sage");
   const [advisorAudioUrl, setAdvisorAudioUrl] = useState("");
+  const [correctionMode, setCorrectionMode] = useState(false);
   const [respondBusy, setRespondBusy] = useState(false);
   const [advisorBusy, setAdvisorBusy] = useState(false);
   const [reports, setReports] = useState([]);
+  const [selectedFlavorNotes, setSelectedFlavorNotes] = useState(["caramel", "cocoa", "citrus"]);
+  const [sensoryScores, setSensoryScores] = useState(defaultSensoryScores);
+  const [tastingNote, setTastingNote] = useState("Creamy cappuccino impression with sweetness, body, and a touch of citrus brightness.");
+  const [guestResonance, setGuestResonance] = useState(defaultGuestResonance);
+  const [stepTimings, setStepTimings] = useState({});
+  const [occasionStartTime, setOccasionStartTime] = useState(null);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
+  const advisorAudioRef = useRef(null);
 
   useEffect(() => {
     try {
       const savedProfile = localStorage.getItem("bd_profile_v7");
       const savedOccasion = localStorage.getItem("bd_occasion_v7");
       const savedReports = localStorage.getItem("bd_reports_v7");
+      const savedFlavors = localStorage.getItem("bd_flavors_v77");
+      const savedScores = localStorage.getItem("bd_scores_v77");
+      const savedTastingNote = localStorage.getItem("bd_tasting_note_v77");
+      const savedGuestResonance = localStorage.getItem("bd_guest_resonance_v78");
       if (savedProfile) setProfile(JSON.parse(savedProfile));
       if (savedOccasion) setOccasion(JSON.parse(savedOccasion));
       if (savedReports) setReports(JSON.parse(savedReports));
+      if (savedFlavors) setSelectedFlavorNotes(JSON.parse(savedFlavors));
+      if (savedScores) setSensoryScores(JSON.parse(savedScores));
+      if (savedTastingNote) setTastingNote(savedTastingNote);
+      if (savedGuestResonance) setGuestResonance(JSON.parse(savedGuestResonance));
     } catch {}
   }, []);
 
   useEffect(() => { try { localStorage.setItem("bd_profile_v7", JSON.stringify(profile)); } catch {} }, [profile]);
   useEffect(() => { try { localStorage.setItem("bd_occasion_v7", JSON.stringify(occasion)); } catch {} }, [occasion]);
   useEffect(() => { try { localStorage.setItem("bd_reports_v7", JSON.stringify(reports)); } catch {} }, [reports]);
+  useEffect(() => { try { localStorage.setItem("bd_flavors_v77", JSON.stringify(selectedFlavorNotes)); } catch {} }, [selectedFlavorNotes]);
+  useEffect(() => { try { localStorage.setItem("bd_scores_v77", JSON.stringify(sensoryScores)); } catch {} }, [sensoryScores]);
+  useEffect(() => { try { localStorage.setItem("bd_tasting_note_v77", tastingNote); } catch {} }, [tastingNote]);
 
   const context = useMemo(() => ({
     machine: profile.machine,
@@ -509,6 +735,8 @@ export default function Home() {
   function openFounderOccasion(item) {
     setSelectedOccasionId(item.id);
     setCurrentStepIndex(0);
+    setStepTimings({});
+    setOccasionStartTime(Date.now());
     setOccasion((prev) => ({
       ...prev,
       occasionName: item.name,
@@ -516,7 +744,8 @@ export default function Home() {
       desiredFeeling: item.desiredFeeling,
       momentIntent: item.purpose,
       recurrence: "Selected Occasion: " + item.name,
-      currentShotTime: item.time
+      currentShotTime: item.time,
+      suggestedTempo: item.suggestedTempo || item.time
     }));
     setTranscript(item.artisanOpening || "");
     setActive("walkthrough");
@@ -535,9 +764,12 @@ export default function Home() {
     } catch (err) { setError(err.message); setStatus("Server check failed"); log(`Health check failed: ${err.message}`); }
   }
 
-  async function startRecording() {
-    setAudioUrl(""); chunksRef.current = []; setTranscript(""); setError(""); setMatrixMatch(null); setSynthesis(null);
-    setStatus("Requesting microphone…"); log("Requesting microphone access.");
+  async function startRecording(mode = "replace") {
+    const appendMode = mode === "append";
+    const existingTranscript = transcript;
+    setAudioUrl(""); chunksRef.current = []; setError(""); setMatrixMatch(null); setSynthesis(null);
+    if (!appendMode) setTranscript("");
+    setStatus(appendMode ? "Requesting microphone for correction…" : "Requesting microphone…"); log(appendMode ? "Requesting microphone access for correction/additional detail." : "Requesting microphone access.");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -562,7 +794,12 @@ export default function Home() {
         const response = await fetch("/api/transcribe", { method: "POST", body: form });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Transcription failed with HTTP ${response.status}`);
-        setTranscript(data.text || ""); setStatus("Transcription complete. Generate Advisor response next."); log(`Transcription returned ${String(data.text || "").length} characters.`);
+        const newText = data.text || "";
+        setTranscript(appendMode ? `${existingTranscript.trim()}
+
+Correction / added detail: ${newText}`.trim() : newText);
+        setCorrectionMode(false);
+        setStatus(appendMode ? "Correction captured. Re-generate Advisor response." : "Transcription complete. Generate Advisor response next."); log(`Transcription returned ${String(newText).length} characters${appendMode ? " as correction/additional detail" : ""}.`);
       };
       recorder.start();
     } catch (err) { setRecording(false); setStatus(`Error: ${err.message}`); setError(err.message); log(`Recording failed: ${err.message}`); }
@@ -572,8 +809,27 @@ export default function Home() {
     catch (err) { setError(err.message); log(`Stop failed: ${err.message}`); }
   }
 
+  function stopAdvisorVoice() {
+    try {
+      if (advisorAudioRef.current) {
+        advisorAudioRef.current.pause();
+        advisorAudioRef.current.currentTime = 0;
+      }
+      setStatus("Advisor stopped. You can correct or add detail.");
+      log("Advisor Voice playback stopped by artisan.");
+    } catch (err) { log(`Stop Advisor failed: ${err.message}`); }
+  }
+
+  function beginCorrection() {
+    stopAdvisorVoice();
+    setCorrectionMode(true);
+    setStatus("Correction mode: speak what the Advisor misunderstood.");
+    log("Correction mode started. Artisan can add a spoken correction.");
+    setActive("simulator");
+  }
+
   async function generateAdvisorResponse() {
-    setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setStatus("Generating Premium Advisor response…"); log("Sending form + voice to /api/respond.");
+    setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setStatus("Assessing Matrix + generating Advisor response…"); log("Sending form + voice to /api/respond.");
     try {
       const response = await fetch("/api/respond", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript, context }) });
       const data = await response.json().catch(() => ({}));
@@ -605,31 +861,37 @@ export default function Home() {
     const report = {
       id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
       drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
-      synthesis, matrixMatch, context
+      synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics: buildTimingMetrics(selectedFounderOccasion, stepTimings, occasionStartTime)
     };
     setReports((prev) => [report, ...prev]); setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
   }
   function clearReports() { setReports([]); log("Cleared local reports."); }
+  function toggleFlavor(note) {
+    setSelectedFlavorNotes((prev) => prev.includes(note) ? prev.filter((n) => n !== note) : [...prev, note]);
+  }
+  function updateSensoryScore(field, value) {
+    setSensoryScores((prev) => ({ ...prev, [field]: Number(value) }));
+  }
 
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.5</small></div></div>
-        {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "matrix", "reports"].map((tab) => (
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.8</small></div></div>
+        {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
-        <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 15 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 7)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
+        <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 21 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 7)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v7.5</p>
-        <h1>Home Barista Occasion Simulator — 15 Occasions + Stagecraft</h1>
-        <p>This starts with the 15 selectable Occasions because this is the heart of the product: detailed stagecraft walkthroughs, beverage targets, Artisan Stagecraft Scripts, Recovery Library access, Premium Advisor synthesis, Advisor Voice, and Doma Reports.</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v7.8</p>
+        <h1>Home Barista Occasion Simulator — 21 Occasions + Performance Model + Tasting Reports</h1>
+        <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
         <div className="navBar">
-          {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "reports", "matrix"].map((tab) => (
+          {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "reports", "matrix"].map((tab) => (
             <button key={tab} className={active === tab ? "tab active" : "tab"} onClick={() => setActive(tab)} type="button">{tabLabel(tab)}</button>
           ))}
         </div>
@@ -639,15 +901,16 @@ export default function Home() {
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} />}
-      {active === "walkthrough" && <OccasionWalkthrough occasionItem={selectedFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} />}
-      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, createReport }} />}
+      {active === "walkthrough" && <OccasionWalkthrough occasionItem={selectedFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport }} />}
+      {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
 
       <section className="card principleCard">
         <h2>Product Principle</h2>
         <p><strong>The form grounds.</strong> The Doma Profile, Machine Passport, House Formula, and Occasion setup prevent generic answers.</p>
-        <p><strong>The artisan voice clarifies.</strong> The live comment adds nuance, emotion, uncertainty, and situational detail.</p>
+        <p><strong>The artisan voice clarifies.</strong> The live comment adds nuance, emotion, uncertainty, and situational detail.</p><p><strong>The artisan can interrupt.</strong> If the Advisor misreads the cup, stop it, add a correction, and re-assess the moment.</p>
         <p><strong>The Advisor synthesizes.</strong> The Recovery Matrix grounds the diagnosis; the Premium Advisor preserves the occasion and speaks back with care, confidence, and delight.</p>
       </section>
 
@@ -657,32 +920,32 @@ export default function Home() {
   );
 }
 
-function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "15 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", simulator: "Advisor Session", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
-function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", simulator: "🎙️", reports: "📊", matrix: "🛠️" })[tab]; }
+function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", simulator: "Advisor Session", tasting: "Tasting Studio", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
+function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", simulator: "🎙️", tasting: "🍯", reports: "📊", matrix: "🛠️" })[tab]; }
 
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health }) {
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 15 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div><div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Simulator</button></div></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
 function Onboarding({ profile, updateProfile, setActive }) {
-  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasions")}>Continue to 15 Occasions</button></section>;
+  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button></section>;
 }
 
 
 function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
   return <section className="occasionPage">
     <section className="card heroMini">
-      <p className="eyebrow">15 Founder Occasions</p>
-      <h2>Fifteen stagecraft occasions, not thirty generic drills.</h2>
-      <p className="small">Each Occasion opens into a detailed home coffee stagecraft walkthrough with beverage targets, Advisor guidance, an Artisan Stagecraft Script, recovery access, voice capture, and Doma Report capture.</p>
+      <p className="eyebrow">21 Founder Occasions</p>
+      <h2>Twenty-one stagecraft Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions.</h2>
+      <p className="small">Each Occasion opens into a detailed home coffee stagecraft walkthrough with beverage targets, suggested Occasion tempo, Advisor guidance, an Artisan Stagecraft Script, First Sip Direction, Guest Resonance Check, recovery access, voice capture, and Doma Report capture.</p>
     </section>
     <div className="occasionGrid">
       {founderOccasions.map((item, index) => <article className="occasionCard" key={item.id}>
-        <div className="occasionTop"><span>Occasion {index + 1}</span><em>{item.tag}</em></div>
+        <div className="occasionTop"><span>Occasion {index + 1}</span><em>{item.family || item.tag}</em></div>
         <h3>{item.name}</h3>
         <p>{item.purpose}</p>
-        <div className="specs"><p><strong>Drink</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Time / Ratio</strong><span>{item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
+        <div className="specs"><p><strong>Drink / drink set</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Suggested Tempo</strong><span>{item.suggestedTempo || item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
         <div className="scriptPreview"><strong>Artisan opening to guest</strong><p>{item.artisanOpening}</p></div>
         <div className="buttonRow"><button className="primary" onClick={() => openFounderOccasion(item)}>Open Occasion</button><button className="secondary" onClick={() => openFounderOccasion(item)}>Mark Complete</button></div>
       </article>)}
@@ -690,48 +953,177 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
   </section>;
 }
 
-function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport }) {
-  const step = occasionItem.steps[currentStepIndex] || occasionItem.steps[0];
-  const progress = Math.round(((currentStepIndex + 1) / occasionItem.steps.length) * 100);
-  const scriptText = occasionItem.steps.map((s, i) => `${i + 1}. ${s.title}: ${s.script}`).join("\n");
+function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport, stepTimings, setStepTimings, occasionStartTime }) {
+  const steps = occasionItem.steps || [];
+  const current = steps[currentStepIndex] || steps[0];
+  const [timerVisible, setTimerVisible] = useState(true);
+  const [stepStart, setStepStart] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!stepStart) return;
+    const id = setInterval(() => setElapsed(Math.max(0, Math.round((Date.now() - stepStart) / 1000))), 1000);
+    return () => clearInterval(id);
+  }, [stepStart]);
+  function startStep() { setStepStart(Date.now()); setElapsed(0); }
+  function completeStep() {
+    const actualSeconds = stepStart ? Math.max(1, Math.round((Date.now() - stepStart) / 1000)) : (stepTimings[currentStepIndex]?.actualSeconds || 0);
+    setStepTimings((prev) => ({ ...prev, [currentStepIndex]: { step: current?.title, suggestedTempo: current?.suggestedTempo || "60–90 sec", actualSeconds, completedAt: new Date().toISOString() } }));
+    setStepStart(null);
+    if (currentStepIndex < steps.length - 1) setCurrentStepIndex(currentStepIndex + 1);
+  }
+  const scriptText = steps.map((step, idx) => `${idx + 1}. ${step.title}\nAdvisor: ${step.advisor}\nArtisan Script: ${step.script}`).join("\n\n");
+  const timingMetrics = buildTimingMetrics(occasionItem, stepTimings, occasionStartTime);
   return <section className="walkthroughPage">
-    <section className="card walkthroughHero">
-      <p className="eyebrow">Selected Occasion</p>
+    <section className="card heroMini">
+      <p className="eyebrow">{occasionItem.family || "Core Occasion"}</p>
       <h2>{occasionItem.name}</h2>
       <p>{occasionItem.purpose}</p>
-      <div className="tiles"><Tile title="Drink" value={occasionItem.drink} /><Tile title="Dose → Yield" value={`${occasionItem.dose} → ${occasionItem.yield}`} /><Tile title="Time" value={occasionItem.time} /><Tile title="Desired delight" value={occasionItem.desiredFeeling} /></div>
-      <div className="pathTrack"><span style={{ width: `${progress}%` }} /></div><p className="small">Step {currentStepIndex + 1} of {occasionItem.steps.length} · {progress}% complete</p>
+      <div className="specs"><p><strong>Drink / drink set</strong><span>{occasionItem.drink}</span></p><p><strong>Suggested total Occasion tempo</strong><span>{occasionItem.suggestedTempo || occasionItem.time}</span></p><p><strong>Intention</strong><span>{occasionItem.desiredFeeling}</span></p><p><strong>Guest Resonance prompt</strong><span>{occasionItem.guestResonancePrompt || "Did the cup and moment land with the guest?"}</span></p></div>
+      <div className="noteBox"><strong>Preparation begins with Mise en Place.</strong> The goal is not speed. The goal is calm, repeatable readiness.</div>
     </section>
-    <section className="card stageStep">
-      <p className="eyebrow">Stagecraft Step {currentStepIndex + 1}</p>
-      <h2>{step.title}</h2>
-      <div className="twoColumn">
-        <div className="noteBox"><h3>Advisor guidance</h3><p>{step.advisor}</p></div>
-        <div className="scriptBox"><h3>Artisan Stagecraft Script</h3><p>{step.script}</p></div>
-      </div>
-      <div className="buttonRow"><button className="secondary" onClick={() => setCurrentStepIndex(Math.max(0, currentStepIndex - 1))} disabled={currentStepIndex === 0}>Previous Step</button><button className="primary" onClick={() => setCurrentStepIndex(Math.min(occasionItem.steps.length - 1, currentStepIndex + 1))} disabled={currentStepIndex >= occasionItem.steps.length - 1}>Next Step</button><button className="secondary" onClick={() => setActive("matrix")}>Open Recovery Library</button><button className="primary" onClick={() => { setTranscript(`I am working through the ${occasionItem.name}. Current stagecraft step: ${step.title}. Advisor guidance: ${step.advisor}. Artisan script: ${step.script}. Please synthesize this Occasion with my form and any voice note.`); setActive("simulator"); }}>Speak / Ask Advisor</button></div>
+    <section className="card"><h2>Preparation</h2><div className="grid"><div className="noteBox"><strong>Home Coffee Mise en Place</strong><ul><li>Ingredients</li><li>Tools</li><li>Cup / glass / vessel</li><li>Garnish or sensory accent</li><li>Machine readiness</li><li>Counter / staging area</li><li>Serving path</li><li>Script readiness</li></ul></div><div className="noteBox"><strong>Readiness flow</strong><ul><li>Machine readiness</li><li>Drink build / method readiness</li><li>Service readiness</li><li>First Sip Direction</li><li>Guest Resonance Check</li></ul></div></div></section>
+    <section className="card stepCard">
+      <p className="eyebrow">Step {currentStepIndex + 1} of {steps.length}</p>
+      <h2>{current?.title}</h2>
+      <p><strong>Suggested tempo:</strong> {current?.suggestedTempo || "60–90 sec"}</p>
+      <p><strong>Advisor guidance:</strong> {current?.advisor}</p>
+      <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
+      <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>Complete Step</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[currentStepIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[currentStepIndex].actualSeconds)}</p> : null}</div>
+      <div className="buttonRow"><button className="secondary" onClick={() => setCurrentStepIndex(Math.max(0, currentStepIndex - 1))}>Previous</button><button className="secondary" onClick={() => setCurrentStepIndex(Math.min(steps.length - 1, currentStepIndex + 1))}>Next</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>
     </section>
-    <section className="card">
-      <h2>Full Occasion Stagecraft Script</h2>
-      <p className="small">This is the artisan-facing script to rehearse and follow. It is separate from Advisor guidance.</p>
-      <pre className="scriptFull">{scriptText}</pre>
-      <div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Back to 15 Occasions</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div>
-    </section>
+    <section className="card"><h2>Occasion Tempo Snapshot</h2><p><strong>Suggested total tempo:</strong> {occasionItem.suggestedTempo || occasionItem.time}</p><p><strong>Total actual time captured:</strong> {formatSeconds(timingMetrics.totalActualSeconds)}</p><p><strong>Personal best:</strong> Founder Benchmarks placeholder. Future anonymous cohort averages will compare Suggested Tempo, Your Actual Tempo, Personal Best, Founder Cohort Average, and Community Average later.</p><p className="small">Founder Benchmarks are not speed-only leaderboards. Future opt-in leaderboards should reward tempo quality, improvement, stagecraft, Guest Resonance, and calm readiness.</p></section>
+    <section className="card"><h2>Full Occasion Stagecraft Script</h2><p className="small">The machine performs the extraction. The artisan performs the Occasion.</p><pre className="scriptFull">{scriptText}</pre><div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Back to 21 Occasions</button><button className="secondary" onClick={() => setActive("tasting")}>Tasting / Flavor Wheel</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div></section>
   </section>;
 }
 
+function buildTimingMetrics(occasionItem, stepTimings, occasionStartTime) {
+  const totalActualSeconds = Object.values(stepTimings || {}).reduce((sum, item) => sum + (Number(item.actualSeconds) || 0), 0);
+  return { suggestedTotalTempo: occasionItem?.suggestedTempo || occasionItem?.time || "Not set", totalActualSeconds, stepLevel: stepTimings || {}, previousAttempt: null, personalBest: null, improvementNote: "First captured attempt or no prior local attempt yet.", tempoReflection: "The goal is not speed. The goal is calm, repeatable readiness." };
+}
+function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }
+
 function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot }) {
-  return <section className="card"><h2>Occasion Setup</h2><p className="small">The product is not only about the cup. It prepares the barista for the moment.</p><div className="grid"><Field label="Occasion name" value={occasion.occasionName} onChange={(v) => updateOccasion("occasionName", v)} /><Field label="Drink" value={occasion.drink} onChange={(v) => updateOccasion("drink", v)} /><Field label="Who is being served" value={occasion.guest} onChange={(v) => updateOccasion("guest", v)} /><Field label="Time pressure" value={occasion.timePressure} onChange={(v) => updateOccasion("timePressure", v)} /><Field label="Current shot time" value={occasion.currentShotTime} onChange={(v) => updateOccasion("currentShotTime", v)} /><Field label="Recurrence / pattern" value={occasion.recurrence} onChange={(v) => updateOccasion("recurrence", v)} /></div><label className="label">Desired feeling / delight</label><input value={occasion.desiredFeeling} onChange={(e) => updateOccasion("desiredFeeling", e.target.value)} /><label className="label">Moment intent</label><textarea value={occasion.momentIntent} onChange={(e) => updateOccasion("momentIntent", e.target.value)} /><div className="buttonRow"><button className="secondary" onClick={loadClearFastShot}>Load Sample Before-Church Occasion</button><button className="secondary" onClick={() => setActive("matrix")}>Open What Went Wrong Matrix</button><button className="primary" onClick={() => setActive("simulator")}>Begin Occasion Simulation</button></div></section>;
+  return <section className="card"><h2>Occasion Setup</h2><p className="small">The product is not only about the cup. It prepares the barista for the moment.</p><div className="grid"><Field label="Occasion name" value={occasion.occasionName} onChange={(v) => updateOccasion("occasionName", v)} /><Field label="Drink" value={occasion.drink} onChange={(v) => updateOccasion("drink", v)} /><Field label="Who is being served" value={occasion.guest} onChange={(v) => updateOccasion("guest", v)} /><Field label="Time pressure" value={occasion.timePressure} onChange={(v) => updateOccasion("timePressure", v)} /><Field label="Current shot time" value={occasion.currentShotTime} onChange={(v) => updateOccasion("currentShotTime", v)} /><Field label="Suggested total Occasion tempo" value={occasion.suggestedTempo || ""} onChange={(v) => updateOccasion("suggestedTempo", v)} /><Field label="Recurrence / pattern" value={occasion.recurrence} onChange={(v) => updateOccasion("recurrence", v)} /></div><label className="label">Desired feeling / delight</label><input value={occasion.desiredFeeling} onChange={(e) => updateOccasion("desiredFeeling", e.target.value)} /><label className="label">Moment intent</label><textarea value={occasion.momentIntent} onChange={(e) => updateOccasion("momentIntent", e.target.value)} /><div className="buttonRow"><button className="secondary" onClick={loadClearFastShot}>Load Sample Before-Church Occasion</button><button className="secondary" onClick={() => setActive("matrix")}>Open What Went Wrong Matrix</button><button className="primary" onClick={() => setActive("simulator")}>Begin Occasion Simulation</button></div></section>;
 }
 
 function Simulator(props) {
-  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, createReport } = props;
-  return <><section className="card"><h2>Occasion Simulator</h2><p className="small">Speak what is happening with the cup, machine, room, guest, or occasion. The form grounds; your voice clarifies.</p><button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : startRecording}>{recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}</button>{audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}<label className="label">Artisan transcript / comment</label><textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened." /><button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy}>{respondBusy ? "Generating…" : "Generate Advisor Response"}</button></section><section className="card advisorCard"><h2>Premium Advisor Response</h2>{synthesis ? <SynthesisPanel synthesis={synthesis} /> : <div className="noteBox">Advisor Understanding will appear here.</div>}{matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : <div className="noteBox"><strong>Matrix Match:</strong> None applied yet, or not appropriate for the artisan's intent.</div>}<label className="label">Advisor response</label><textarea value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} /><label className="label">Advisor voice option</label><select value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}><option value="alloy">Alloy — balanced and clear</option><option value="verse">Verse — expressive and warm</option><option value="sage">Sage — calm and composed</option><option value="coral">Coral — bright and friendly</option><option value="ash">Ash — steady and grounded</option></select><div className="buttonRow"><button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy || !advisorText}>{advisorBusy ? "Generating…" : "Generate Advisor Voice"}</button><button className="secondary" onClick={createReport} disabled={!advisorText || advisorText === advisorStarterText}>Create Doma Report</button></div>{advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio controls autoPlay src={advisorAudioUrl} /></> : null}</section></>;
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport } = props;
+  return <>
+    <section className="card">
+      <h2>Occasion Simulator</h2>
+      <p className="small">Speak what is happening with the cup, machine, room, guest, or occasion. The form grounds; your voice clarifies; corrections can update the Advisor.</p>
+      <div className="buttonRow">
+        <button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : () => startRecording("replace")}>{recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}</button>
+        <button className="secondary" onClick={() => startRecording("append")} disabled={recording}>Add Spoken Detail / Correction</button>
+      </div>
+      {correctionMode ? <div className="noteBox"><strong>Correction mode:</strong> Tell the Advisor what it misunderstood, for example: “No, it was not running fast. It was barely dripping, only a few drops came out.”</div> : null}
+      {audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}
+      <label className="label">Artisan transcript / comment</label>
+      <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened. Corrections are appended here." />
+      <button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy}>{respondBusy ? "Assessing…" : "Generate Advisor Response"}</button>
+    </section>
+    <section className="card advisorCard">
+      <h2>Premium Advisor Response</h2>
+      {synthesis ? <SynthesisPanel synthesis={synthesis} /> : <div className="noteBox">Advisor Understanding will appear here.</div>}
+      {matrixMatch ? <div className="successBox"><strong>Likely Matrix Match:</strong> {matrixMatch.label}<br /><strong>Matrix One Next Move:</strong> {matrixMatch.oneNextMove}</div> : <div className="noteBox"><strong>Matrix Match:</strong> None applied yet, or not appropriate for the artisan's intent.</div>}
+      <label className="label">Advisor response</label>
+      <textarea value={advisorText} onChange={(e) => setAdvisorText(e.target.value)} />
+      <label className="label">Advisor voice option</label>
+      <select value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}><option value="alloy">Alloy — balanced and clear</option><option value="verse">Verse — expressive and warm</option><option value="sage">Sage — calm and composed</option><option value="coral">Coral — bright and friendly</option><option value="ash">Ash — steady and grounded</option></select>
+      <div className="buttonRow">
+        <button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy || !advisorText}>{advisorBusy ? "Generating…" : "Generate Advisor Voice"}</button>
+        <button className="secondary" onClick={stopAdvisorVoice} disabled={!advisorAudioUrl}>Stop Advisor</button>
+        <button className="secondary green" onClick={beginCorrection} disabled={!advisorText || advisorText === advisorStarterText}>Correct / Add Detail</button>
+        <button className="secondary" onClick={createReport} disabled={!advisorText || advisorText === advisorStarterText}>Create Doma Report</button>
+      </div>
+      {advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio ref={advisorAudioRef} controls autoPlay src={advisorAudioUrl} /></> : null}
+    </section>
+  </>;
 }
 
 function Reports({ reports, clearReports, setActive }) {
-  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">This is where each Occasion becomes memory: what happened, what the Advisor understood, what was recommended, and what can be refined later.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator and create a Doma Report.</div> : reports.map((r) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
+  return <section className="card"><h2>Doma Reports / Refinement Records</h2><p className="small">This is where each Occasion becomes memory: what happened, what the Advisor understood, what was recommended, what the artisan tasted, and how the sensory profile changed.</p>{reports.length === 0 ? <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div> : reports.map((r) => <article className="report" key={r.id}><h3>{r.title}</h3><p className="small">{r.createdAt} • {r.drink} • Served to: {r.guest}</p><p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p><p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p><p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>{r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}{r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}{r.sensoryScores ? <MiniReportCharts scores={r.sensoryScores} /> : null}<details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details><details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details></article>)}<div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div></section>;
 }
+
+
+
+function TastingStudio({ selectedFlavorNotes, toggleFlavor, sensoryScores, updateSensoryScore, tastingNote, setTastingNote, guestResonance, setGuestResonance, setActive, createReport }) {
+  const scoreEntries = Object.entries(sensoryScores);
+  return <section className="tastingPage">
+    <div className="card tastingHero"><p className="eyebrow">Tasting Table / Sensory Development</p><h1>Flavor Wheel + Real-Time Doma Report</h1><p>The artisan can identify what they are tasting, light up the flavor wheel, score sensory dimensions, and watch the report visuals update in real time.</p></div>
+    <div className="tastingGrid">
+      <section className="card"><h2>Interactive Flavor Wheel</h2><FlavorWheel selectedFlavorNotes={selectedFlavorNotes} /><p className="small">Selected notes light up on the wheel. This gives the artisan language for the cup, not just numbers.</p></section>
+      <section className="card"><h2>What are you tasting?</h2>{flavorWheelGroups.map((group) => <div className="flavorGroup" key={group.group}><h3>{group.group}</h3><div className="flavorChips">{group.notes.map((note) => <button type="button" key={note} className={selectedFlavorNotes.includes(note) ? "chip selected" : "chip"} onClick={() => toggleFlavor(note)}>{note}</button>)}</div></div>)}<div className="noteBox"><strong>Selected:</strong> {selectedFlavorNotes.length ? selectedFlavorNotes.join(", ") : "Choose a few tasting notes."}</div></section>
+    </div>
+    <div className="tastingGrid">
+      <section className="card"><h2>Sensory Scores</h2>{scoreEntries.map(([field, value]) => <div className="scoreRow" key={field}><label>{labelize(field)} <strong>{value}</strong></label><input type="range" min="0" max="10" value={value} onChange={(e) => updateSensoryScore(field, e.target.value)} /></div>)}<label className="label">Tasting note / cup reflection</label><textarea value={tastingNote} onChange={(e) => setTastingNote(e.target.value)} placeholder="Speak or type what you tasted: sweetness, body, citrus, cocoa, finish, delight…" /></section>
+      <section className="card"><h2>Real-Time Report Visuals</h2><MiniReportCharts scores={sensoryScores} /><GuestResonanceForm guestResonance={guestResonance} setGuestResonance={setGuestResonance} /><div className="buttonRow"><button className="primary" onClick={createReport}>Create Doma Report with Tasting</button><button className="secondary" onClick={() => setActive("simulator")}>Back to Advisor Session</button><button className="secondary" onClick={() => setActive("reports")}>View Reports</button></div></section>
+    </div>
+  </section>;
+}
+
+
+function GuestResonanceForm({ guestResonance, setGuestResonance }) {
+  function update(field, value) { setGuestResonance((prev) => ({ ...prev, [field]: value })); }
+  return <section className="guestBox"><h3>Guest Resonance Check</h3><p className="small">The Occasion is not complete when the drink is made. It is complete when the drink is received.</p><div className="grid"><div><label className="label">Guest Resonance Score, 1–5</label><input type="range" min="1" max="5" value={guestResonance.score} onChange={(e) => update("score", Number(e.target.value))} /><strong>{guestResonance.score}</strong></div><div><label className="label">Guest reaction</label><select value={guestResonance.reaction} onChange={(e) => update("reaction", e.target.value)}>{["delighted","curious","neutral","confused","overwhelmed","comforted","surprised"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">First thing noticed</label><select value={guestResonance.firstThingNoticed} onChange={(e) => update("firstThingNoticed", e.target.value)}>{["aroma","sweetness","acidity","texture","temperature","visual presentation","story","finish"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Would serve again</label><select value={guestResonance.wouldServeAgain} onChange={(e) => update("wouldServeAgain", e.target.value)}>{["yes","adjust","no"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Next adjustment</label><select value={guestResonance.nextAdjustment} onChange={(e) => update("nextAdjustment", e.target.value)}>{["sweeter","brighter","colder","warmer","stronger","softer","more story","less explanation"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div></div><label className="label">Guest quote or observation</label><textarea value={guestResonance.quote} onChange={(e)=>update("quote", e.target.value)} placeholder="Capture what they said, noticed, or felt." /></section>;
+}
+
+function FlavorWheel({ selectedFlavorNotes }) {
+  const notes = flatFlavorNotes();
+  const cx = 180, cy = 180;
+  const groupRadius = 72;
+  const noteRadius = 132;
+  return <svg viewBox="0 0 360 360" className="flavorWheelSvg" role="img" aria-label="Interactive flavor wheel">
+    <circle cx={cx} cy={cy} r="168" className="wheelOuter" />
+    <circle cx={cx} cy={cy} r="82" className="wheelCenter" />
+    <text x={cx} y={cy - 8} textAnchor="middle" className="wheelTitle">Barista Doma</text>
+    <text x={cx} y={cy + 14} textAnchor="middle" className="wheelSub">Flavor Wheel</text>
+    {flavorWheelGroups.map((g, i) => {
+      const angle = (i / flavorWheelGroups.length) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(angle) * groupRadius;
+      const y = cy + Math.sin(angle) * groupRadius;
+      const active = g.notes.some((n) => selectedFlavorNotes.includes(n));
+      return <g key={g.group}><circle cx={x} cy={y} r="34" className={active ? "wheelGroup active" : "wheelGroup"} /><text x={x} y={y + 4} textAnchor="middle" className="wheelGroupText">{g.group.split(" /")[0]}</text></g>;
+    })}
+    {notes.map((item, i) => {
+      const angle = (i / notes.length) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(angle) * noteRadius;
+      const y = cy + Math.sin(angle) * noteRadius;
+      const active = selectedFlavorNotes.includes(item.note);
+      return <g key={item.note}><circle cx={x} cy={y} r={active ? 16 : 11} className={active ? "wheelNote active" : "wheelNote"} /><text x={x} y={y + 28} textAnchor="middle" className={active ? "wheelNoteText active" : "wheelNoteText"}>{item.note}</text></g>;
+    })}
+  </svg>;
+}
+
+function MiniReportCharts({ scores }) {
+  return <div className="chartStack"><RadarChart scores={scores} /><BarChart scores={scores} /><LineChart scores={scores} /></div>;
+}
+
+function RadarChart({ scores }) {
+  const entries = Object.entries(scores);
+  const cx = 160, cy = 160, maxR = 110;
+  const points = entries.map(([_, value], i) => {
+    const angle = (i / entries.length) * Math.PI * 2 - Math.PI / 2;
+    const r = (Number(value) / 10) * maxR;
+    return [cx + Math.cos(angle) * r, cy + Math.sin(angle) * r];
+  });
+  const grid = [2,4,6,8,10];
+  return <div className="chartCard"><h3>Sensory Spider Chart</h3><svg viewBox="0 0 320 320" className="chartSvg">{grid.map((g) => <circle key={g} cx={cx} cy={cy} r={(g/10)*maxR} className="radarGrid" />)}{entries.map(([label], i) => { const angle = (i / entries.length) * Math.PI * 2 - Math.PI / 2; const x = cx + Math.cos(angle) * 132; const y = cy + Math.sin(angle) * 132; return <g key={label}><line x1={cx} y1={cy} x2={cx + Math.cos(angle)*maxR} y2={cy + Math.sin(angle)*maxR} className="radarAxis" /><text x={x} y={y} textAnchor="middle" className="chartLabel">{labelize(label)}</text></g>; })}<polygon points={points.map((p) => p.join(",")).join(" ")} className="radarShape" />{points.map(([x,y], i) => <circle key={i} cx={x} cy={y} r="5" className="radarDot" />)}</svg></div>;
+}
+
+function BarChart({ scores }) {
+  const entries = Object.entries(scores);
+  return <div className="chartCard"><h3>Sensory Bar Chart</h3><div className="barChart">{entries.map(([label, value]) => <div className="barRow" key={label}><span>{labelize(label)}</span><div className="barTrack"><div className="barFill" style={{ width: `${Number(value)*10}%` }} /></div><strong>{value}</strong></div>)}</div></div>;
+}
+
+function LineChart({ scores }) {
+  const entries = Object.entries(scores);
+  const w = 320, h = 190, pad = 34;
+  const pts = entries.map(([_, value], i) => [pad + i * ((w - pad*2) / Math.max(1, entries.length - 1)), h - pad - (Number(value)/10)*(h-pad*2)]);
+  return <div className="chartCard"><h3>Cup Profile Line</h3><svg viewBox={`0 0 ${w} ${h}`} className="lineSvg"><line x1={pad} y1={h-pad} x2={w-pad} y2={h-pad} className="chartAxis" /><line x1={pad} y1={pad} x2={pad} y2={h-pad} className="chartAxis" /><polyline points={pts.map((p) => p.join(",")).join(" ")} className="linePath" />{pts.map(([x,y], i) => <g key={entries[i][0]}><circle cx={x} cy={y} r="5" className="lineDot" /><text x={x} y={h-9} textAnchor="middle" className="tinyLabel">{labelize(entries[i][0]).slice(0,4)}</text></g>)}</svg></div>;
+}
+
+function labelize(value) { return String(value).replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase()); }
 
 function Matrix({ setActive, setTranscript, updateOccasion }) {
   const [query, setQuery] = useState("");
@@ -773,7 +1165,7 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
       <div className="matrixHeader"><div><h1>When the machine speaks, the Advisor helps interpret.</h1><p>This is the searchable What Went Wrong Matrix: a practical recovery knowledge base for real coffee occasions. Search an issue, open the Moment Recovery Engine, read guidance aloud, or send the issue back into the current Advisor Session.</p></div><button className="primary" onClick={() => setActive("occasion")}>Return to Occasion</button></div>
     </div>
     <section className="card recoveryControls"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search: sour, milk, choking, grinder, water, puck…" /><select value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select><p className="small"><strong>{filtered.length}</strong> issues shown. This library should keep expanding as the Barista Doma knowledge base grows.</p></section>
-    <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button><button className="secondary" onClick={() => readText(recoveryText(item))} disabled={readBusy}>Read recovery</button><button className="secondary" onClick={() => readText(fixText(item))} disabled={readBusy}>Read fix steps</button></div></article>)}</div>
+    <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button></div></article>)}</div>
     {readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null}
     {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
   </section>;

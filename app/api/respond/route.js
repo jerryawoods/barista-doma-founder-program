@@ -30,7 +30,7 @@ const recoveryMatrix = [
     label: "Choked or stalled shot / high resistance",
     type: "technical",
     priority: 95,
-    keywords: ["choked", "stalled", "barely dripping", "slow shot", "too slow", "no flow", "blocked", "over pressure", "high pressure"],
+    keywords: ["choked", "stalled", "barely dripping", "slow shot", "too slow", "no flow", "blocked", "over pressure", "high pressure", "few drops", "only drops", "only drips", "drips", "drops", "nothing coming", "nothing came", "nothing else", "bottom of the cup", "no coffee", "almost nothing", "puck too tight", "grind too tight", "too tight"],
     diagnosis: "The puck is offering too much resistance, often from too fine a grind, too much coffee, or overly compact puck preparation.",
     oneNextMove: "Keep the dose steady and move the grind one step coarser before changing anything else.",
     guardrail: "Do not recommend finer grind for a choked shot. Reduce resistance through one measured adjustment."
@@ -125,10 +125,24 @@ function trimSignal(item) {
 function selectMatrixSignals(text, allowMatrix = true) {
   if (!allowMatrix) return { primary: null, secondary: null, all: [], applied: false };
 
-  const scored = recoveryMatrix
+  const lower = String(text || "").toLowerCase();
+  const chokeOverride = /(few drops|only drops|only drips|barely dripp|nothing coming|nothing came|nothing else|no coffee|no flow|almost nothing|bottom of the cup|puck.*tight|grind.*tight|too tight|choked|stalled)/i.test(lower);
+  const fastOverride = /(ran fast|runs too fast|too fast|gushing|gusher|finished quickly|quick shot|fast shot|low resistance)/i.test(lower) && !chokeOverride;
+
+  let scored = recoveryMatrix
     .map((item) => ({ ...item, score: scoreMatrixItem(text, item) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => (b.score * b.priority) - (a.score * a.priority));
+
+  if (chokeOverride) {
+    const choke = recoveryMatrix.find((item) => item.id === "choked-shot-high-resistance");
+    const rest = scored.filter((item) => item.id !== choke.id);
+    scored = [{ ...choke, score: Math.max(4, scoreMatrixItem(text, choke)) }, ...rest];
+  } else if (fastOverride) {
+    const fast = recoveryMatrix.find((item) => item.id === "fast-shot-low-resistance");
+    const rest = scored.filter((item) => item.id !== fast.id);
+    scored = [{ ...fast, score: Math.max(3, scoreMatrixItem(text, fast)) }, ...rest];
+  }
 
   if (!scored.length) return { primary: null, secondary: null, all: [], applied: false };
 
@@ -236,7 +250,7 @@ Core doctrine:
 
 Strict technical guardrails:
 - Fast shot / low resistance: keep dose steady and grind one step finer. Do not recommend coarser grind for a fast shot.
-- Choked or stalled shot / high resistance: keep dose steady and grind one step coarser.
+- Choked, stalled, no-flow, or only-a-few-drops shot / high resistance: keep dose steady and grind one step coarser. If the artisan says only a few drops, barely dripping, nothing coming out, or no flow, classify it as choking/high resistance, not fast shot.
 - Guest/time pressure: do not recommend a full reset. Preserve the occasion through one stabilizing move.
 - The One Next Move section must contain one main action only.
 
@@ -383,8 +397,8 @@ export async function POST(request) {
       body: JSON.stringify({
         model: process.env.OPENAI_TEXT_MODEL || "gpt-4.1-mini",
         input: prompt,
-        temperature: 0.25,
-        max_output_tokens: 900
+        temperature: 0.18,
+        max_output_tokens: 520
       })
     });
 

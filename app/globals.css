@@ -111,3 +111,89 @@ hr { border:0; border-top:1px solid #3f314d; margin:22px 0; }
 .scriptFull { white-space: pre-wrap; background:#100c09; border:1px solid #4a372b; border-radius:14px; padding:16px; color:#fff3e7; line-height:1.5; max-height:420px; overflow:auto; }
 @media (max-width: 1150px) { .occasionGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .occasionGrid, .twoColumn { grid-template-columns: 1fr; } .occasionCard { min-height: auto; } }
+
+/* v7.7 restored tasting table, flavor wheel, and real-time report visuals */
+.tastingHero { background: linear-gradient(135deg, #2c1b10, #17101d); border-color:#795a3d; }
+.tastingGrid { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:start; }
+.flavorWheelSvg { width:100%; max-width: 520px; display:block; margin: 0 auto; background:#110c16; border:1px solid #4b3859; border-radius: 22px; padding: 10px; }
+.wheelOuter { fill:#17101d; stroke:#5b416c; stroke-width:2; }
+.wheelCenter { fill:#24182b; stroke:#d6b48c; stroke-width:2; }
+.wheelTitle { fill:#f7efe6; font-size: 16px; font-weight: 800; }
+.wheelSub { fill:#d6b48c; font-size: 12px; letter-spacing:.06em; }
+.wheelGroup { fill:#2b2033; stroke:#6d557b; stroke-width:1.5; }
+.wheelGroup.active { fill:#6a3f22; stroke:#f0c987; stroke-width:3; }
+.wheelGroupText { fill:#f7efe6; font-size: 9px; font-weight: 700; }
+.wheelNote { fill:#3d3028; stroke:#8a674a; stroke-width:1; }
+.wheelNote.active { fill:#f0c987; stroke:#fff3cf; stroke-width:3; filter: drop-shadow(0 0 8px rgba(240,201,135,.6)); }
+.wheelNoteText { fill:#cdbbd7; font-size: 8px; }
+.wheelNoteText.active { fill:#fff3cf; font-size: 9px; font-weight: 800; }
+.flavorGroup { border:1px solid #3f314d; background:#110c16; border-radius:14px; padding:12px; margin:10px 0; }
+.flavorGroup h3 { margin:0 0 8px; color:#e7c37a; }
+.flavorChips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { border:1px solid #6c5343; background:#251a15; color:#f7efe6; border-radius:999px; padding:9px 12px; margin:0; font-size:13px; }
+.chip.selected { background:#f0c987; color:#21160f; border-color:#f0c987; }
+.scoreRow { margin:14px 0; }
+.scoreRow label { display:flex; justify-content:space-between; color:#d6b48c; font-weight:800; margin-bottom:6px; }
+.scoreRow input[type=range] { padding:0; min-height: auto; accent-color:#f0c987; }
+.chartStack { display:grid; gap:14px; }
+.chartCard { background:#110c16; border:1px solid #3f314d; border-radius:16px; padding:14px; overflow:hidden; }
+.chartCard h3 { margin-top:0; color:#e7c37a; }
+.chartSvg, .lineSvg { width:100%; display:block; background:#0f0a13; border-radius:14px; }
+.radarGrid { fill:none; stroke:#3f314d; stroke-width:1; }
+.radarAxis, .chartAxis { stroke:#5b416c; stroke-width:1; }
+.radarShape { fill: rgba(240,201,135,.25); stroke:#f0c987; stroke-width:3; }
+.radarDot, .lineDot { fill:#f0c987; stroke:#fff3cf; stroke-width:2; }
+.chartLabel, .tinyLabel { fill:#cdbbd7; font-size:10px; }
+.barChart { display:grid; gap:10px; }
+.barRow { display:grid; grid-template-columns: 86px 1fr 28px; gap:10px; align-items:center; font-size:13px; }
+.barRow span { color:#cdbbd7; }
+.barTrack { height:14px; background:#24182b; border:1px solid #4b3859; border-radius:999px; overflow:hidden; }
+.barFill { height:100%; background:#f0c987; border-radius:999px; }
+.linePath { fill:none; stroke:#f0c987; stroke-width:3; }
+@media(max-width:900px){ .tastingGrid { grid-template-columns:1fr; } }
+
+/* v7.7 restored tasting table, flavor wheel, and real-time report visuals */
+.tastingHero { background: linear-gradient(135deg, #2c1b10, #17101d); border-color:#795a3d; }
+.tastingGrid { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:start; }
+.flavorWheelSvg { width:100%; max-width: 520px; display:block; margin: 0 auto; background:#110c16; border:1px solid #4b3859; border-radius: 22px; padding: 10px; }
+.wheelOuter { fill:#17101d; stroke:#5b416c; stroke-width:2; }
+.wheelCenter { fill:#24182b; stroke:#d6b48c; stroke-width:2; }
+.wheelTitle { fill:#f7efe6; font-size: 16px; font-weight: 800; }
+.wheelSub { fill:#d6b48c; font-size: 12px; letter-spacing:.06em; }
+.wheelGroup { fill:#2b2033; stroke:#6d557b; stroke-width:1.5; }
+.wheelGroup.active { fill:#6a3f22; stroke:#f0c987; stroke-width:3; }
+.wheelGroupText { fill:#f7efe6; font-size: 9px; font-weight: 700; }
+.wheelNote { fill:#3d3028; stroke:#8a674a; stroke-width:1; }
+.wheelNote.active { fill:#f0c987; stroke:#fff3cf; stroke-width:3; filter: drop-shadow(0 0 8px rgba(240,201,135,.6)); }
+.wheelNoteText { fill:#cdbbd7; font-size: 8px; }
+.wheelNoteText.active { fill:#fff3cf; font-size: 9px; font-weight: 800; }
+.flavorGroup { border:1px solid #3f314d; background:#110c16; border-radius:14px; padding:12px; margin:10px 0; }
+.flavorGroup h3 { margin:0 0 8px; color:#e7c37a; }
+.flavorChips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { border:1px solid #6c5343; background:#251a15; color:#f7efe6; border-radius:999px; padding:9px 12px; margin:0; font-size:13px; }
+.chip.selected { background:#f0c987; color:#21160f; border-color:#f0c987; }
+.scoreRow { margin:14px 0; }
+.scoreRow label { display:flex; justify-content:space-between; color:#d6b48c; font-weight:800; margin-bottom:6px; }
+.scoreRow input[type=range] { padding:0; min-height: auto; accent-color:#f0c987; }
+.chartStack { display:grid; gap:14px; }
+.chartCard { background:#110c16; border:1px solid #3f314d; border-radius:16px; padding:14px; overflow:hidden; }
+.chartCard h3 { margin-top:0; color:#e7c37a; }
+.chartSvg, .lineSvg { width:100%; display:block; background:#0f0a13; border-radius:14px; }
+.radarGrid { fill:none; stroke:#3f314d; stroke-width:1; }
+.radarAxis, .chartAxis { stroke:#5b416c; stroke-width:1; }
+.radarShape { fill: rgba(240,201,135,.25); stroke:#f0c987; stroke-width:3; }
+.radarDot, .lineDot { fill:#f0c987; stroke:#fff3cf; stroke-width:2; }
+.chartLabel, .tinyLabel { fill:#cdbbd7; font-size:10px; }
+.barChart { display:grid; gap:10px; }
+.barRow { display:grid; grid-template-columns: 86px 1fr 28px; gap:10px; align-items:center; font-size:13px; }
+.barRow span { color:#cdbbd7; }
+.barTrack { height:14px; background:#24182b; border:1px solid #4b3859; border-radius:999px; overflow:hidden; }
+.barFill { height:100%; background:#f0c987; border-radius:999px; }
+.linePath { fill:none; stroke:#f0c987; stroke-width:3; }
+@media(max-width:900px){ .tastingGrid { grid-template-columns:1fr; } }
+
+/* v7.8 Occasion Performance additions */
+.tempoBox,.guestBox{border:1px solid rgba(173,137,85,.35);background:rgba(255,250,240,.72);border-radius:18px;padding:16px;margin-top:14px}
+.timerFace{font-size:38px;font-weight:800;letter-spacing:.08em;margin-top:12px;padding:14px;border-radius:16px;background:#1e1712;color:#fff;text-align:center;max-width:180px}
+.guestBox h3{margin-top:0}
+.guestBox select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(66,44,28,.25);background:#fff}
