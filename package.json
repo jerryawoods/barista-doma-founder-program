@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-occasion-simulator-v85-step-engine",
-  "version": "1.0.0",
+  "name": "barista-doma-home-barista-occasion-simulator-v861-step-read-aloud",
+  "version": "8.6.1",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -3593,6 +3593,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [timerVisible, setTimerVisible] = useState(true);
   const [stepStart, setStepStart] = useState(null);
   const [elapsed, setElapsed] = useState(0);
+  const [stepReadBusy, setStepReadBusy] = useState(false);
+  const [stepAudioUrl, setStepAudioUrl] = useState("");
+  const stepAudioRef = useRef(null);
   const stepPanelRef = useRef(null);
 
   useEffect(() => {
@@ -3619,6 +3622,56 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   function startStep() {
     setStepStart(Date.now());
     setElapsed(0);
+  }
+
+  function buildStepReadText(step = current) {
+    return [
+      `Barista Doma Occasion: ${occasionItem.name}.`,
+      `Step ${safeIndex + 1} of ${steps.length}: ${step?.title || "Stagecraft step"}.`,
+      step?.suggestedTempo ? `Suggested tempo: ${step.suggestedTempo}.` : "",
+      step?.action ? `Action: ${step.action}` : "",
+      step?.why ? `Why this matters: ${step.why}` : "",
+      step?.watch ? `What to watch: ${step.watch}` : "",
+      step?.advisor ? `Advisor guidance: ${step.advisor}` : "",
+      step?.script ? `Artisan stagecraft script: ${step.script}` : ""
+    ].filter(Boolean).join("\n");
+  }
+
+  async function readCurrentStep() {
+    setStepReadBusy(true);
+    setStepAudioUrl("");
+    try {
+      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: buildStepReadText(current), voice: "sage" }) });
+      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data?.error || data?.detail || `Step read-aloud failed with HTTP ${response.status}`); }
+      const blob = await response.blob();
+      setStepAudioUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      alert(err.message || String(err));
+    } finally {
+      setStepReadBusy(false);
+    }
+  }
+
+  async function readFullOccasionScript() {
+    setStepReadBusy(true);
+    setStepAudioUrl("");
+    try {
+      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: `Full Barista Doma stagecraft script for ${occasionItem.name}.\n\n${scriptText}`, voice: "sage" }) });
+      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data?.error || data?.detail || `Script read-aloud failed with HTTP ${response.status}`); }
+      const blob = await response.blob();
+      setStepAudioUrl(URL.createObjectURL(blob));
+    } catch (err) {
+      alert(err.message || String(err));
+    } finally {
+      setStepReadBusy(false);
+    }
+  }
+
+  function stopStepReading() {
+    if (stepAudioRef.current) {
+      stepAudioRef.current.pause();
+      stepAudioRef.current.currentTime = 0;
+    }
   }
 
   function completeStep() {
@@ -3652,10 +3705,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
-      <div className="buttonRow"><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
+      <div className="buttonRow"><button className="secondary" onClick={readCurrentStep} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Current Step"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{stepAudioUrl ? <div className="noteBox"><strong>Step Read-Aloud Playback</strong><audio ref={stepAudioRef} controls autoPlay src={stepAudioUrl} /></div> : null}{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
     </section>
     <section className="card"><h2>Occasion Tempo Snapshot</h2><p><strong>Suggested total tempo:</strong> {occasionItem.suggestedTempo || occasionItem.time}</p><p><strong>Total actual time captured:</strong> {formatSeconds(timingMetrics.totalActualSeconds)}</p><p><strong>Personal best:</strong> Founder Benchmarks placeholder. Future anonymous cohort averages will compare Suggested Tempo, Your Actual Tempo, Personal Best, Founder Cohort Average, and Community Average later.</p><p className="small">Founder Benchmarks are not speed-only leaderboards. Future opt-in leaderboards should reward tempo quality, improvement, stagecraft, Guest Resonance, and calm readiness.</p></section>
-    <section className="card"><h2>Full Occasion Stagecraft Script</h2><p className="small">The machine performs the extraction. The artisan performs the Occasion.</p><pre className="scriptFull">{scriptText}</pre><div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Back to 21 Occasions</button><button className="secondary" onClick={() => setActive("tasting")}>Tasting / Flavor Wheel</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div></section>
+    <section className="card"><h2>Full Occasion Stagecraft Script</h2><p className="small">The machine performs the extraction. The artisan performs the Occasion.</p><pre className="scriptFull">{scriptText}</pre><div className="buttonRow"><button className="secondary" onClick={readFullOccasionScript} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Full Occasion Script"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" onClick={() => setActive("occasions")}>Back to 21 Occasions</button><button className="secondary" onClick={() => setActive("tasting")}>Tasting / Flavor Wheel</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div></section>
   </section>;
 }
 
