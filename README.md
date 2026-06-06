@@ -1,9 +1,10 @@
-# Barista Doma v8.4 — Occasion Walkthrough Routing Hard Fix
+# Barista Doma Home Barista Occasion Simulator v8.5
 
-This patch makes the selected Occasion walkthrough explicit and persistent.
+Patch focus: real step-by-step Occasion walkthrough engine.
 
-- Uses a dedicated walkthroughOccasionId separate from general Occasion setup.
-- Opening an Occasion immediately sets selectedOccasionId and walkthroughOccasionId.
-- Removes the previous occasion-name sync behavior that could overwrite the selected walkthrough.
-- Adds a visible Active walkthrough confirmation on the walkthrough page.
-- Preserves voice, Advisor, Recovery Matrix, Tasting Studio, Doma Reports, charts, print, CSV, Guest Resonance, and Occasion Tempo.
+- Preserves v8.4 routing and locked Occasion selection.
+- Adds visible Step X of Y progress controls.
+- Adds numbered step jump buttons.
+- Complete Step now saves timing and advances to the next step.
+- Final step routes to Tasting Studio for report capture.
+- Timer hidden still captures step duration.

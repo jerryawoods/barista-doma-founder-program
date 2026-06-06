@@ -1088,22 +1088,50 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccas
 
 function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport, stepTimings, setStepTimings, occasionStartTime }) {
   const steps = occasionItem.steps || [];
-  const current = steps[currentStepIndex] || steps[0];
+  const safeIndex = Math.min(Math.max(Number(currentStepIndex) || 0, 0), Math.max(steps.length - 1, 0));
+  const current = steps[safeIndex] || steps[0];
   const [timerVisible, setTimerVisible] = useState(true);
   const [stepStart, setStepStart] = useState(null);
   const [elapsed, setElapsed] = useState(0);
+  const stepPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (safeIndex !== currentStepIndex) setCurrentStepIndex(safeIndex);
+  }, [safeIndex, currentStepIndex, setCurrentStepIndex]);
+
+  useEffect(() => {
+    setStepStart(null);
+    setElapsed(0);
+    if (stepPanelRef.current) stepPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [safeIndex, occasionItem?.id]);
+
   useEffect(() => {
     if (!stepStart) return;
     const id = setInterval(() => setElapsed(Math.max(0, Math.round((Date.now() - stepStart) / 1000))), 1000);
     return () => clearInterval(id);
   }, [stepStart]);
-  function startStep() { setStepStart(Date.now()); setElapsed(0); }
-  function completeStep() {
-    const actualSeconds = stepStart ? Math.max(1, Math.round((Date.now() - stepStart) / 1000)) : (stepTimings[currentStepIndex]?.actualSeconds || 0);
-    setStepTimings((prev) => ({ ...prev, [currentStepIndex]: { step: current?.title, suggestedTempo: current?.suggestedTempo || "60–90 sec", actualSeconds, completedAt: new Date().toISOString() } }));
-    setStepStart(null);
-    if (currentStepIndex < steps.length - 1) setCurrentStepIndex(currentStepIndex + 1);
+
+  function goToStep(index) {
+    const next = Math.min(Math.max(index, 0), Math.max(steps.length - 1, 0));
+    setCurrentStepIndex(next);
   }
+
+  function startStep() {
+    setStepStart(Date.now());
+    setElapsed(0);
+  }
+
+  function completeStep() {
+    const actualSeconds = stepStart ? Math.max(1, Math.round((Date.now() - stepStart) / 1000)) : (stepTimings[safeIndex]?.actualSeconds || Math.max(1, elapsed || 1));
+    setStepTimings((prev) => ({ ...prev, [safeIndex]: { step: current?.title, suggestedTempo: current?.suggestedTempo || "60–90 sec", actualSeconds, completedAt: new Date().toISOString() } }));
+    setStepStart(null);
+    if (safeIndex < steps.length - 1) {
+      setCurrentStepIndex(safeIndex + 1);
+    } else {
+      setActive("tasting");
+    }
+  }
+
   const scriptText = steps.map((step, idx) => `${idx + 1}. ${step.title}\nAdvisor: ${step.advisor}\nArtisan Script: ${step.script}`).join("\n\n");
   const timingMetrics = buildTimingMetrics(occasionItem, stepTimings, occasionStartTime);
   return <section className="walkthroughPage">
@@ -1116,14 +1144,15 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <div className="noteBox"><strong>Preparation begins with Mise en Place.</strong> The goal is not speed. The goal is calm, repeatable readiness.</div>
     </section>
     <section className="card"><h2>Preparation</h2><div className="grid"><div className="noteBox"><strong>Home Coffee Mise en Place</strong><ul><li>Ingredients</li><li>Tools</li><li>Cup / glass / vessel</li><li>Garnish or sensory accent</li><li>Machine readiness</li><li>Counter / staging area</li><li>Serving path</li><li>Script readiness</li></ul></div><div className="noteBox"><strong>Readiness flow</strong><ul><li>Machine readiness</li><li>Drink build / method readiness</li><li>Service readiness</li><li>First Sip Direction</li><li>Guest Resonance Check</li></ul></div></div></section>
-    <section className="card stepCard">
-      <p className="eyebrow">Step {currentStepIndex + 1} of {steps.length}</p>
+    <section className="card stepCard" ref={stepPanelRef}>
+      <div className="stepProgress"><strong>Step {safeIndex + 1} of {steps.length}</strong><div className="stepDots">{steps.map((step, idx) => <button key={step.title + idx} className={idx === safeIndex ? "stepDot active" : stepTimings[idx] ? "stepDot done" : "stepDot"} onClick={() => goToStep(idx)} aria-label={`Go to step ${idx + 1}: ${step.title}`}>{idx + 1}</button>)}</div></div>
+      <p className="eyebrow">Active stagecraft step</p>
       <h2>{current?.title}</h2>
       <p><strong>Suggested tempo:</strong> {current?.suggestedTempo || "60–90 sec"}</p>
       <p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
-      <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>Complete Step</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[currentStepIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[currentStepIndex].actualSeconds)}</p> : null}</div>
-      <div className="buttonRow"><button className="secondary" onClick={() => setCurrentStepIndex(Math.max(0, currentStepIndex - 1))}>Previous</button><button className="secondary" onClick={() => setCurrentStepIndex(Math.min(steps.length - 1, currentStepIndex + 1))}>Next</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>
+      <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
+      <div className="buttonRow"><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
     </section>
     <section className="card"><h2>Occasion Tempo Snapshot</h2><p><strong>Suggested total tempo:</strong> {occasionItem.suggestedTempo || occasionItem.time}</p><p><strong>Total actual time captured:</strong> {formatSeconds(timingMetrics.totalActualSeconds)}</p><p><strong>Personal best:</strong> Founder Benchmarks placeholder. Future anonymous cohort averages will compare Suggested Tempo, Your Actual Tempo, Personal Best, Founder Cohort Average, and Community Average later.</p><p className="small">Founder Benchmarks are not speed-only leaderboards. Future opt-in leaderboards should reward tempo quality, improvement, stagecraft, Guest Resonance, and calm readiness.</p></section>
     <section className="card"><h2>Full Occasion Stagecraft Script</h2><p className="small">The machine performs the extraction. The artisan performs the Occasion.</p><pre className="scriptFull">{scriptText}</pre><div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Back to 21 Occasions</button><button className="secondary" onClick={() => setActive("tasting")}>Tasting / Flavor Wheel</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div></section>
