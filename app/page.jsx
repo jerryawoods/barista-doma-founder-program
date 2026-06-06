@@ -66,543 +66,3043 @@ function reportTrendSummary(previous, currentScores, guestResonance) {
 
 const founderOccasions = [
   {
-    id: "first-cup-diagnostic",
-    name: "The First Cup Diagnostic",
-    tag: "Orientation",
-    purpose: "Establish the artisan's baseline and begin reading the machine as an instrument.",
-    drink: "Espresso",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec target",
-    grindVessel: "medium-fine · demitasse",
-    desiredFeeling: "clear, calm, observant, confident",
-    artisanOpening: "This first cup is not about perfection. I am learning how this machine speaks today, and I am going to listen carefully.",
-    reportPrompt: "What did the first cup reveal about flow, taste, rhythm, and confidence?",
-    steps: [
-      { title: "Name the intention", advisor: "Begin by stating that this is a diagnostic cup, not a performance test. Your job is to observe without panic.", script: "I am starting with a clear baseline so I can understand the machine before I try to impress it." },
-      { title: "Prepare the counter", advisor: "Clear the immediate workspace. Put cup, towel, scale, beans, tamper, and milk pitcher where your hands can move calmly.", script: "The counter is set. I am giving the cup a clean place to begin." },
-      { title: "Warm the machine and cup", advisor: "Confirm the machine is ready, purge briefly, and warm the vessel. A cold start can distort the cup.", script: "I am warming the cup so the coffee lands in a ready vessel." },
-      { title: "Dose with discipline", advisor: "Use the house dose. Do not improvise yet. A stable dose lets the Advisor understand what changed.", script: "I am keeping the dose steady so I can learn from one variable at a time." },
-      { title: "Prepare the puck", advisor: "Distribute evenly, tamp level, and check the rim. Puck preparation is the first act of stagecraft.", script: "I am preparing the coffee bed carefully so the water can move with intention." },
-      { title: "Pull and observe", advisor: "Watch first drops, flow color, speed, and body. Record what happened without judging yourself.", script: "I am watching the flow and letting the machine show me where we are." },
-      { title: "Taste for direction", advisor: "Taste for sour, bitter, thin, balanced, or pleasant. Do not chase every note; identify the next useful direction.", script: "This taste is information. I am not failing; I am learning the path." },
-      { title: "Use Recovery if needed", advisor: "If the cup chokes, runs fast, tastes sour, or feels thin, open the Recovery Library before guessing.", script: "If something goes wrong, I will recover with one clear move rather than panic." },
-      { title: "Capture the Doma Report", advisor: "Speak a quick note: dose, yield, time, taste, feeling, and one next move.", script: "I am saving what this cup taught me so the next cup can become more confident." }
+    "id": "first-cup-diagnostic",
+    "name": "The First Cup Diagnostic",
+    "family": "Core Occasions",
+    "tag": "Orientation",
+    "purpose": "Establish the machine, grinder, dose, yield, taste, and confidence baseline before performing for others.",
+    "drink": "Espresso baseline",
+    "drinkChoices": "Espresso; Americano if tasting dilution is needed; small cappuccino if milk performance is being tested",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec target",
+    "ratioGuidance": "Espresso baseline is roughly 1:2 dose-to-yield. Keep dose and yield stable so one variable can be read at a time.",
+    "grindVessel": "Medium-fine espresso grind \u00b7 demitasse or clear shot glass",
+    "suggestedTempo": "7\u201310 minutes",
+    "desiredFeeling": "clear, calm, observant, confident",
+    "artisanOpening": "This first cup is not about perfection. I am learning how this machine speaks today, and I am going to listen carefully.",
+    "firstSipDirection": "Sip once while warm and name the first impression before adding milk or sugar.",
+    "guestResonancePrompt": "What did the machine reveal first: flow, taste, aroma, texture, or confidence?",
+    "advisorDirection": "Advisor should act like a diagnostic coach: slow the artisan down, protect one-variable discipline, and translate observations into one next move.",
+    "recoveryWatchouts": "fast shot, choking/no-flow, sour, bitter, thin body, channeling, messy puck",
+    "reportPrompt": "What did the first cup reveal about flow, taste, rhythm, and confidence?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: espresso beans, filtered water, optional milk only if testing milk performance",
+        "Tools: scale, timer, tamper, towel, distribution tool, knock box",
+        "Cup/glass/vessel: demitasse or clear shot glass",
+        "Garnish or sensory accent: none; keep the diagnostic clean",
+        "Machine readiness: fully warm machine, purge group, dry basket, confirmed grinder setting",
+        "Counter/staging area: empty counter with only diagnostic tools",
+        "Serving path: cup placed where flow can be watched",
+        "Script readiness: say the diagnostic intention before pulling"
+      ],
+      "machineReadiness": [
+        "fully warm machine, purge group, dry basket, confirmed grinder setting",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "espresso beans, filtered water, optional milk only if testing milk performance",
+        "scale, timer, tamper, towel, distribution tool, knock box",
+        "demitasse or clear shot glass",
+        "none; keep the diagnostic clean"
+      ],
+      "serviceReadiness": [
+        "empty counter with only diagnostic tools",
+        "cup placed where flow can be watched",
+        "say the diagnostic intention before pulling"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the diagnostic intention",
+        "suggestedTempo": "30 sec",
+        "action": "Say aloud that this is a baseline cup. Do not evaluate yourself; evaluate the machine/cup relationship.",
+        "why": "It lowers pressure and prevents random changes.",
+        "watch": "Avoid changing grind, dose, and yield all at once.",
+        "advisor": "Start from the house formula and read what the machine gives you today.",
+        "script": "I am starting with a clear baseline so I can understand the machine before I try to impress it."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage beans, water, scale, towel, tamper, cup, and knock box within reach. Remove anything not needed.",
+        "why": "A clean station lets the artisan see the cup, not the clutter.",
+        "watch": "Missing scale/towel causes rushed movement mid-shot.",
+        "advisor": "Preparation begins with Mise en Place; the diagnostic starts before grinding.",
+        "script": "The counter is set. I am giving the cup a clean place to begin."
+      },
+      {
+        "title": "Confirm Machine Passport context",
+        "suggestedTempo": "60 sec",
+        "action": "Check machine, grinder, basket, dose, yield, and shot time target in the form.",
+        "why": "The Advisor needs these fields to avoid generic advice.",
+        "watch": "Do not start if machine or dose/yield are blank.",
+        "advisor": "If the form is incomplete, complete it before asking for guidance.",
+        "script": "I am giving the Advisor the machine context before I ask it to interpret the cup."
+      },
+      {
+        "title": "Dose and prepare puck",
+        "suggestedTempo": "90 sec",
+        "action": "Weigh the dose, distribute evenly, tamp level, wipe rim, and lock in.",
+        "why": "Puck prep is the first physical performance of the cup.",
+        "watch": "Uneven distribution can mimic grind problems.",
+        "advisor": "Keep dose steady so the next recommendation is trustworthy.",
+        "script": "I am keeping the dose steady so I can learn from one variable at a time."
+      },
+      {
+        "title": "Pull and observe flow",
+        "suggestedTempo": "45 sec",
+        "action": "Start the shot, watch first drops, flow speed, color, body, and total time.",
+        "why": "Flow is the machine speaking before the taste confirms it.",
+        "watch": "Few drops means choking; gushing means low resistance.",
+        "advisor": "Observe before diagnosing. Use actual words: few drops, fast, spraying, blonding.",
+        "script": "I am watching the flow and letting the machine show me where we are."
+      },
+      {
+        "title": "Taste for direction",
+        "suggestedTempo": "60 sec",
+        "action": "Taste and choose first impression: sour, bitter, thin, balanced, harsh, sweet, flat.",
+        "why": "Taste tells the Advisor whether the number problem matters in the cup.",
+        "watch": "Do not invent flavor notes; name what is obvious.",
+        "advisor": "One honest sensory word is more useful than a long guess.",
+        "script": "This taste is information. I am not failing; I am learning the path."
+      },
+      {
+        "title": "Use Recovery Matrix if needed",
+        "suggestedTempo": "60 sec",
+        "action": "If the cup chokes, runs fast, tastes sour, or feels thin, type the issue in natural language or select a Matrix issue.",
+        "why": "The Matrix grounds the Advisor in known recovery paths.",
+        "watch": "Do not accept opposite guidance; correct the Advisor if needed.",
+        "advisor": "Few drops/no flow = reduce resistance; fast/gushing = increase resistance.",
+        "script": "If something goes wrong, I will recover with one clear move rather than panic."
+      },
+      {
+        "title": "Capture diagnostic Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Save machine, grinder, beans, dose, yield, time, taste, confidence, and one next move.",
+        "why": "This becomes the first entry in the second coffee brain.",
+        "watch": "Do not skip the report; the next cup needs memory.",
+        "advisor": "Reports turn practice into progress.",
+        "script": "I am saving what this cup taught me so the next cup can become more confident."
+      }
     ]
   },
   {
-    id: "quiet-table",
-    name: "The Quiet Table",
-    tag: "Soft connection",
-    purpose: "Serve a calm, low-noise coffee moment for a person who needs quiet presence more than performance.",
-    drink: "Cappuccino",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · warm ceramic cup",
-    desiredFeeling: "soft, steady, gentle, cared for",
-    artisanOpening: "I made this one quietly, just to create a little room for you to settle.",
-    reportPrompt: "Did the cup lower the room's noise and create a softer moment?",
-    steps: [
-      { title: "Read the room", advisor: "Notice whether the person wants conversation or quiet. Do not over-explain the coffee.", script: "No rush. This is just a quiet cup for a quiet moment." },
-      { title: "Soften the setup", advisor: "Reduce clatter. Set tools down gently. The sound of preparation is part of the occasion.", script: "I am keeping the counter calm so the cup feels peaceful before it is served." },
-      { title: "Choose a comforting drink", advisor: "A cappuccino or milk drink can carry warmth without demanding analysis.", script: "I chose something soft and warm rather than something that asks for attention." },
-      { title: "Confirm the house formula", advisor: "Use the familiar recipe. This is not the moment for experimentation.", script: "I am keeping the recipe familiar so the moment can stay easy." },
-      { title: "Pull with steady pace", advisor: "Watch the shot, but do not let the machine pull your emotional rhythm faster than the room.", script: "The coffee can take its time. So can we." },
-      { title: "Texture the milk softly", advisor: "Aim for glossy, quiet milk texture. Avoid large bubbles and harsh steaming sounds where possible.", script: "I am giving this cup a softer texture for a softer moment." },
-      { title: "Present without performance", advisor: "Serve simply. Let the cup be an offering, not a demonstration.", script: "Here you go. Just something warm to sit with for a minute." },
-      { title: "Recover quietly", advisor: "If the shot is imperfect, do not announce failure. Use the Recovery Library only if the issue would harm the moment.", script: "If I need to adjust, I will do it calmly and keep the room steady." },
-      { title: "Report the felt outcome", advisor: "Capture whether the moment felt calmer, not only whether the extraction was ideal.", script: "I am remembering whether this cup brought peace, not just whether it hit numbers." }
+    "id": "quiet-table",
+    "name": "The Quiet Table",
+    "family": "Core Occasions",
+    "tag": "Soft connection",
+    "purpose": "Serve a calm low-noise coffee moment for someone who needs presence more than performance.",
+    "drink": "Cappuccino or cortado",
+    "drinkChoices": "Cappuccino; cortado; brewed coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Cappuccino can be explained as roughly 1:1:1 espresso, steamed milk, and foam; cortado is closer to equal espresso and warm milk.",
+    "grindVessel": "warm ceramic cup",
+    "suggestedTempo": "8\u201311 minutes",
+    "desiredFeeling": "soft, steady, gentle, cared for",
+    "artisanOpening": "I made this one quietly, just to create a little room for you to settle.",
+    "firstSipDirection": "Ask the guest to notice warmth and texture before analyzing flavor.",
+    "guestResonancePrompt": "Did the guest feel comforted, settled, or less rushed?",
+    "advisorDirection": "Advisor should protect quietness: fewer words, softer recovery, no technical lecture unless asked.",
+    "recoveryWatchouts": "milk too foamy, rushed tempo, bitter cup, guest overwhelmed",
+    "reportPrompt": "Did the cup lower the room noise and create a softer moment?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: espresso beans, milk or alt milk, filtered water",
+        "Tools: scale, timer, tamper, milk pitcher, towel",
+        "Cup/glass/vessel: warm ceramic cappuccino/cortado cup",
+        "Garnish or sensory accent: optional cocoa dusting only if familiar",
+        "Machine readiness: warm group, purge steam wand, pitcher ready",
+        "Counter/staging area: quiet counter, no unnecessary clatter",
+        "Serving path: serve at table or counter without forcing conversation",
+        "Script readiness: short calm script ready"
+      ],
+      "machineReadiness": [
+        "warm group, purge steam wand, pitcher ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "espresso beans, milk or alt milk, filtered water",
+        "scale, timer, tamper, milk pitcher, towel",
+        "warm ceramic cappuccino/cortado cup",
+        "optional cocoa dusting only if familiar"
+      ],
+      "serviceReadiness": [
+        "quiet counter, no unnecessary clatter",
+        "serve at table or counter without forcing conversation",
+        "short calm script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Quiet Table out loud and choose the desired feeling: soft, steady, gentle, cared for.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as soft connection and protect the human purpose before technique.",
+        "script": "I made this one quietly, just to create a little room for you to settle."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Cappuccino; cortado; brewed coffee. Confirm dose/yield/time and ratio guidance: Cappuccino can be explained as roughly 1:1:1 espresso, steamed milk, and foam; cortado is closer to equal espresso and warm milk.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Cappuccino or cortado because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set warm ceramic cup.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Serve a calm low-noise coffee moment for someone who needs presence more than performance.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this one quietly, just to create a little room for you to settle."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Ask the guest to notice warmth and texture before analyzing flavor.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Ask the guest to notice warmth and texture before analyzing flavor."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the guest feel comforted, settled, or less rushed?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup lower the room noise and create a softer moment?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "welcome-home-cup",
-    name: "The Welcome Home Cup",
-    tag: "Homecoming",
-    purpose: "Use coffee to mark arrival, warmth, and belonging when someone returns home.",
-    drink: "Latte or cappuccino",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · favorite home cup",
-    desiredFeeling: "welcoming, warm, relieving, familiar",
-    artisanOpening: "Welcome home. I made this so the day can soften a little as you come in.",
-    reportPrompt: "Did the cup help the person feel received by the home?",
-    steps: [
-      { title: "Prepare before arrival", advisor: "If possible, set the station before the person enters. The welcome should feel effortless.", script: "I wanted this ready close to when you walked in." },
-      { title: "Choose the right cup", advisor: "Use a familiar vessel. Homecoming is about recognition.", script: "I chose the cup that feels most like home." },
-      { title: "Set the atmosphere", advisor: "Lower clutter, create counter space, and let the machine feel like a hearth rather than an appliance.", script: "The counter is ready. The house gets to welcome you too." },
-      { title: "Pull the espresso", advisor: "Keep the shot reliable. This is a service moment, not a dial-in experiment.", script: "I am keeping this cup steady and familiar." },
-      { title: "Steam for comfort", advisor: "Texture milk for sweetness and warmth. Avoid chasing complex latte art if it slows the welcome.", script: "I am making this soft enough to land gently." },
-      { title: "Serve with eye contact", advisor: "Presentation is human before it is visual. Let the guest feel seen.", script: "Here you go. I am glad you are home." },
-      { title: "Use Recovery gracefully", advisor: "If something misbehaves, choose the simplest recovery. The welcome matters more than perfection.", script: "If this one needs a small correction, I will keep the welcome intact." },
-      { title: "Invite the pause", advisor: "Give the person permission to sit, breathe, or talk.", script: "Take a minute. The rest can wait." },
-      { title: "Capture what worked", advisor: "Report the guest reaction and the rhythm of the welcome.", script: "I am noting whether the cup helped the home feel like home." }
+    "id": "three-pm-reset",
+    "name": "The 3 PM Reset",
+    "family": "Core Occasions",
+    "tag": "Energy",
+    "purpose": "Restore afternoon energy without heaviness or a second-morning intensity.",
+    "drink": "Americano, iced coffee, or small cappuccino",
+    "drinkChoices": "Americano; iced americano; espresso over tonic; small cappuccino",
+    "dose": "18g",
+    "yield": "36g espresso base; dilute to taste",
+    "time": "25\u201332 sec espresso or quick iced build",
+    "ratioGuidance": "Americano uses espresso plus water; iced variations should preserve brightness and avoid watery dilution.",
+    "grindVessel": "glass or small mug",
+    "suggestedTempo": "6\u20139 minutes",
+    "desiredFeeling": "light, lifted, clean, capable",
+    "artisanOpening": "I made this as a reset \u2014 light enough to keep moving, but with enough structure to wake the afternoon up.",
+    "firstSipDirection": "Sip before stirring if iced; notice brightness first, finish second.",
+    "guestResonancePrompt": "Did it feel more refreshing or more energizing?",
+    "advisorDirection": "Advisor should avoid heavy ritual; recommend simple builds and clean flavors that do not drag the afternoon down.",
+    "recoveryWatchouts": "watery iced drink, sour brightness, too much caffeine, melted ice",
+    "reportPrompt": "Did the cup reset energy without heaviness?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: espresso beans, water, optional ice/citrus/sparkling water",
+        "Tools: scale, timer, glass, spoon, towel",
+        "Cup/glass/vessel: chilled glass or small mug",
+        "Garnish or sensory accent: citrus peel or sparkling top if desired",
+        "Machine readiness: machine warm, basket dry, water ready",
+        "Counter/staging area: quick clean counter with ice/glass pre-staged",
+        "Serving path: serve quickly before ice melts",
+        "Script readiness: brief reset script ready"
+      ],
+      "machineReadiness": [
+        "machine warm, basket dry, water ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "espresso beans, water, optional ice/citrus/sparkling water",
+        "scale, timer, glass, spoon, towel",
+        "chilled glass or small mug",
+        "citrus peel or sparkling top if desired"
+      ],
+      "serviceReadiness": [
+        "quick clean counter with ice/glass pre-staged",
+        "serve quickly before ice melts",
+        "brief reset script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The 3 PM Reset out loud and choose the desired feeling: light, lifted, clean, capable.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as energy and protect the human purpose before technique.",
+        "script": "I made this as a reset \u2014 light enough to keep moving, but with enough structure to wake the afternoon up."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Americano; iced americano; espresso over tonic; small cappuccino. Confirm dose/yield/time and ratio guidance: Americano uses espresso plus water; iced variations should preserve brightness and avoid watery dilution.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Americano, iced coffee, or small cappuccino because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set glass or small mug.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Restore afternoon energy without heaviness or a second-morning intensity.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this as a reset \u2014 light enough to keep moving, but with enough structure to wake the afternoon up."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Sip before stirring if iced; notice brightness first, finish second.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Sip before stirring if iced; notice brightness first, finish second."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel more refreshing or more energizing?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup reset energy without heaviness?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "morning-launch",
-    name: "The Morning Launch",
-    tag: "Confidence",
-    purpose: "Start the day with a coffee ritual that creates momentum without rushing the artisan or the household.",
-    drink: "Americano or cappuccino",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · travel or breakfast cup",
-    desiredFeeling: "focused, capable, ordered, optimistic",
-    artisanOpening: "This cup is here to help us begin the day with steadiness instead of scramble.",
-    reportPrompt: "Did the cup create momentum, order, and confidence for the day?",
-    steps: [
-      { title: "Choose the morning outcome", advisor: "Decide whether the cup needs speed, softness, or focus. Let the occasion choose the drink.", script: "This cup is for a better start, not just more speed." },
-      { title: "Stage the essentials", advisor: "Put only what you need on the counter. Morning complexity causes mistakes.", script: "I am keeping the station simple so the morning can move cleanly." },
-      { title: "Confirm machine readiness", advisor: "Warm the machine and cup. A hurried cold pull can sabotage confidence.", script: "I am giving the machine a fair start so it can give us a steady cup." },
-      { title: "Use the house formula", advisor: "Use your reliable dose and yield. Morning launch is not the place for excessive experimentation.", script: "I am choosing the known path this morning." },
-      { title: "Pull and watch the pace", advisor: "If it runs fast or slow, note it. Make one adjustment only if time allows.", script: "I am watching the flow without letting it rush me." },
-      { title: "Finish for the day ahead", advisor: "If milk is involved, texture for comfort. If black coffee, serve cleanly and promptly.", script: "This cup is ready to move with us into the day." },
-      { title: "Recovery path", advisor: "If something goes wrong, open the Matrix and choose the fastest stabilizing move.", script: "One calm recovery is better than a frantic perfect cup." },
-      { title: "Serve the launch", advisor: "Hand the cup over as a signal that the day can begin with care.", script: "Here is a steady start for the morning." },
-      { title: "Report the rhythm", advisor: "Log whether the workflow helped or hurt the morning.", script: "I am saving what made the morning smoother." }
+    "id": "welcome-home-cup",
+    "name": "The Welcome Home Cup",
+    "family": "Core Occasions",
+    "tag": "Homecoming",
+    "purpose": "Make arrival feel received, warm, and cared for.",
+    "drink": "Latte or cappuccino",
+    "drinkChoices": "Latte; cappuccino; warm brewed coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Latte leans milkier and softer; cappuccino is 1:1:1 and feels more structured.",
+    "grindVessel": "favorite home cup",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "welcoming, relieving, familiar",
+    "artisanOpening": "Welcome home. I made this so the day can soften a little as you come in.",
+    "firstSipDirection": "Invite aroma first; let them sit before judging taste.",
+    "guestResonancePrompt": "Did the person feel received by the home?",
+    "advisorDirection": "Advisor should keep the focus on arrival, not impressing; avoid risky experiments.",
+    "recoveryWatchouts": "milk texture, too hot, delayed service, guest distracted",
+    "reportPrompt": "Did the cup help the person feel home?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk, water, optional sugar preference",
+        "Tools: scale, timer, pitcher, towel",
+        "Cup/glass/vessel: familiar favorite cup",
+        "Garnish or sensory accent: none or light cinnamon if preferred",
+        "Machine readiness: machine warm before arrival if possible",
+        "Counter/staging area: counter reset before guest enters",
+        "Serving path: serve to their settling place",
+        "Script readiness: welcoming line ready"
+      ],
+      "machineReadiness": [
+        "machine warm before arrival if possible",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk, water, optional sugar preference",
+        "scale, timer, pitcher, towel",
+        "familiar favorite cup",
+        "none or light cinnamon if preferred"
+      ],
+      "serviceReadiness": [
+        "counter reset before guest enters",
+        "serve to their settling place",
+        "welcoming line ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Welcome Home Cup out loud and choose the desired feeling: welcoming, relieving, familiar.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as homecoming and protect the human purpose before technique.",
+        "script": "Welcome home. I made this so the day can soften a little as you come in."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Latte; cappuccino; warm brewed coffee. Confirm dose/yield/time and ratio guidance: Latte leans milkier and softer; cappuccino is 1:1:1 and feels more structured.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Latte or cappuccino because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set favorite home cup.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Make arrival feel received, warm, and cared for.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "Welcome home. I made this so the day can soften a little as you come in."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Invite aroma first; let them sit before judging taste.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Invite aroma first; let them sit before judging taste."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the person feel received by the home?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup help the person feel home?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "listening-cup",
-    name: "The Listening Cup",
-    tag: "Conversation",
-    purpose: "Create low-pressure ground for conversation, reflection, or reconciliation.",
-    drink: "Pour-over, Americano, or gentle milk drink",
-    dose: "18g espresso or 20g brew",
-    yield: "36g espresso or 300g brew",
-    time: "espresso 25–32 sec · brew 3:00–4:00",
-    grindVessel: "method-appropriate · shared table cup",
-    desiredFeeling: "open, unhurried, safe, attentive",
-    artisanOpening: "I made this so we could have something warm between us while we talk.",
-    reportPrompt: "Did the cup create low-pressure space for listening?",
-    steps: [
-      { title: "Name the human purpose", advisor: "This is not a beverage flex. It is a container for listening.", script: "No pressure. I just thought coffee might give us a gentle place to start." },
-      { title: "Choose a non-demanding drink", advisor: "Select a drink that does not require the guest to analyze flavor.", script: "I kept this simple so the conversation can lead." },
-      { title: "Set seating before service", advisor: "Know where the cup will land. The table is part of the stage.", script: "I set this here so we can sit comfortably." },
-      { title: "Prepare with quiet rhythm", advisor: "Let your movements show care and patience.", script: "I am not rushing this cup." },
-      { title: "Serve as an invitation", advisor: "Offer the cup without forcing the conversation.", script: "Here you go. We can talk, or just sit for a minute." },
-      { title: "Let silence work", advisor: "Do not fill every pause. Coffee can hold the threshold.", script: "We do not have to rush the words." },
-      { title: "Recovery if needed", advisor: "If the cup is imperfect, do not make the moment about the mistake.", script: "This cup is here to support the moment, not dominate it." },
-      { title: "Close gently", advisor: "Let the cup end with appreciation rather than a verdict.", script: "Thank you for sitting with me." },
-      { title: "Report the threshold", advisor: "Capture whether trust, calm, or openness increased.", script: "I am noting how the cup helped the conversation begin." }
+    "id": "morning-launch",
+    "name": "The Morning Launch",
+    "family": "Core Occasions",
+    "tag": "Confidence",
+    "purpose": "Start the day with rhythm, order, and confidence.",
+    "drink": "Cappuccino, flat white, Americano, or espresso",
+    "drinkChoices": "Cappuccino; flat white; Americano; espresso",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Choose milk ratio by desired feel: cappuccino 1:1:1; flat white more milk and less foam; Americano espresso plus water.",
+    "grindVessel": "breakfast cup or travel mug",
+    "suggestedTempo": "7\u201310 minutes",
+    "desiredFeeling": "focused, steady, optimistic",
+    "artisanOpening": "This cup is here to help us begin the day with steadiness instead of scramble.",
+    "firstSipDirection": "Notice structure and finish; do not overanalyze when the day needs momentum.",
+    "guestResonancePrompt": "Did it create momentum, steadiness, or too much intensity?",
+    "advisorDirection": "Advisor should keep variables stable and protect the morning from over-tweaking.",
+    "recoveryWatchouts": "fast shot, rushed routine, milk delay, too strong",
+    "reportPrompt": "Did the cup create order for the day?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/water, travel lid if needed",
+        "Tools: scale, timer, pitcher, towel",
+        "Cup/glass/vessel: breakfast cup or travel mug",
+        "Garnish or sensory accent: none; functional clarity",
+        "Machine readiness: machine warm, workflow ready",
+        "Counter/staging area: simple station, only essentials",
+        "Serving path: serving path to breakfast/travel area",
+        "Script readiness: morning launch phrase ready"
+      ],
+      "machineReadiness": [
+        "machine warm, workflow ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/water, travel lid if needed",
+        "scale, timer, pitcher, towel",
+        "breakfast cup or travel mug",
+        "none; functional clarity"
+      ],
+      "serviceReadiness": [
+        "simple station, only essentials",
+        "serving path to breakfast/travel area",
+        "morning launch phrase ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Morning Launch out loud and choose the desired feeling: focused, steady, optimistic.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as confidence and protect the human purpose before technique.",
+        "script": "This cup is here to help us begin the day with steadiness instead of scramble."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Cappuccino; flat white; Americano; espresso. Confirm dose/yield/time and ratio guidance: Choose milk ratio by desired feel: cappuccino 1:1:1; flat white more milk and less foam; Americano espresso plus water.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Cappuccino, flat white, Americano, or espresso because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set breakfast cup or travel mug.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Start the day with rhythm, order, and confidence.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "This cup is here to help us begin the day with steadiness instead of scramble."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Notice structure and finish; do not overanalyze when the day needs momentum.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Notice structure and finish; do not overanalyze when the day needs momentum."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it create momentum, steadiness, or too much intensity?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup create order for the day?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "apology-cup",
-    name: "The Apology Cup",
-    tag: "Repair",
-    purpose: "Offer coffee as a humble gesture of repair without using it to avoid accountability.",
-    drink: "Warm latte or gentle cappuccino",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · simple cup",
-    desiredFeeling: "humble, sincere, warm, safe",
-    artisanOpening: "I made this as a small gesture. The apology matters more than the coffee, but I wanted to bring care with it.",
-    reportPrompt: "Did the cup support humility and repair without becoming a distraction?",
-    steps: [
-      { title: "Check your posture", advisor: "Do not use the cup as a performance to earn forgiveness. Use it as a vessel of care.", script: "This is just a small gesture. What I need to say matters more." },
-      { title: "Keep the drink simple", advisor: "Avoid flamboyance. Repair calls for humility.", script: "I kept this simple because I do not want to make this about me." },
-      { title: "Prepare calmly", advisor: "Let your pace settle you before you speak.", script: "I am slowing down before I come to you." },
-      { title: "Serve before explaining", advisor: "Hand the cup gently, then speak plainly.", script: "Here. I made this for you, and I also owe you an apology." },
-      { title: "Say the apology", advisor: "Be specific. Do not hide behind the coffee.", script: "I am sorry for what I did. I understand it affected you." },
-      { title: "Do not demand response", advisor: "The cup is an offering, not a transaction.", script: "You do not have to respond right now." },
-      { title: "Recovery if coffee fails", advisor: "If the drink is imperfect, keep the apology centered.", script: "The coffee may not be perfect, but the care is real." },
-      { title: "Close with respect", advisor: "Let the other person lead the next moment.", script: "Thank you for hearing me." },
-      { title: "Report with honesty", advisor: "Capture what the cup helped and what the conversation still needs.", script: "I am recording the lesson, not scoring the person." }
+    "id": "listening-cup",
+    "name": "The Listening Cup",
+    "family": "Core Occasions",
+    "tag": "Conversation",
+    "purpose": "Create space for conversation rather than showing off coffee knowledge.",
+    "drink": "Small milk drink or brewed coffee",
+    "drinkChoices": "Cortado; cappuccino; pour-over; Americano",
+    "dose": "18g espresso or 20g brew",
+    "yield": "36g espresso or 300g brew",
+    "time": "espresso 25\u201332 sec; brew 3\u20134 min",
+    "ratioGuidance": "Select a drink that supports conversation and does not demand analysis.",
+    "grindVessel": "two simple cups",
+    "suggestedTempo": "8\u201313 minutes",
+    "desiredFeeling": "open, attentive, safe",
+    "artisanOpening": "I made this so we could have something warm between us while we talk.",
+    "firstSipDirection": "Let the guest respond before explaining notes.",
+    "guestResonancePrompt": "Did the cup help someone open up or settle in?",
+    "advisorDirection": "Advisor should coach restraint: ask less, listen more, explain only if invited.",
+    "recoveryWatchouts": "overexplaining, drink too intense, awkward silence, bitter cup",
+    "reportPrompt": "Did the cup create low-pressure space?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: coffee, water, optional milk",
+        "Tools: method tools, scale/timer, cups, towel",
+        "Cup/glass/vessel: two table-friendly cups",
+        "Garnish or sensory accent: none; avoid sensory distraction",
+        "Machine readiness: machine or brewer ready before conversation begins",
+        "Counter/staging area: table path clear",
+        "Serving path: serve seated if possible",
+        "Script readiness: short invitation script ready"
+      ],
+      "machineReadiness": [
+        "machine or brewer ready before conversation begins",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "coffee, water, optional milk",
+        "method tools, scale/timer, cups, towel",
+        "two table-friendly cups",
+        "none; avoid sensory distraction"
+      ],
+      "serviceReadiness": [
+        "table path clear",
+        "serve seated if possible",
+        "short invitation script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Listening Cup out loud and choose the desired feeling: open, attentive, safe.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as conversation and protect the human purpose before technique.",
+        "script": "I made this so we could have something warm between us while we talk."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Cortado; cappuccino; pour-over; Americano. Confirm dose/yield/time and ratio guidance: Select a drink that supports conversation and does not demand analysis.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Small milk drink or brewed coffee because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set two simple cups.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Create space for conversation rather than showing off coffee knowledge.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this so we could have something warm between us while we talk."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Let the guest respond before explaining notes.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Let the guest respond before explaining notes."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the cup help someone open up or settle in?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup create low-pressure space?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "celebration-cup",
-    name: "The Celebration Cup",
-    tag: "Joy",
-    purpose: "Mark good news with a cup that feels intentional, elevated, and shared.",
-    drink: "Signature milk drink or espresso tonic",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · clear or favorite celebratory cup",
-    desiredFeeling: "joyful, bright, proud, delightful",
-    artisanOpening: "This cup is for the good news. I wanted the moment to have a little ceremony.",
-    reportPrompt: "Did the cup help make the celebration feel remembered?",
-    steps: [
-      { title: "Name the celebration", advisor: "Know exactly what the cup is honoring.", script: "This is for what just happened. It deserves a little ceremony." },
-      { title: "Choose a festive format", advisor: "A signature drink, garnish, or special cup can elevate the moment.", script: "I made this one a little special for the occasion." },
-      { title: "Set visual stagecraft", advisor: "Use a tray, cloth, garnish, or clear glass if it adds delight.", script: "I wanted it to look like the good news feels." },
-      { title: "Pull the base carefully", advisor: "A bright moment still needs a stable cup. Keep dose and yield known.", script: "The base is steady so the celebration can shine." },
-      { title: "Build the signature touch", advisor: "Add the celebratory element without overcomplicating the drink.", script: "This is the little extra for today." },
-      { title: "Serve with words", advisor: "Say what is being celebrated. Let the cup become a marker.", script: "To this moment — and to what it means." },
-      { title: "Recovery path", advisor: "If the drink stumbles, simplify and preserve joy.", script: "If I need to adjust, I will keep the celebration moving." },
-      { title: "Invite a toast or pause", advisor: "Let the cup hold the recognition.", script: "Let's take one sip before we rush past it." },
-      { title: "Report the memory", advisor: "Capture what made the cup feel celebratory.", script: "I am saving the details that made this feel like a real moment." }
+    "id": "apology-cup",
+    "name": "The Apology Cup",
+    "family": "Core Occasions",
+    "tag": "Repair",
+    "purpose": "Offer a humble cup that supports repair without replacing accountability.",
+    "drink": "Gentle latte or warm cappuccino",
+    "drinkChoices": "Latte; gentle cappuccino; warm brewed coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Use a familiar mild build; the coffee should not demand attention away from the apology.",
+    "grindVessel": "simple warm cup",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "humble, sincere, safe",
+    "artisanOpening": "I made this as a small gesture. The apology matters more than the coffee, but I wanted to bring care with it.",
+    "firstSipDirection": "No forced first sip direction; allow them to receive it naturally.",
+    "guestResonancePrompt": "Did the cup support repair or distract from it?",
+    "advisorDirection": "Advisor should prevent performance energy; center sincerity and restraint.",
+    "recoveryWatchouts": "overperforming, too much explanation, cup failure during emotional moment",
+    "reportPrompt": "Did the cup carry care without asking for applause?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/water, simple cup",
+        "Tools: scale, timer, pitcher, towel",
+        "Cup/glass/vessel: plain warm cup",
+        "Garnish or sensory accent: none",
+        "Machine readiness: machine warm, lowest-risk recipe chosen",
+        "Counter/staging area: counter quiet and uncluttered",
+        "Serving path: serve gently, not ceremonially",
+        "Script readiness: apology line ready"
+      ],
+      "machineReadiness": [
+        "machine warm, lowest-risk recipe chosen",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/water, simple cup",
+        "scale, timer, pitcher, towel",
+        "plain warm cup",
+        "none"
+      ],
+      "serviceReadiness": [
+        "counter quiet and uncluttered",
+        "serve gently, not ceremonially",
+        "apology line ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Apology Cup out loud and choose the desired feeling: humble, sincere, safe.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as repair and protect the human purpose before technique.",
+        "script": "I made this as a small gesture. The apology matters more than the coffee, but I wanted to bring care with it."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Latte; gentle cappuccino; warm brewed coffee. Confirm dose/yield/time and ratio guidance: Use a familiar mild build; the coffee should not demand attention away from the apology.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Gentle latte or warm cappuccino because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set simple warm cup.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Offer a humble cup that supports repair without replacing accountability.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this as a small gesture. The apology matters more than the coffee, but I wanted to bring care with it."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "No forced first sip direction; allow them to receive it naturally.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "No forced first sip direction; allow them to receive it naturally."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the cup support repair or distract from it?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup carry care without asking for applause?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "boss-coming-over",
-    name: "The Boss Is Coming Over",
-    tag: "Hospitality",
-    purpose: "Prepare a confident, polished coffee moment for a high-stakes guest without becoming stiff or performative.",
-    drink: "Cappuccino, latte, or clean espresso",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · polished ceramic cup",
-    desiredFeeling: "composed, credible, generous, refined",
-    artisanOpening: "I made this as a small welcome. I hope it gives us a good place to begin.",
-    reportPrompt: "Did the cup support confidence and gracious hosting?",
-    steps: [
-      { title: "Lower the stakes internally", advisor: "You are hosting a person, not auditioning for a café job.", script: "This is hospitality, not a performance exam." },
-      { title: "Choose a reliable drink", advisor: "Select the drink you can make consistently under pressure.", script: "I chose something familiar so I can serve it well." },
-      { title: "Prepare the room", advisor: "Clear seating, cup placement, napkin, water, and counter visibility.", script: "I set things up so we can just enjoy the coffee." },
-      { title: "Use known settings", advisor: "Do not attempt a new recipe. Let confidence come from repetition.", script: "I am staying with the house formula today." },
-      { title: "Pull with composure", advisor: "If flow is off, make one controlled recovery, not a string of nervous changes.", script: "I am keeping the process steady." },
-      { title: "Serve with ease", advisor: "Avoid apologizing for small imperfections. Offer the cup warmly.", script: "Here you go. I hope this brings a little warmth to the conversation." },
-      { title: "Recovery path", advisor: "If something fails, use the Matrix and simplify to a drink you can complete gracefully.", script: "If I need to reset, I will do it calmly and keep the welcome intact." },
-      { title: "Let conversation lead", advisor: "After serving, stop performing. Be present.", script: "Please enjoy. I am glad you could come by." },
-      { title: "Report the host rhythm", advisor: "Capture what helped you feel composed.", script: "I am noting how I hosted, not just how the shot ran." }
+    "id": "celebration-cup",
+    "name": "The Celebration Cup",
+    "family": "Core Occasions",
+    "tag": "Joy",
+    "purpose": "Mark good news with a cup that feels intentional and memorable.",
+    "drink": "Signature cappuccino, espresso tonic, or dessert-style drink",
+    "drinkChoices": "Signature cappuccino; espresso tonic; affogato-style espresso",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Build one stable espresso base and add one celebratory sensory element.",
+    "grindVessel": "favorite cup or clear glass",
+    "suggestedTempo": "9\u201313 minutes",
+    "desiredFeeling": "joyful, bright, proud",
+    "artisanOpening": "This cup is for the good news. I wanted the moment to have a little ceremony.",
+    "firstSipDirection": "Invite them to notice the special visual or aroma first.",
+    "guestResonancePrompt": "Did it feel like celebration, surprise, or too much?",
+    "advisorDirection": "Advisor should encourage one elegant flourish, not a cluttered drink.",
+    "recoveryWatchouts": "too sweet, garnish overdone, visual messy, time pressure",
+    "reportPrompt": "Did the cup make the win feel marked?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk or tonic, optional garnish",
+        "Tools: scale, timer, pitcher/glass, spoon, towel",
+        "Cup/glass/vessel: clear glass or favorite cup",
+        "Garnish or sensory accent: citrus, cocoa, berry, or small sweet accent",
+        "Machine readiness: machine warm, recipe stable",
+        "Counter/staging area: counter staged like a small ceremony",
+        "Serving path: serve as a toast or marked pause",
+        "Script readiness: celebration line ready"
+      ],
+      "machineReadiness": [
+        "machine warm, recipe stable",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk or tonic, optional garnish",
+        "scale, timer, pitcher/glass, spoon, towel",
+        "clear glass or favorite cup",
+        "citrus, cocoa, berry, or small sweet accent"
+      ],
+      "serviceReadiness": [
+        "counter staged like a small ceremony",
+        "serve as a toast or marked pause",
+        "celebration line ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Celebration Cup out loud and choose the desired feeling: joyful, bright, proud.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as joy and protect the human purpose before technique.",
+        "script": "This cup is for the good news. I wanted the moment to have a little ceremony."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Signature cappuccino; espresso tonic; affogato-style espresso. Confirm dose/yield/time and ratio guidance: Build one stable espresso base and add one celebratory sensory element.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Signature cappuccino, espresso tonic, or dessert-style drink because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set favorite cup or clear glass.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Mark good news with a cup that feels intentional and memorable.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "This cup is for the good news. I wanted the moment to have a little ceremony."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Invite them to notice the special visual or aroma first.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Invite them to notice the special visual or aroma first."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel like celebration, surprise, or too much?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup make the win feel marked?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "neighbor-cup",
-    name: "The Neighbor Cup",
-    tag: "Community",
-    purpose: "Use coffee to build simple local connection without overformalizing the moment.",
-    drink: "Americano, latte, or batch-style coffee",
-    dose: "18g espresso or 20g brew",
-    yield: "36g or 300g brew",
-    time: "espresso 25–32 sec · brew 3:00–4:00",
-    grindVessel: "method-appropriate · casual mug",
-    desiredFeeling: "friendly, generous, easy, connected",
-    artisanOpening: "I made a little extra and thought you might enjoy a cup.",
-    reportPrompt: "Did the cup create an easy bridge to community?",
-    steps: [
-      { title: "Keep it neighborly", advisor: "Do not make the invitation feel elaborate or burdensome.", script: "No big production. I just thought you might like some coffee." },
-      { title: "Choose an accessible drink", advisor: "Select something broadly enjoyable and easy to accept.", script: "I made something simple and warm." },
-      { title: "Prepare an extra cup", advisor: "Have a second cup ready before offering so the gesture feels natural.", script: "I already had enough for one more." },
-      { title: "Serve without pressure", advisor: "Offer, then let them decline easily if needed.", script: "Only if you want one — no pressure at all." },
-      { title: "Read the response", advisor: "If they linger, conversation may open. If not, the gesture still worked.", script: "I am glad to share it either way." },
-      { title: "Recovery path", advisor: "If the coffee is not perfect, let generosity carry the moment.", script: "It is a simple cup, but it comes with good will." },
-      { title: "Create the bridge", advisor: "Use the cup to make future connection easier.", script: "Maybe next time we can sit for a few minutes." },
-      { title: "Report community signal", advisor: "Capture whether the cup made the relationship warmer.", script: "I am remembering how coffee helped us connect." }
+    "id": "boss-coming-over",
+    "name": "The Boss Is Coming Over",
+    "family": "Core Occasions",
+    "tag": "Polish",
+    "purpose": "Serve with calm competence under social pressure.",
+    "drink": "Polished cappuccino, flat white, espresso, or pour-over",
+    "drinkChoices": "Cappuccino; flat white; espresso; pour-over",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Choose the most reliable drink, not the riskiest. Cappuccino 1:1:1 is understandable and polished when milk texture is reliable.",
+    "grindVessel": "clean ceramic cup or service tray",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "composed, capable, polished",
+    "artisanOpening": "I kept this one classic \u2014 balanced, warm, and straightforward.",
+    "firstSipDirection": "One simple cue: notice balance and warmth.",
+    "guestResonancePrompt": "Did the guest feel comfortable, impressed, or over-managed?",
+    "advisorDirection": "Advisor should reduce anxiety, pick reliable options, and avoid overexplaining specialty language.",
+    "recoveryWatchouts": "fast shot, milk foam error, overexplaining, pressure mistakes",
+    "reportPrompt": "Did the artisan stay composed under pressure?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/water, best reliable cups",
+        "Tools: scale, timer, pitcher, towel, tray",
+        "Cup/glass/vessel: polished ceramic cup",
+        "Garnish or sensory accent: none or restrained cocoa",
+        "Machine readiness: machine fully warmed before guest arrives",
+        "Counter/staging area: counter looks intentional and professional",
+        "Serving path: serve cleanly without fuss",
+        "Script readiness: classic confidence script ready"
+      ],
+      "machineReadiness": [
+        "machine fully warmed before guest arrives",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/water, best reliable cups",
+        "scale, timer, pitcher, towel, tray",
+        "polished ceramic cup",
+        "none or restrained cocoa"
+      ],
+      "serviceReadiness": [
+        "counter looks intentional and professional",
+        "serve cleanly without fuss",
+        "classic confidence script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Boss Is Coming Over out loud and choose the desired feeling: composed, capable, polished.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as polish and protect the human purpose before technique.",
+        "script": "I kept this one classic \u2014 balanced, warm, and straightforward."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Cappuccino; flat white; espresso; pour-over. Confirm dose/yield/time and ratio guidance: Choose the most reliable drink, not the riskiest. Cappuccino 1:1:1 is understandable and polished when milk texture is reliable.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Polished cappuccino, flat white, espresso, or pour-over because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set clean ceramic cup or service tray.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Serve with calm competence under social pressure.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I kept this one classic \u2014 balanced, warm, and straightforward."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "One simple cue: notice balance and warmth.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "One simple cue: notice balance and warmth."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the guest feel comfortable, impressed, or over-managed?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the artisan stay composed under pressure?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "late-night-counter",
-    name: "The Late-Night Counter",
-    tag: "Reflection",
-    purpose: "Make coffee or decaf as a reflective counter moment when the house is quieter.",
-    drink: "Decaf espresso, cortado, or warm milk drink",
-    dose: "17–18g",
-    yield: "34–36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · small ceramic cup",
-    desiredFeeling: "quiet, reflective, settled, grateful",
-    artisanOpening: "This is just a small cup to close the day with a little care.",
-    reportPrompt: "Did the cup help the day land softly?",
-    steps: [
-      { title: "Choose gentleness", advisor: "Late-night coffee should not disturb the body or the room.", script: "I am making this gentle because the day is closing." },
-      { title: "Lower the sound", advisor: "Keep grinder, cups, and cleanup as quiet as possible.", script: "I am keeping the counter quiet tonight." },
-      { title: "Use decaf or small format", advisor: "Match the cup to rest, not stimulation.", script: "This is for reflection, not a second workday." },
-      { title: "Prepare slowly", advisor: "Let the ritual help you settle.", script: "I am letting the process slow me down." },
-      { title: "Serve to self or loved one", advisor: "If sharing, keep words soft and brief.", script: "Here is something small and warm before we close the day." },
-      { title: "Recovery path", advisor: "If the shot is off, do not chase multiple pulls late at night. Simplify.", script: "A simple cup is enough tonight." },
-      { title: "Reflect with the cup", advisor: "Let the cup hold gratitude, not analysis.", script: "One sip, one breath, and the day can rest." },
-      { title: "Report the closure", advisor: "Capture whether the ritual helped the transition to rest.", script: "I am noting what helped the day end well." }
+    "id": "friend-lift",
+    "name": "The Friend Who Needs a Lift",
+    "family": "Core Occasions",
+    "tag": "Care",
+    "purpose": "Encourage someone with comfort, warmth, and lightness.",
+    "drink": "Comforting milk drink or gentle iced drink",
+    "drinkChoices": "Latte; cappuccino; iced latte; warm brewed coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Choose softness over intensity; milk ratio can be adjusted toward comfort.",
+    "grindVessel": "comfort cup or tall iced glass",
+    "suggestedTempo": "7\u201311 minutes",
+    "desiredFeeling": "encouraging, soft, steady",
+    "artisanOpening": "I made this one soft and steady \u2014 just something to give you a little lift.",
+    "firstSipDirection": "Invite them to notice sweetness or comfort first.",
+    "guestResonancePrompt": "Did they feel comforted, encouraged, or unchanged?",
+    "advisorDirection": "Advisor should help the artisan read mood and avoid making the drink too intense.",
+    "recoveryWatchouts": "drink too strong, wrong temperature, guest low energy, milk texture",
+    "reportPrompt": "Did the cup offer lift without pressure?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/alt milk, optional gentle sweetener",
+        "Tools: scale, timer, pitcher, towel, glass/cup",
+        "Cup/glass/vessel: comforting vessel",
+        "Garnish or sensory accent: light sweetness or cinnamon only if appropriate",
+        "Machine readiness: machine warm, milk ready",
+        "Counter/staging area: soft uncluttered counter",
+        "Serving path: serve near where friend is resting",
+        "Script readiness: encouragement script ready"
+      ],
+      "machineReadiness": [
+        "machine warm, milk ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/alt milk, optional gentle sweetener",
+        "scale, timer, pitcher, towel, glass/cup",
+        "comforting vessel",
+        "light sweetness or cinnamon only if appropriate"
+      ],
+      "serviceReadiness": [
+        "soft uncluttered counter",
+        "serve near where friend is resting",
+        "encouragement script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Friend Who Needs a Lift out loud and choose the desired feeling: encouraging, soft, steady.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as care and protect the human purpose before technique.",
+        "script": "I made this one soft and steady \u2014 just something to give you a little lift."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Latte; cappuccino; iced latte; warm brewed coffee. Confirm dose/yield/time and ratio guidance: Choose softness over intensity; milk ratio can be adjusted toward comfort.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Comforting milk drink or gentle iced drink because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set comfort cup or tall iced glass.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Encourage someone with comfort, warmth, and lightness.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this one soft and steady \u2014 just something to give you a little lift."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Invite them to notice sweetness or comfort first.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Invite them to notice sweetness or comfort first."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did they feel comforted, encouraged, or unchanged?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup offer lift without pressure?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "parent-visit",
-    name: "The Parent Visit",
-    tag: "Familiarity",
-    purpose: "Serve family with dignity, familiarity, and care without overcomplicating the cup.",
-    drink: "Latte, drip-style coffee, or cappuccino",
-    dose: "18g or familiar brew ratio",
-    yield: "36g or full cup",
-    time: "25–32 sec espresso · brew as needed",
-    grindVessel: "familiar mug",
-    desiredFeeling: "honoring, familiar, comfortable, generous",
-    artisanOpening: "I made this the way I thought you might enjoy it — familiar and warm.",
-    reportPrompt: "Did the cup honor the guest rather than the artisan's ego?",
-    steps: [
-      { title: "Start with their preference", advisor: "Family hospitality often means serving what they enjoy, not what you want to showcase.", script: "I made this closer to how you like it." },
-      { title: "Choose familiarity", advisor: "Use a drink style and cup that feels recognizable.", script: "Nothing complicated — just something warm for you." },
-      { title: "Prepare with respect", advisor: "Let your movements show care rather than impatience.", script: "I wanted to take a little care with this one." },
-      { title: "Adjust sweetness or milk thoughtfully", advisor: "Do not shame preferences. Hospitality honors the person.", script: "I can add a little more milk or sweetness if you prefer." },
-      { title: "Serve with memory", advisor: "Connect the cup to family warmth, not performance.", script: "This reminded me of the kind of coffee we would sit with." },
-      { title: "Recovery path", advisor: "If the machine misbehaves, simplify quickly. The visit matters more.", script: "I will keep this easy and make sure you have a cup you enjoy." },
-      { title: "Invite comfort", advisor: "Make the guest feel they can relax.", script: "Sit down. I will bring it over." },
-      { title: "Report preference", advisor: "Capture what they actually liked for next time.", script: "I am remembering your preference so the next cup feels even more like yours." }
+    "id": "date-night-counter",
+    "name": "The Date-Night Counter",
+    "family": "Core Occasions",
+    "tag": "Intimacy",
+    "purpose": "Create a polished counter moment with texture, beauty, and closeness.",
+    "drink": "Dessert-style espresso drink or coffee mocktail",
+    "drinkChoices": "Cortado; affogato-style espresso; cold foam espresso; coffee mocktail",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Keep drink small and sensory; one beautiful texture or temperature contrast is enough.",
+    "grindVessel": "two small cups or coupe glasses",
+    "suggestedTempo": "10\u201314 minutes",
+    "desiredFeeling": "playful, intimate, polished",
+    "artisanOpening": "I made this as a small counter dessert \u2014 just enough to slow us down for a few minutes.",
+    "firstSipDirection": "Taste together; invite a shared reaction rather than a lecture.",
+    "guestResonancePrompt": "Did it feel playful, intimate, comforting, or too much?",
+    "advisorDirection": "Advisor should coach romance through restraint, pacing, and visual polish.",
+    "recoveryWatchouts": "too sweet, messy counter, overexplaining, wrong temperature",
+    "reportPrompt": "Did the cup create a shared pause?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/cream or sparkling element, optional small sweet accent",
+        "Tools: scale, timer, two glasses/cups, spoon, towel",
+        "Cup/glass/vessel: matched small vessels",
+        "Garnish or sensory accent: chocolate, citrus, berry, or foam accent",
+        "Machine readiness: machine warm, recipe reliable",
+        "Counter/staging area: counter cleared like a small stage",
+        "Serving path: serve side by side",
+        "Script readiness: counter-dessert script ready"
+      ],
+      "machineReadiness": [
+        "machine warm, recipe reliable",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/cream or sparkling element, optional small sweet accent",
+        "scale, timer, two glasses/cups, spoon, towel",
+        "matched small vessels",
+        "chocolate, citrus, berry, or foam accent"
+      ],
+      "serviceReadiness": [
+        "counter cleared like a small stage",
+        "serve side by side",
+        "counter-dessert script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Date-Night Counter out loud and choose the desired feeling: playful, intimate, polished.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as intimacy and protect the human purpose before technique.",
+        "script": "I made this as a small counter dessert \u2014 just enough to slow us down for a few minutes."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Cortado; affogato-style espresso; cold foam espresso; coffee mocktail. Confirm dose/yield/time and ratio guidance: Keep drink small and sensory; one beautiful texture or temperature contrast is enough.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Dessert-style espresso drink or coffee mocktail because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set two small cups or coupe glasses.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Create a polished counter moment with texture, beauty, and closeness.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this as a small counter dessert \u2014 just enough to slow us down for a few minutes."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Taste together; invite a shared reaction rather than a lecture.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Taste together; invite a shared reaction rather than a lecture."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel playful, intimate, comforting, or too much?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup create a shared pause?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "friend-needs-lift",
-    name: "The Friend Who Needs a Lift",
-    tag: "Encouragement",
-    purpose: "Use coffee as a gentle lift for someone discouraged, tired, or emotionally low.",
-    drink: "Mocha, latte, or comforting cappuccino",
-    dose: "18g",
-    yield: "36g",
-    time: "25–32 sec",
-    grindVessel: "medium-fine · comforting mug",
-    desiredFeeling: "encouraging, warm, seen, hopeful",
-    artisanOpening: "I made this because sometimes a warm cup helps the next few minutes feel possible.",
-    reportPrompt: "Did the cup help lift the friend's spirit without forcing cheer?",
-    steps: [
-      { title: "Do not force positivity", advisor: "A lift is not denial. Offer warmth without minimizing their feeling.", script: "I know today is a lot. I made this for right now." },
-      { title: "Choose comfort", advisor: "A slightly sweeter or milk-based drink may serve the emotional moment.", script: "I made this one a little comforting." },
-      { title: "Prepare with care", advisor: "Let the ritual communicate attention.", script: "I took a little time with this because you matter." },
-      { title: "Serve gently", advisor: "Place the cup as support, not a demand to feel better.", script: "No need to talk unless you want to. Here is something warm." },
-      { title: "Let the cup work", advisor: "Allow quiet. The cup can be the first bridge.", script: "We can just sit for a minute." },
-      { title: "Recovery path", advisor: "If the drink is imperfect, the kindness still matters. Simplify.", script: "The cup is simple, but the care behind it is real." },
-      { title: "Encourage lightly", advisor: "Use one sincere line, not a speech.", script: "I am with you. We can take the next step slowly." },
-      { title: "Report the lift", advisor: "Capture whether warmth, presence, or conversation emerged.", script: "I am noting how the cup helped create a little lift." }
+    "id": "parent-visit",
+    "name": "The Parent Visit",
+    "family": "Core Occasions",
+    "tag": "Familiarity",
+    "purpose": "Serve something recognizable with care and respect.",
+    "drink": "Familiar coffee, latte, cappuccino, or brewed coffee",
+    "drinkChoices": "Latte; cappuccino; Americano; brewed coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Meet preference first; use sugar/milk options without judgment.",
+    "grindVessel": "familiar mug",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "familiar, respectful, cared for",
+    "artisanOpening": "I made this close to what I think you will enjoy \u2014 warm, familiar, and easy.",
+    "firstSipDirection": "Let them respond naturally; do not instruct unless they ask.",
+    "guestResonancePrompt": "Did it feel familiar, too strong, surprisingly good, or comforting?",
+    "advisorDirection": "Advisor should emphasize preference, not education. Capture learnings for future guest profile.",
+    "recoveryWatchouts": "too strong, too unfamiliar, wrong milk/sugar, overexplaining",
+    "reportPrompt": "What preference did we learn?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/sugar options, water",
+        "Tools: scale, timer, pitcher, towel",
+        "Cup/glass/vessel: familiar mug",
+        "Garnish or sensory accent: none unless they like it",
+        "Machine readiness: machine ready, reliable recipe",
+        "Counter/staging area: service area with condiments available",
+        "Serving path: serve where they are comfortable",
+        "Script readiness: respectful preference script ready"
+      ],
+      "machineReadiness": [
+        "machine ready, reliable recipe",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/sugar options, water",
+        "scale, timer, pitcher, towel",
+        "familiar mug",
+        "none unless they like it"
+      ],
+      "serviceReadiness": [
+        "service area with condiments available",
+        "serve where they are comfortable",
+        "respectful preference script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Parent Visit out loud and choose the desired feeling: familiar, respectful, cared for.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as familiarity and protect the human purpose before technique.",
+        "script": "I made this close to what I think you will enjoy \u2014 warm, familiar, and easy."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Latte; cappuccino; Americano; brewed coffee. Confirm dose/yield/time and ratio guidance: Meet preference first; use sugar/milk options without judgment.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Familiar coffee, latte, cappuccino, or brewed coffee because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set familiar mug.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Serve something recognizable with care and respect.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I made this close to what I think you will enjoy \u2014 warm, familiar, and easy."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Let them respond naturally; do not instruct unless they ask.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Let them respond naturally; do not instruct unless they ask."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel familiar, too strong, surprisingly good, or comforting?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: What preference did we learn?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "deep-work-cup",
-    name: "The Deep Work Cup",
-    tag: "Focus",
-    purpose: "Create a focused cup that supports serious work without becoming a distraction.",
-    drink: "Americano, espresso, or pour-over",
-    dose: "18g espresso or 20g brew",
-    yield: "36g espresso or 300g brew",
-    time: "espresso 25–32 sec · brew 3:00–4:00",
-    grindVessel: "method-appropriate · desk-safe cup",
-    desiredFeeling: "focused, clear, sustained, capable",
-    artisanOpening: "This cup is to help me enter focused work with clarity and steadiness.",
-    reportPrompt: "Did the cup support focus without pulling attention away from the work?",
-    steps: [
-      { title: "Define the work block", advisor: "Name the work before making the coffee. The cup serves the work.", script: "This cup is for one focused block, not endless distraction." },
-      { title: "Choose clean energy", advisor: "Avoid over-rich drinks if they slow the body or mind.", script: "I am choosing clarity over comfort this time." },
-      { title: "Set the desk stage", advisor: "Prepare water, notebook, and cup placement before brewing.", script: "The workspace is ready before the coffee arrives." },
-      { title: "Brew reliably", advisor: "Use a known recipe. Deep work does not need a dial-in detour.", script: "I am keeping the cup simple so the work can be complex." },
-      { title: "Serve to self", advisor: "Place the cup where it supports rhythm without becoming fidgeting.", script: "This cup marks the start." },
-      { title: "Recovery path", advisor: "If the cup fails, do not sacrifice the work block. Simplify quickly.", script: "A decent cup and a strong work block beat a perfect cup and lost focus." },
-      { title: "Begin immediately", advisor: "The first sip should lead into action.", script: "Sip, breathe, begin." },
-      { title: "Report effectiveness", advisor: "Capture whether the cup helped focus, clarity, and momentum.", script: "I am noting whether this cup helped me do the work." }
+    "id": "neighbor-cup",
+    "name": "The Neighbor Cup",
+    "family": "Core Occasions",
+    "tag": "Community",
+    "purpose": "Build casual community with approachable hospitality.",
+    "drink": "Simple latte, brewed coffee, iced coffee, or cappuccino",
+    "drinkChoices": "Latte; cappuccino; brewed coffee; iced coffee",
+    "dose": "18g",
+    "yield": "36g",
+    "time": "25\u201332 sec",
+    "ratioGuidance": "Choose an easy-to-receive drink; avoid making the neighbor feel tested.",
+    "grindVessel": "casual cup or to-go cup",
+    "suggestedTempo": "6\u201310 minutes",
+    "desiredFeeling": "approachable, friendly, easy",
+    "artisanOpening": "I was making coffee and thought you might enjoy one too.",
+    "firstSipDirection": "Invite a simple reaction, not a tasting exam.",
+    "guestResonancePrompt": "Did it feel welcoming, surprising, curious, or too formal?",
+    "advisorDirection": "Advisor should keep the tone low-pressure and community-oriented.",
+    "recoveryWatchouts": "overperformance, too strong, awkward delivery, unknown preferences",
+    "reportPrompt": "Did the cup open a small community connection?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, milk/water, optional extra cup",
+        "Tools: scale, timer, pitcher, towel",
+        "Cup/glass/vessel: casual cup or to-go vessel",
+        "Garnish or sensory accent: none or simple cinnamon",
+        "Machine readiness: machine ready while making own cup",
+        "Counter/staging area: counter normal, not staged too formally",
+        "Serving path: easy handoff path",
+        "Script readiness: neighbor invitation script ready"
+      ],
+      "machineReadiness": [
+        "machine ready while making own cup",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, milk/water, optional extra cup",
+        "scale, timer, pitcher, towel",
+        "casual cup or to-go vessel",
+        "none or simple cinnamon"
+      ],
+      "serviceReadiness": [
+        "counter normal, not staged too formally",
+        "easy handoff path",
+        "neighbor invitation script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Neighbor Cup out loud and choose the desired feeling: approachable, friendly, easy.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as community and protect the human purpose before technique.",
+        "script": "I was making coffee and thought you might enjoy one too."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Latte; cappuccino; brewed coffee; iced coffee. Confirm dose/yield/time and ratio guidance: Choose an easy-to-receive drink; avoid making the neighbor feel tested.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Simple latte, brewed coffee, iced coffee, or cappuccino because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set casual cup or to-go cup.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Build casual community with approachable hospitality.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "I was making coffee and thought you might enjoy one too."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Invite a simple reaction, not a tasting exam.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Invite a simple reaction, not a tasting exam."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel welcoming, surprising, curious, or too formal?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup open a small community connection?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "after-dinner-cup",
-    name: "The After-Dinner Cup",
-    tag: "Closure",
-    purpose: "Close a meal with warmth, conversation, and a sense of completion.",
-    drink: "Decaf espresso, cortado, affogato, or small cappuccino",
-    dose: "17–18g",
-    yield: "34–36g",
-    time: "25–32 sec",
-    grindVessel: "small cup or dessert vessel",
-    desiredFeeling: "complete, warm, lingering, satisfied",
-    artisanOpening: "I made this as a small closing note for the meal.",
-    reportPrompt: "Did the cup help the meal end with warmth and completion?",
-    steps: [
-      { title: "Read the meal's energy", advisor: "Decide whether the close should be bright, sweet, quiet, or celebratory.", script: "This is just a little finish for the table." },
-      { title: "Choose the closing drink", advisor: "Select small and elegant rather than large and heavy.", script: "I kept it small so it can close the meal, not restart it." },
-      { title: "Prepare dessert pairing if needed", advisor: "If pairing with dessert, let coffee support sweetness and texture.", script: "This should sit nicely with the last bite." },
-      { title: "Pull with care", advisor: "A small drink magnifies flaws, so keep the recipe stable.", script: "I am keeping this clean and simple." },
-      { title: "Serve at the table", advisor: "Bring the cup as part of the meal's final rhythm.", script: "Here is the closing cup." },
-      { title: "Recovery path", advisor: "If extraction is off, use milk, dessert, or smaller serving to preserve the close.", script: "I will adjust the finish without making the table wait." },
-      { title: "Invite lingering", advisor: "Let the cup extend conversation without dragging the evening.", script: "We can linger for a few minutes." },
-      { title: "Report the close", advisor: "Capture pairing, timing, and emotional finish.", script: "I am remembering how the meal ended through the cup." }
-    ]
-  },
-
-
-  {
-    id: "founders-performance",
-    name: "The Founder's Performance",
-    tag: "Showcase",
-    purpose: "Bring story, technique, recovery, and report capture together as a signature home barista performance.",
-    drink: "Chosen signature drink",
-    dose: "18g or chosen formula",
-    yield: "36g or chosen formula",
-    time: "25–32 sec or chosen target",
-    grindVessel: "chosen vessel · staged presentation",
-    desiredFeeling: "expressive, confident, hospitable, delightful",
-    artisanOpening: "This cup has a story. I made it to express care, memory, and a little craft at the counter.",
-    reportPrompt: "Did the performance integrate story, cup, service, recovery, and delight?",
-    steps: [
-      { title: "Choose the story", advisor: "Name the feeling, memory, person, or place the drink will express.", script: "This cup is about a feeling I wanted to bring into the room." },
-      { title: "Design the drink", advisor: "Choose ingredients, vessel, dose, yield, and finishing touch in service of the story.", script: "Every part of this drink is here for a reason." },
-      { title: "Stage the counter", advisor: "Arrange tools and ingredients so the performance flows visibly and calmly.", script: "I prepared the counter so the cup could unfold clearly." },
-      { title: "Rehearse the spoken opening", advisor: "Say the first line before starting. The story should guide the movement.", script: "Before I make it, let me tell you what this cup is meant to hold." },
-      { title: "Execute the base", advisor: "Pull the espresso or brew foundation with known discipline.", script: "The base carries the structure of the drink." },
-      { title: "Build the signature element", advisor: "Add the special element with restraint. It should clarify the story, not clutter it.", script: "This is the note that connects the cup to the moment." },
-      { title: "Present the cup", advisor: "Serve with the vessel facing the guest, and speak the final line clearly.", script: "The cup holds the promise; the sip releases the joy." },
-      { title: "Use Recovery if needed", advisor: "If something misfires, narrate calmly and choose one recovery path.", script: "I am going to steady this part so the cup can still land." },
-      { title: "Invite the sip", advisor: "Give the guest a simple way to experience the drink.", script: "Take the first sip slowly; this one is meant to open gently." },
-      { title: "Capture the performance report", advisor: "Record story, recipe, movement, guest response, and next refinement.", script: "I am saving the performance so the next one becomes more intentional." }
-    ]
-  },
-  {
-    id: "first-sip-flex",
-    family: "Next-Gen Sensory Occasions",
-    name: "The First Sip Flex",
-    tag: "Next-Gen Sensory",
-    purpose: "For the guest who thinks they do not like serious coffee.",
-    drink: "Chilled espresso tonic with citrus + berry lift",
-    dose: "18g espresso base",
-    yield: "36g espresso + tonic build",
-    time: "8–11 min Occasion tempo",
-    suggestedTempo: "8–11 minutes",
-    grindVessel: "medium-fine · tall chilled glass",
-    desiredFeeling: "bright, social, refreshing, not rushed",
-    artisanOpening: "I made this as a chilled espresso tonic with citrus, a little floral lift, and a bright berry finish. Try the first sip without stirring it — the top is lighter and sparkling, then the espresso comes through underneath.",
-    guestResonancePrompt: "Did it feel more like coffee, soda, or a mocktail?",
-    reportPrompt: "Did the guest understand the sparkling coffee idea and respond with curiosity or delight?",
-    steps: [
-      { title: "Intention", suggestedTempo:"30 sec", advisor:"Invite curiosity, not coffee expertise.", script:"This one is made to be bright and easy to approach." },
-      { title: "Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Preparation begins with Mise en Place: espresso base, tonic, citrus, berry accent, glass, ice, spoon, towel, and serving path.", script:"I have the glass, ice, citrus, berry lift, and espresso ready before I start." },
-      { title: "Machine readiness", suggestedTempo:"60 sec", advisor:"Warm and purge the machine before the espresso base.", script:"I am giving the espresso a stable start before it meets the tonic." },
-      { title: "Build the chilled vessel", suggestedTempo:"60 sec", advisor:"Chill the glass, add ice, and prepare the sensory accent.", script:"The glass is cold so the first sip feels lifted." },
-      { title: "Pull the espresso", suggestedTempo:"90 sec", advisor:"Pull a clean espresso base. Keep the shot steady and avoid over-explaining.", script:"The espresso is the anchor underneath the sparkle." },
-      { title: "Layer tonic + espresso", suggestedTempo:"90 sec", advisor:"Pour carefully so the guest experiences layers.", script:"Try the first sip without stirring so you can notice the layers." },
-      { title: "First Sip Direction", suggestedTempo:"30 sec", advisor:"Guide the guest toward the first sip experience.", script:"The top should feel lighter and sparkling, then the espresso comes through underneath." },
-      { title: "Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether it landed as coffee, soda, or mocktail.", script:"Did it feel more like coffee, soda, or a mocktail?" },
-      { title: "Doma Report", suggestedTempo:"60 sec", advisor:"Capture taste, guest reaction, tempo, and next adjustment.", script:"I am saving what landed, not just what I made." }
-    ]
-  },
-  {
-    id: "matcha-bridge",
-    family: "Next-Gen Sensory Occasions",
-    name: "The Matcha Bridge",
-    tag: "Next-Gen Sensory",
-    purpose: "For matcha, tea, and café-drink lovers.",
-    drink: "Iced matcha latte with espresso float or espresso sidecar",
-    dose: "18g espresso sidecar or float",
-    yield: "36g espresso + matcha latte build",
-    time: "8–12 min Occasion tempo",
-    suggestedTempo: "8–12 minutes",
-    grindVessel: "medium-fine · clear iced glass + sidecar cup",
-    desiredFeeling: "bridging, soft, rounded, curious",
-    artisanOpening: "I made this as a matcha-espresso bridge. The matcha gives it that soft green tea sweetness, and the espresso adds a deeper roasted note underneath. Sip it from the edge first, then stir it once and notice how the flavors become rounder.",
-    guestResonancePrompt: "Did the espresso make it richer, or did you prefer the matcha before stirring?",
-    reportPrompt: "Did the guest experience the espresso as a bridge or an interruption?",
-    steps: [
-      { title:"Intention", suggestedTempo:"30 sec", advisor:"This Occasion invites tea lovers into coffee without forcing espresso seriousness.", script:"This is a bridge between matcha softness and espresso depth." },
-      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set matcha, milk, ice, espresso vessel, whisk, glass, towel, and serving path.", script:"I have the matcha, espresso, glass, ice, and sidecar ready." },
-      { title:"Prepare matcha base", suggestedTempo:"120 sec", advisor:"Whisk matcha smoothly before espresso enters the story.", script:"The matcha should feel soft before the espresso deepens it." },
-      { title:"Machine readiness", suggestedTempo:"60 sec", advisor:"Purge and stabilize before pulling the espresso element.", script:"The espresso needs to be clean because it is the contrast note." },
-      { title:"Pull espresso", suggestedTempo:"90 sec", advisor:"Pull a balanced espresso base or sidecar.", script:"This espresso is here to add depth, not dominate." },
-      { title:"Float or sidecar", suggestedTempo:"60 sec", advisor:"Choose float for visual drama or sidecar for control.", script:"Sip it from the edge first, then stir once and notice the rounder flavor." },
-      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Invite comparison before and after stirring.", script:"Notice whether the espresso makes it richer or if you prefer the matcha first." },
-      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask which version landed.", script:"Did the espresso make it richer, or did you prefer it before stirring?" },
-      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture preference, texture, and guest resonance.", script:"I am saving whether this bridge actually worked for you." }
-    ]
-  },
-  {
-    id: "cold-foam-little-treat",
-    family: "Next-Gen Sensory Occasions",
-    name: "The Cold Foam Little Treat",
-    tag: "Next-Gen Sensory",
-    purpose: "A small indulgence without turning it into a sugar bomb.",
-    drink: "Iced latte or cold brew with lightly flavored cold foam",
-    dose: "18g espresso or cold brew base",
-    yield: "drink build by vessel",
-    time: "7–10 min Occasion tempo",
-    suggestedTempo: "7–10 minutes",
-    grindVessel: "cold glass · foam-ready top",
-    desiredFeeling: "soft, creamy, playful, lightly indulgent",
-    artisanOpening: "I made this one with a cold foam top so the first sip feels soft before the coffee opens up. You should get creaminess first, then sweetness, then the coffee underneath. Try it without the straw first.",
-    guestResonancePrompt: "Did the texture change how you experienced the coffee?",
-    reportPrompt: "Did cold foam improve texture, delight, and guest interest?",
-    steps: [
-      { title:"Intention", suggestedTempo:"30 sec", advisor:"This is a texture-first Occasion, not a sugar bomb.", script:"This is a small treat, but I kept it coffee-centered." },
-      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set coffee base, milk/foam base, flavor accent, glass, ice, frother, and serving path.", script:"The foam, coffee, ice, and glass are ready before I build." },
-      { title:"Prepare coffee base", suggestedTempo:"90 sec", advisor:"Use espresso or cold brew as the foundation.", script:"The coffee underneath should still be clear." },
-      { title:"Make cold foam", suggestedTempo:"90 sec", advisor:"Keep foam light, soft, and restrained.", script:"The foam should soften the first sip without burying the coffee." },
-      { title:"Build the drink", suggestedTempo:"60 sec", advisor:"Layer coffee, ice, and foam cleanly.", script:"You should get creaminess first, then sweetness, then coffee." },
-      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Ask for strawless first sip to feel texture.", script:"Try the first sip without the straw so the texture lands first." },
-      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether texture changed perception.", script:"Did the texture change how you experienced the coffee?" },
-      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture texture, sweetness, coffee clarity, and guest reaction.", script:"I am saving whether texture created delight." }
-    ]
-  },
-  {
-    id: "zero-proof-coffee-social",
-    family: "Next-Gen Sensory Occasions",
-    name: "The Zero-Proof Coffee Social",
-    tag: "Next-Gen Sensory",
-    purpose: "Evening gathering, party, sober-curious moment, or social alternative to alcohol.",
-    drink: "Coffee mocktail, espresso tonic, or cold brew spritz",
-    dose: "espresso or cold brew base",
-    yield: "sparkling social build",
-    time: "8–12 min Occasion tempo",
-    suggestedTempo: "8–12 minutes",
-    grindVessel: "clear social glass · garnish-ready",
-    desiredFeeling: "social, bright, elevated, zero-proof",
-    artisanOpening: "I made this like a zero-proof coffee cocktail — sparkling, bright, and meant to feel social without being heavy. Take the first sip before stirring so you get the lift on top.",
-    guestResonancePrompt: "Would this work for you instead of a cocktail?",
-    reportPrompt: "Did it feel socially complete without alcohol?",
-    steps: [
-      { title:"Intention", suggestedTempo:"30 sec", advisor:"This Occasion gives the guest a social drink without alcohol heaviness.", script:"This is meant to feel social without being heavy." },
-      { title:"Home Coffee Mise en Place", suggestedTempo:"90 sec", advisor:"Set base coffee, sparkling element, citrus/garnish, glass, ice, stirrer, and serving path.", script:"The social build is staged before the first pour." },
-      { title:"Prepare coffee base", suggestedTempo:"90 sec", advisor:"Use a clean espresso or cold brew base.", script:"The coffee should carry flavor without making the drink heavy." },
-      { title:"Build sparkling layer", suggestedTempo:"60 sec", advisor:"Pour for lift and visual clarity.", script:"The sparkle is part of the hospitality." },
-      { title:"Add garnish/accent", suggestedTempo:"45 sec", advisor:"Use garnish as sensory cue, not clutter.", script:"This little accent tells you where the sip is going." },
-      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Invite first sip before stirring.", script:"Take the first sip before stirring so you get the lift on top." },
-      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask whether it could replace a cocktail.", script:"Would this work for you instead of a cocktail?" },
-      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture social fit, sweetness, brightness, and delight.", script:"I am saving whether this drink worked socially." }
+    "id": "sunday-slow-cup",
+    "name": "The Sunday Slow Cup",
+    "family": "Core Occasions",
+    "tag": "Reflection",
+    "purpose": "Create an unhurried reflective cup with pace and presence.",
+    "drink": "Slow cappuccino, pour-over, Americano, or cortado",
+    "drinkChoices": "Pour-over; cappuccino; Americano; cortado",
+    "dose": "18g espresso or 22g brew",
+    "yield": "36g espresso or 330g brew",
+    "time": "espresso 25\u201332 sec; brew 3:30\u20134:30",
+    "ratioGuidance": "Use the method that supports slowness; do not force espresso if brewed coffee better fits the moment.",
+    "grindVessel": "favorite slow cup",
+    "suggestedTempo": "10\u201316 minutes",
+    "desiredFeeling": "peaceful, reflective, unhurried",
+    "artisanOpening": "This one is meant to be slow \u2014 not rushed, just something to sit with.",
+    "firstSipDirection": "Notice aroma first, then warmth, then finish.",
+    "guestResonancePrompt": "Did it create peace, reflection, or distraction?",
+    "advisorDirection": "Advisor should protect slow tempo and help the artisan avoid turning the moment into a task list.",
+    "recoveryWatchouts": "rushing, over-tweaking, bitter brew, too much explanation",
+    "reportPrompt": "Did the cup create reflective space?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: beans, water, optional milk",
+        "Tools: method tools, scale, timer, towel",
+        "Cup/glass/vessel: favorite slow vessel",
+        "Garnish or sensory accent: none or subtle citrus peel",
+        "Machine readiness: machine/brewer warmed without hurry",
+        "Counter/staging area: counter calm and clean",
+        "Serving path: serve where reflection will happen",
+        "Script readiness: slow cup script ready"
+      ],
+      "machineReadiness": [
+        "machine/brewer warmed without hurry",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "beans, water, optional milk",
+        "method tools, scale, timer, towel",
+        "favorite slow vessel",
+        "none or subtle citrus peel"
+      ],
+      "serviceReadiness": [
+        "counter calm and clean",
+        "serve where reflection will happen",
+        "slow cup script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Sunday Slow Cup out loud and choose the desired feeling: peaceful, reflective, unhurried.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as reflection and protect the human purpose before technique.",
+        "script": "This one is meant to be slow \u2014 not rushed, just something to sit with."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Pour-over; cappuccino; Americano; cortado. Confirm dose/yield/time and ratio guidance: Use the method that supports slowness; do not force espresso if brewed coffee better fits the moment.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Slow cappuccino, pour-over, Americano, or cortado because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set favorite slow cup.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Create an unhurried reflective cup with pace and presence.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "This one is meant to be slow \u2014 not rushed, just something to sit with."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Notice aroma first, then warmth, then finish.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Notice aroma first, then warmth, then finish."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it create peace, reflection, or distraction?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: Did the cup create reflective space?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "afternoon-reset",
-    family: "Next-Gen Sensory Occasions",
-    name: "The Afternoon Reset",
-    tag: "Next-Gen Sensory",
-    purpose: "Energy without heaviness.",
-    drink: "Lighter iced coffee, citrus cold brew, or sparkling coffee refresher",
-    dose: "espresso or cold brew base",
-    yield: "lighter iced/sparkling build",
-    time: "6–9 min Occasion tempo",
-    suggestedTempo: "6–9 minutes",
-    grindVessel: "iced glass · refreshing presentation",
-    desiredFeeling: "refreshing, bright, clean, energizing",
-    artisanOpening: "I made this as an afternoon reset — bright, cold, and lighter than a latte. Try it before stirring; the citrus lifts first, then the coffee gives it a clean finish.",
-    guestResonancePrompt: "Does this feel more refreshing or more energizing?",
-    reportPrompt: "Did it restore energy without heaviness?",
-    steps: [
-      { title:"Intention", suggestedTempo:"30 sec", advisor:"This should reset energy, not weigh the guest down.", script:"This is a light reset for the afternoon." },
-      { title:"Home Coffee Mise en Place", suggestedTempo:"75 sec", advisor:"Set coffee base, ice, citrus, glass, garnish, towel, and serving path.", script:"The reset is staged to move cleanly and calmly." },
-      { title:"Prepare the base", suggestedTempo:"90 sec", advisor:"Keep the base clean and bright.", script:"The coffee should finish clean, not heavy." },
-      { title:"Build cold refreshment", suggestedTempo:"60 sec", advisor:"Use ice, citrus, and dilution intentionally.", script:"The citrus lifts first, then the coffee finishes clean." },
-      { title:"First Sip Direction", suggestedTempo:"30 sec", advisor:"Ask guest to taste before stirring.", script:"Try it before stirring; the citrus lifts first." },
-      { title:"Guest Resonance Check", suggestedTempo:"45 sec", advisor:"Ask refreshing vs energizing.", script:"Does this feel more refreshing or more energizing?" },
-      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Capture energy, refreshment, and tempo.", script:"I am saving whether this reset actually reset the afternoon." },
-      { title:"Next adjustment", suggestedTempo:"30 sec", advisor:"Tune brighter, colder, softer, or stronger next time.", script:"Next time I can make it brighter, colder, softer, or stronger." }
+    "id": "founders-performance",
+    "name": "The Founder\u2019s Performance",
+    "family": "Core Occasions",
+    "tag": "Complete Standard",
+    "purpose": "Practice the complete Barista Doma standard across preparation, stagecraft, recovery, tasting, and report.",
+    "drink": "Chosen signature or best house beverage",
+    "drinkChoices": "Best house cappuccino; signature espresso tonic; selected founder drink",
+    "dose": "18g baseline",
+    "yield": "36g espresso base",
+    "time": "25\u201332 sec espresso base",
+    "ratioGuidance": "Use the selected drink formula and document every variable; this is the full performance rehearsal.",
+    "grindVessel": "best vessel for chosen drink",
+    "suggestedTempo": "12\u201318 minutes",
+    "desiredFeeling": "prepared, composed, excellent",
+    "artisanOpening": "This is my full Barista Doma performance \u2014 the machine makes the beverage, and I prepare the moment.",
+    "firstSipDirection": "Give the correct first sip direction for the chosen drink.",
+    "guestResonancePrompt": "Did the complete Occasion land: drink, service, taste, guest, tempo?",
+    "advisorDirection": "Advisor should evaluate the full Occasion, not just the cup: readiness, voice, recovery, tasting, Guest Resonance, and report completeness.",
+    "recoveryWatchouts": "any issue; use matrix, correction loop, tasting, report",
+    "reportPrompt": "What improved and what becomes the next refinement?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: chosen drink ingredients, garnish, water, milk/tonic as needed",
+        "Tools: full tool set, scale, timer, towel, report device",
+        "Cup/glass/vessel: best vessel for chosen drink",
+        "Garnish or sensory accent: chosen accent aligned to occasion",
+        "Machine readiness: machine, grinder, and formula verified",
+        "Counter/staging area: full station staged with serving path",
+        "Serving path: serve with script and first sip direction",
+        "Script readiness: complete performance script ready"
+      ],
+      "machineReadiness": [
+        "machine, grinder, and formula verified",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "chosen drink ingredients, garnish, water, milk/tonic as needed",
+        "full tool set, scale, timer, towel, report device",
+        "best vessel for chosen drink",
+        "chosen accent aligned to occasion"
+      ],
+      "serviceReadiness": [
+        "full station staged with serving path",
+        "serve with script and first sip direction",
+        "complete performance script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the Occasion intention",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Say the purpose of The Founder\u2019s Performance out loud and choose the desired feeling: prepared, composed, excellent.",
+        "why": "The Advisor uses the intention to keep guidance aligned to the moment.",
+        "watch": "Do not start as a generic coffee task.",
+        "advisor": "Frame this as complete standard and protect the human purpose before technique.",
+        "script": "This is my full Barista Doma performance \u2014 the machine makes the beverage, and I prepare the moment."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage ingredients, tools, vessel, sensory accent, machine readiness, counter space, serving path, and script. Confirm nothing important is missing.",
+        "why": "Preparation begins with Mise en Place; it is the first readiness act, not just ingredients.",
+        "watch": "Missing vessel, towel, or script creates friction later.",
+        "advisor": "Use the structured form so machine, drink choice, dose, yield, and guest context are visible.",
+        "script": "I have the station ready so the cup can serve the moment."
+      },
+      {
+        "title": "Select the drink and formula",
+        "suggestedTempo": "60 sec",
+        "action": "Choose from: Best house cappuccino; signature espresso tonic; selected founder drink. Confirm dose/yield/time and ratio guidance: Use the selected drink formula and document every variable; this is the full performance rehearsal.",
+        "why": "The Advisor cannot give high-quality guidance if it does not know the selected drink and formula.",
+        "watch": "Do not let the app assume cappuccino when the artisan chose another drink.",
+        "advisor": "The selected drink must feed the Advisor, Recovery Matrix, and Doma Report.",
+        "script": "I am choosing Chosen signature or best house beverage because it fits this occasion."
+      },
+      {
+        "title": "Prepare machine and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Warm or chill the vessel as needed, confirm machine readiness, and set best vessel for chosen drink.",
+        "why": "The vessel and machine condition shape temperature, texture, and confidence.",
+        "watch": "Cold cups, wet baskets, or unready milk pitchers can sabotage the moment.",
+        "advisor": "Check Machine Passport data before diagnosing any issue.",
+        "script": "I am preparing the machine and vessel so the drink lands correctly."
+      },
+      {
+        "title": "Build the beverage with occasion discipline",
+        "suggestedTempo": "2\u20134 min",
+        "action": "Prepare the drink using the selected formula. Keep changes minimal and tied to the Occasion purpose: Practice the complete Barista Doma standard across preparation, stagecraft, recovery, tasting, and report.",
+        "why": "The drink build is part of the performance; the artisan\u2019s rhythm matters.",
+        "watch": "If the shot chokes, runs fast, or tastes off, open the Matrix instead of guessing.",
+        "advisor": "Give one next move only; preserve the Occasion.",
+        "script": "I am building this cup with care, not just making coffee."
+      },
+      {
+        "title": "Use the Artisan Stagecraft Script",
+        "suggestedTempo": "30\u201345 sec",
+        "action": "Serve the drink with the Occasion script. Keep words natural, brief, and guest-centered.",
+        "why": "The script turns beverage service into stagecraft.",
+        "watch": "Avoid overexplaining or making the guest feel tested.",
+        "advisor": "Coach the artisan to say enough to guide the first sip, not dominate it.",
+        "script": "This is my full Barista Doma performance \u2014 the machine makes the beverage, and I prepare the moment."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Give the correct first sip direction for the chosen drink.",
+        "why": "The first sip teaches the guest how to receive the drink.",
+        "watch": "Do not force tasting notes; invite attention.",
+        "advisor": "The Advisor should tailor the sip direction to drink choice and guest readiness.",
+        "script": "Give the correct first sip direction for the chosen drink."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the complete Occasion land: drink, service, taste, guest, tempo?",
+        "why": "The Occasion is not complete when the drink is made; it is complete when it is received.",
+        "watch": "Do not ask too many questions; capture the first honest reaction.",
+        "advisor": "Use Guest Resonance in the report: reaction, first thing noticed, quote, serve again, next adjustment.",
+        "script": "Tell me what you noticed first \u2014 aroma, texture, sweetness, temperature, or the feeling of it."
+      },
+      {
+        "title": "Complete Doma Report",
+        "suggestedTempo": "90 sec",
+        "action": "Capture machine, grinder, beans, drink choice, dose, yield, shot time, sensory notes, recovery, tempo, Guest Resonance, and next adjustment. Report prompt: What improved and what becomes the next refinement?",
+        "why": "The report makes Barista Doma the second coffee brain.",
+        "watch": "Do not skip data that the Advisor needs next time.",
+        "advisor": "Summarize trend/confidence and preserve the next move.",
+        "script": "I am saving this Occasion so the next one can become more confident."
+      }
     ]
   },
   {
-    id: "flavor-layer-flight",
-    family: "Next-Gen Sensory Occasions",
-    name: "The Flavor Layer Flight",
-    tag: "Next-Gen Sensory",
-    purpose: "Group tasting, hangout, family gathering, or curiosity moment.",
-    drink: "Three mini drinks from one coffee — creamy, sparkling, and soft/sweet",
-    dose: "shared coffee base split across three builds",
-    yield: "three mini servings",
-    time: "12–16 min Occasion tempo",
-    suggestedTempo: "12–16 minutes",
-    grindVessel: "three small cups/glasses · left-to-right flight",
-    desiredFeeling: "curious, playful, comparative, personal",
-    artisanOpening: "I made three small versions from the same coffee. One is creamy, one is sparkling, and one is soft and sweet on top. Taste them left to right and tell me which one feels most like you.",
-    guestResonancePrompt: "Which one felt most like you — refreshing, comforting, surprising, or most personal?",
-    reportPrompt: "Which version created the strongest guest resonance?",
-    steps: [
-      { title:"Intention", suggestedTempo:"30 sec", advisor:"This is a tasting moment designed for identity and curiosity.", script:"These are three expressions of the same coffee." },
-      { title:"Home Coffee Mise en Place", suggestedTempo:"120 sec", advisor:"Prepare three vessels, base coffee, cream/foam, sparkling element, sweet accent, labels, and serving path.", script:"The flight is staged left to right before I begin." },
-      { title:"Prepare coffee base", suggestedTempo:"120 sec", advisor:"Create a stable base so the variations are meaningful.", script:"The same coffee is going to show three sides." },
-      { title:"Build creamy version", suggestedTempo:"60 sec", advisor:"Make comfort and texture visible.", script:"This one is the creamy version." },
-      { title:"Build sparkling version", suggestedTempo:"60 sec", advisor:"Build refreshment and lift.", script:"This one is the sparkling version." },
-      { title:"Build soft/sweet version", suggestedTempo:"60 sec", advisor:"Make sweetness gentle, not overwhelming.", script:"This one is soft and sweet on top." },
-      { title:"First Sip Direction", suggestedTempo:"45 sec", advisor:"Guide left to right tasting.", script:"Taste them left to right and tell me which one feels most like you." },
-      { title:"Guest Resonance Check", suggestedTempo:"60 sec", advisor:"Capture personal connection to the version.", script:"Which one felt most like you — refreshing, comforting, surprising, or most personal?" },
-      { title:"Doma Report", suggestedTempo:"60 sec", advisor:"Record preference, notes, and guest quote.", script:"I am saving which version became personal." }
+    "id": "first-sip-flex",
+    "name": "The First Sip Flex",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "First-sip wow",
+    "purpose": "For the guest who thinks they do not like serious coffee.",
+    "drink": "Chilled espresso tonic with citrus + berry lift",
+    "drinkChoices": "Chilled espresso tonic; espresso spritz; low-sugar berry citrus tonic",
+    "dose": "18g espresso base",
+    "yield": "36g espresso base over tonic",
+    "time": "25\u201332 sec espresso; total build 8\u201311 min",
+    "ratioGuidance": "Espresso tonic is not a latte ratio; build sparkling base first, leave headroom, float espresso for contrast.",
+    "grindVessel": "chilled highball glass",
+    "suggestedTempo": "8\u201311 minutes",
+    "desiredFeeling": "bright, social, refreshing, not rushed",
+    "artisanOpening": "I made this as a chilled espresso tonic with citrus, a little floral lift, and a bright berry finish. Try the first sip without stirring it \u2014 the top is lighter and sparkling, then the espresso comes through underneath.",
+    "firstSipDirection": "Sip from the top before stirring so the sparkling citrus layer arrives first.",
+    "guestResonancePrompt": "Did it feel more like coffee, soda, or a mocktail?",
+    "advisorDirection": "Advisor should protect sparkle, visual layering, and guest surprise. It should not over-teach espresso extraction unless the shot fails.",
+    "recoveryWatchouts": "flat tonic, bitter espresso float, muddled layers, guest confused",
+    "reportPrompt": "Did the guest cross the bridge into serious coffee through delight?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: espresso, chilled tonic/sparkling water, ice, citrus peel or wheel, berry accent",
+        "Tools: scale, espresso tools, chilled glass, bar spoon, towel",
+        "Cup/glass/vessel: chilled highball or clear glass",
+        "Garnish or sensory accent: citrus twist and one berry or berry syrup accent",
+        "Machine readiness: machine hot and ready; glass cold; espresso pulled last",
+        "Counter/staging area: clear counter with glass centered for visual build",
+        "Serving path: serve immediately before carbonation fades",
+        "Script readiness: first-sip unstirred script ready"
+      ],
+      "machineReadiness": [
+        "machine hot and ready; glass cold; espresso pulled last",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "espresso, chilled tonic/sparkling water, ice, citrus peel or wheel, berry accent",
+        "scale, espresso tools, chilled glass, bar spoon, towel",
+        "chilled highball or clear glass",
+        "citrus twist and one berry or berry syrup accent"
+      ],
+      "serviceReadiness": [
+        "clear counter with glass centered for visual build",
+        "serve immediately before carbonation fades",
+        "first-sip unstirred script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the sensory intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name the purpose of The First Sip Flex: For the guest who thinks they do not like serious coffee.",
+        "why": "Next-Gen drinks need a clear reason or they can feel gimmicky.",
+        "watch": "Avoid novelty without intention.",
+        "advisor": "Advisor should protect sparkle, visual layering, and guest surprise. It should not over-teach espresso extraction unless the shot fails.",
+        "script": "I made this as a chilled espresso tonic with citrus, a little floral lift, and a bright berry finish. Try the first sip without stirring it \u2014 the top is lighter and sparkling, then the espresso comes through underneath."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage all cold/sensory ingredients, tools, vessel, garnish, machine readiness, serving path, and script before brewing.",
+        "why": "Cold and layered drinks punish missing pieces because ice, foam, and sparkle change quickly.",
+        "watch": "Do not start espresso until glass, ice, and accent are ready.",
+        "advisor": "Preparation begins with Mise en Place; stage the sensory elements first.",
+        "script": "Everything is staged so the drink can be built cleanly."
+      },
+      {
+        "title": "Confirm drink choice and build formula",
+        "suggestedTempo": "60 sec",
+        "action": "Select one build from: Chilled espresso tonic; espresso spritz; low-sugar berry citrus tonic. Use this guidance: Espresso tonic is not a latte ratio; build sparkling base first, leave headroom, float espresso for contrast.",
+        "why": "The Advisor needs selected drink choice, not just the Occasion name.",
+        "watch": "Do not assume the default if the artisan chooses a variant.",
+        "advisor": "Feed selected drink, dose/yield, and build method into Advisor context.",
+        "script": "I am choosing this build because it fits The First Sip Flex."
+      },
+      {
+        "title": "Prepare base and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Prepare the vessel: chilled highball glass. Confirm machine and coffee base. Use 18g espresso base toward 36g espresso base over tonic where espresso is involved.",
+        "why": "Temperature, vessel, and sequence shape perception.",
+        "watch": "Warm espresso in warm glass can melt ice too fast; cold glass protects texture.",
+        "advisor": "Coach sequence and readiness before taste correction.",
+        "script": "I am preparing the base so the first sip has the right structure."
+      },
+      {
+        "title": "Build the sensory structure",
+        "suggestedTempo": "2\u20133 min",
+        "action": "Build the drink deliberately: preserve layers, texture, temperature contrast, and aroma for Chilled espresso tonic with citrus + berry lift.",
+        "why": "The drink experience comes from sequence, not ingredients alone.",
+        "watch": "Stirring too early, over-sweetening, or losing foam/sparkle weakens the Occasion.",
+        "advisor": "Explain each build action in practical terms if asked.",
+        "script": "I am building the layers so the guest can experience the drink in order."
+      },
+      {
+        "title": "Serve with Artisan Stagecraft Script",
+        "suggestedTempo": "30 sec",
+        "action": "Use the script exactly enough to guide curiosity, then stop talking.",
+        "why": "Gen Z/Next-Gen guests often want an experience but not a lecture.",
+        "watch": "Too much explanation can reduce delight.",
+        "advisor": "Advisor should make the script short, social, and sensory.",
+        "script": "I made this as a chilled espresso tonic with citrus, a little floral lift, and a bright berry finish. Try the first sip without stirring it \u2014 the top is lighter and sparkling, then the espresso comes through underneath."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Sip from the top before stirring so the sparkling citrus layer arrives first.",
+        "why": "First sip direction prevents the guest from collapsing the drink too early.",
+        "watch": "If they stir first, the intended contrast may disappear.",
+        "advisor": "Coach the guest gently; do not control them.",
+        "script": "Sip from the top before stirring so the sparkling citrus layer arrives first."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did it feel more like coffee, soda, or a mocktail?",
+        "why": "Guest Resonance tells whether the drink crossed from interesting to delightful.",
+        "watch": "Capture their words, not your hope.",
+        "advisor": "Use reaction, first thing noticed, quote, and serve-again choice.",
+        "script": "Did it feel more like coffee, soda, or a mocktail?"
+      },
+      {
+        "title": "Doma Report and next adjustment",
+        "suggestedTempo": "90 sec",
+        "action": "Log drink variant, build sequence, sensory notes, Guest Resonance, timing, and next adjustment. Did the guest cross the bridge into serious coffee through delight?",
+        "why": "These drinks are learning engines for younger and sensory-led guests.",
+        "watch": "Do not lose the chosen variant or guest quote.",
+        "advisor": "Connect flavor wheel, graphs, and report trend to future builds.",
+        "script": "I am saving which version landed so I can make the next one better."
+      }
+    ]
+  },
+  {
+    "id": "matcha-bridge",
+    "name": "The Matcha Bridge",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "Tea bridge",
+    "purpose": "For matcha, tea, and caf\u00e9-drink lovers who may not identify as espresso people.",
+    "drink": "Iced matcha latte with espresso float or espresso sidecar",
+    "drinkChoices": "Iced matcha latte with espresso float; espresso sidecar; shaken matcha espresso",
+    "dose": "18g espresso base; 2g matcha typical",
+    "yield": "36g espresso; 6\u20138 oz matcha milk base",
+    "time": "25\u201332 sec espresso; total build 8\u201312 min",
+    "ratioGuidance": "Matcha base should be smooth before espresso enters; float gives layered tasting, sidecar gives guest control.",
+    "grindVessel": "clear iced glass + optional sidecar cup",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "curious, round, layered, approachable",
+    "artisanOpening": "I made this as a matcha-espresso bridge. The matcha gives it that soft green tea sweetness, and the espresso adds a deeper roasted note underneath. Sip it from the edge first, then stir it once and notice how the flavors become rounder.",
+    "firstSipDirection": "Sip from the edge before stirring, then stir once to compare.",
+    "guestResonancePrompt": "Did the espresso make it richer, or did you prefer the matcha before stirring?",
+    "advisorDirection": "Advisor should help the artisan bridge categories and avoid coffee-snob language.",
+    "recoveryWatchouts": "clumpy matcha, bitter espresso, layers mixing too early, too sweet",
+    "reportPrompt": "Did matcha become a bridge into coffee?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: matcha, milk/alt milk, espresso, ice, optional light sweetener",
+        "Tools: matcha whisk/shaker, espresso tools, glass, sidecar cup, spoon",
+        "Cup/glass/vessel: clear iced glass plus optional small espresso sidecar",
+        "Garnish or sensory accent: none or light matcha dusting",
+        "Machine readiness: machine hot, matcha pre-sifted or smooth, ice ready",
+        "Counter/staging area: separate matcha and espresso stations cleanly",
+        "Serving path: present sidecar/float clearly",
+        "Script readiness: bridge explanation ready"
+      ],
+      "machineReadiness": [
+        "machine hot, matcha pre-sifted or smooth, ice ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "matcha, milk/alt milk, espresso, ice, optional light sweetener",
+        "matcha whisk/shaker, espresso tools, glass, sidecar cup, spoon",
+        "clear iced glass plus optional small espresso sidecar",
+        "none or light matcha dusting"
+      ],
+      "serviceReadiness": [
+        "separate matcha and espresso stations cleanly",
+        "present sidecar/float clearly",
+        "bridge explanation ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the sensory intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name the purpose of The Matcha Bridge: For matcha, tea, and caf\u00e9-drink lovers who may not identify as espresso people.",
+        "why": "Next-Gen drinks need a clear reason or they can feel gimmicky.",
+        "watch": "Avoid novelty without intention.",
+        "advisor": "Advisor should help the artisan bridge categories and avoid coffee-snob language.",
+        "script": "I made this as a matcha-espresso bridge. The matcha gives it that soft green tea sweetness, and the espresso adds a deeper roasted note underneath. Sip it from the edge first, then stir it once and notice how the flavors become rounder."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage all cold/sensory ingredients, tools, vessel, garnish, machine readiness, serving path, and script before brewing.",
+        "why": "Cold and layered drinks punish missing pieces because ice, foam, and sparkle change quickly.",
+        "watch": "Do not start espresso until glass, ice, and accent are ready.",
+        "advisor": "Preparation begins with Mise en Place; stage the sensory elements first.",
+        "script": "Everything is staged so the drink can be built cleanly."
+      },
+      {
+        "title": "Confirm drink choice and build formula",
+        "suggestedTempo": "60 sec",
+        "action": "Select one build from: Iced matcha latte with espresso float; espresso sidecar; shaken matcha espresso. Use this guidance: Matcha base should be smooth before espresso enters; float gives layered tasting, sidecar gives guest control.",
+        "why": "The Advisor needs selected drink choice, not just the Occasion name.",
+        "watch": "Do not assume the default if the artisan chooses a variant.",
+        "advisor": "Feed selected drink, dose/yield, and build method into Advisor context.",
+        "script": "I am choosing this build because it fits The Matcha Bridge."
+      },
+      {
+        "title": "Prepare base and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Prepare the vessel: clear iced glass + optional sidecar cup. Confirm machine and coffee base. Use 18g espresso base; 2g matcha typical toward 36g espresso; 6\u20138 oz matcha milk base where espresso is involved.",
+        "why": "Temperature, vessel, and sequence shape perception.",
+        "watch": "Warm espresso in warm glass can melt ice too fast; cold glass protects texture.",
+        "advisor": "Coach sequence and readiness before taste correction.",
+        "script": "I am preparing the base so the first sip has the right structure."
+      },
+      {
+        "title": "Build the sensory structure",
+        "suggestedTempo": "2\u20133 min",
+        "action": "Build the drink deliberately: preserve layers, texture, temperature contrast, and aroma for Iced matcha latte with espresso float or espresso sidecar.",
+        "why": "The drink experience comes from sequence, not ingredients alone.",
+        "watch": "Stirring too early, over-sweetening, or losing foam/sparkle weakens the Occasion.",
+        "advisor": "Explain each build action in practical terms if asked.",
+        "script": "I am building the layers so the guest can experience the drink in order."
+      },
+      {
+        "title": "Serve with Artisan Stagecraft Script",
+        "suggestedTempo": "30 sec",
+        "action": "Use the script exactly enough to guide curiosity, then stop talking.",
+        "why": "Gen Z/Next-Gen guests often want an experience but not a lecture.",
+        "watch": "Too much explanation can reduce delight.",
+        "advisor": "Advisor should make the script short, social, and sensory.",
+        "script": "I made this as a matcha-espresso bridge. The matcha gives it that soft green tea sweetness, and the espresso adds a deeper roasted note underneath. Sip it from the edge first, then stir it once and notice how the flavors become rounder."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Sip from the edge before stirring, then stir once to compare.",
+        "why": "First sip direction prevents the guest from collapsing the drink too early.",
+        "watch": "If they stir first, the intended contrast may disappear.",
+        "advisor": "Coach the guest gently; do not control them.",
+        "script": "Sip from the edge before stirring, then stir once to compare."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the espresso make it richer, or did you prefer the matcha before stirring?",
+        "why": "Guest Resonance tells whether the drink crossed from interesting to delightful.",
+        "watch": "Capture their words, not your hope.",
+        "advisor": "Use reaction, first thing noticed, quote, and serve-again choice.",
+        "script": "Did the espresso make it richer, or did you prefer the matcha before stirring?"
+      },
+      {
+        "title": "Doma Report and next adjustment",
+        "suggestedTempo": "90 sec",
+        "action": "Log drink variant, build sequence, sensory notes, Guest Resonance, timing, and next adjustment. Did matcha become a bridge into coffee?",
+        "why": "These drinks are learning engines for younger and sensory-led guests.",
+        "watch": "Do not lose the chosen variant or guest quote.",
+        "advisor": "Connect flavor wheel, graphs, and report trend to future builds.",
+        "script": "I am saving which version landed so I can make the next one better."
+      }
+    ]
+  },
+  {
+    "id": "cold-foam-treat",
+    "name": "The Cold Foam Little Treat",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "Texture",
+    "purpose": "A small indulgence with texture without becoming a sugar bomb.",
+    "drink": "Iced latte or cold brew with lightly flavored cold foam",
+    "drinkChoices": "Iced latte; cold brew with cold foam; espresso over milk with foam cap",
+    "dose": "18g espresso base or 4\u20136 oz cold brew",
+    "yield": "36g espresso or cold brew base",
+    "time": "25\u201332 sec espresso; total build 7\u201310 min",
+    "ratioGuidance": "Build coffee base first, foam separately, then cap lightly so first sip passes through texture.",
+    "grindVessel": "clear iced glass",
+    "suggestedTempo": "7\u201310 minutes",
+    "desiredFeeling": "soft, creamy, restrained, delightful",
+    "artisanOpening": "I made this one with a cold foam top so the first sip feels soft before the coffee opens up. You should get creaminess first, then sweetness, then the coffee underneath. Try it without the straw first.",
+    "firstSipDirection": "Sip without straw first through the foam.",
+    "guestResonancePrompt": "Did the texture change how you experienced the coffee?",
+    "advisorDirection": "Advisor should control sweetness and make texture the star, not sugar.",
+    "recoveryWatchouts": "foam collapsing, too sweet, coffee hidden, watery base",
+    "reportPrompt": "Did texture create delight without heaviness?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: espresso/cold brew, milk/cream or alt milk, ice, tiny flavor accent",
+        "Tools: frother/shaker, espresso tools, glass, spoon, towel",
+        "Cup/glass/vessel: clear iced glass",
+        "Garnish or sensory accent: light vanilla/citrus/cocoa accent only if restrained",
+        "Machine readiness: machine ready or cold brew measured; foam tool ready",
+        "Counter/staging area: cold ingredients staged and glass ready",
+        "Serving path: serve immediately while foam sits on top",
+        "Script readiness: texture-first script ready"
+      ],
+      "machineReadiness": [
+        "machine ready or cold brew measured; foam tool ready",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "espresso/cold brew, milk/cream or alt milk, ice, tiny flavor accent",
+        "frother/shaker, espresso tools, glass, spoon, towel",
+        "clear iced glass",
+        "light vanilla/citrus/cocoa accent only if restrained"
+      ],
+      "serviceReadiness": [
+        "cold ingredients staged and glass ready",
+        "serve immediately while foam sits on top",
+        "texture-first script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the sensory intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name the purpose of The Cold Foam Little Treat: A small indulgence with texture without becoming a sugar bomb.",
+        "why": "Next-Gen drinks need a clear reason or they can feel gimmicky.",
+        "watch": "Avoid novelty without intention.",
+        "advisor": "Advisor should control sweetness and make texture the star, not sugar.",
+        "script": "I made this one with a cold foam top so the first sip feels soft before the coffee opens up. You should get creaminess first, then sweetness, then the coffee underneath. Try it without the straw first."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage all cold/sensory ingredients, tools, vessel, garnish, machine readiness, serving path, and script before brewing.",
+        "why": "Cold and layered drinks punish missing pieces because ice, foam, and sparkle change quickly.",
+        "watch": "Do not start espresso until glass, ice, and accent are ready.",
+        "advisor": "Preparation begins with Mise en Place; stage the sensory elements first.",
+        "script": "Everything is staged so the drink can be built cleanly."
+      },
+      {
+        "title": "Confirm drink choice and build formula",
+        "suggestedTempo": "60 sec",
+        "action": "Select one build from: Iced latte; cold brew with cold foam; espresso over milk with foam cap. Use this guidance: Build coffee base first, foam separately, then cap lightly so first sip passes through texture.",
+        "why": "The Advisor needs selected drink choice, not just the Occasion name.",
+        "watch": "Do not assume the default if the artisan chooses a variant.",
+        "advisor": "Feed selected drink, dose/yield, and build method into Advisor context.",
+        "script": "I am choosing this build because it fits The Cold Foam Little Treat."
+      },
+      {
+        "title": "Prepare base and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Prepare the vessel: clear iced glass. Confirm machine and coffee base. Use 18g espresso base or 4\u20136 oz cold brew toward 36g espresso or cold brew base where espresso is involved.",
+        "why": "Temperature, vessel, and sequence shape perception.",
+        "watch": "Warm espresso in warm glass can melt ice too fast; cold glass protects texture.",
+        "advisor": "Coach sequence and readiness before taste correction.",
+        "script": "I am preparing the base so the first sip has the right structure."
+      },
+      {
+        "title": "Build the sensory structure",
+        "suggestedTempo": "2\u20133 min",
+        "action": "Build the drink deliberately: preserve layers, texture, temperature contrast, and aroma for Iced latte or cold brew with lightly flavored cold foam.",
+        "why": "The drink experience comes from sequence, not ingredients alone.",
+        "watch": "Stirring too early, over-sweetening, or losing foam/sparkle weakens the Occasion.",
+        "advisor": "Explain each build action in practical terms if asked.",
+        "script": "I am building the layers so the guest can experience the drink in order."
+      },
+      {
+        "title": "Serve with Artisan Stagecraft Script",
+        "suggestedTempo": "30 sec",
+        "action": "Use the script exactly enough to guide curiosity, then stop talking.",
+        "why": "Gen Z/Next-Gen guests often want an experience but not a lecture.",
+        "watch": "Too much explanation can reduce delight.",
+        "advisor": "Advisor should make the script short, social, and sensory.",
+        "script": "I made this one with a cold foam top so the first sip feels soft before the coffee opens up. You should get creaminess first, then sweetness, then the coffee underneath. Try it without the straw first."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Sip without straw first through the foam.",
+        "why": "First sip direction prevents the guest from collapsing the drink too early.",
+        "watch": "If they stir first, the intended contrast may disappear.",
+        "advisor": "Coach the guest gently; do not control them.",
+        "script": "Sip without straw first through the foam."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Did the texture change how you experienced the coffee?",
+        "why": "Guest Resonance tells whether the drink crossed from interesting to delightful.",
+        "watch": "Capture their words, not your hope.",
+        "advisor": "Use reaction, first thing noticed, quote, and serve-again choice.",
+        "script": "Did the texture change how you experienced the coffee?"
+      },
+      {
+        "title": "Doma Report and next adjustment",
+        "suggestedTempo": "90 sec",
+        "action": "Log drink variant, build sequence, sensory notes, Guest Resonance, timing, and next adjustment. Did texture create delight without heaviness?",
+        "why": "These drinks are learning engines for younger and sensory-led guests.",
+        "watch": "Do not lose the chosen variant or guest quote.",
+        "advisor": "Connect flavor wheel, graphs, and report trend to future builds.",
+        "script": "I am saving which version landed so I can make the next one better."
+      }
+    ]
+  },
+  {
+    "id": "zero-proof-social",
+    "name": "The Zero-Proof Coffee Social",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "Zero-proof",
+    "purpose": "Evening gathering, party, sober-curious moment, or social alternative to alcohol.",
+    "drink": "Coffee mocktail, espresso tonic, or cold brew spritz",
+    "drinkChoices": "Espresso tonic; cold brew spritz; coffee mocktail",
+    "dose": "18g espresso or 2\u20133 oz cold brew concentrate",
+    "yield": "36g espresso or 3\u20134 oz coffee base",
+    "time": "25\u201332 sec espresso; total build 8\u201312 min",
+    "ratioGuidance": "Treat it like a zero-proof cocktail: glass, ice, sparkling lift, coffee base, garnish, first sip before stirring.",
+    "grindVessel": "rocks glass, highball, or coupe",
+    "suggestedTempo": "8\u201312 minutes",
+    "desiredFeeling": "social, bright, elevated, adult, alcohol-free",
+    "artisanOpening": "I made this like a zero-proof coffee cocktail \u2014 sparkling, bright, and meant to feel social without being heavy. Take the first sip before stirring so you get the lift on top.",
+    "firstSipDirection": "Take the first sip before stirring so the lift stays on top.",
+    "guestResonancePrompt": "Would this work for you instead of a cocktail?",
+    "advisorDirection": "Advisor should protect social dignity and adult complexity without alcohol.",
+    "recoveryWatchouts": "too bitter, too sweet, flat sparkle, garnish overdone",
+    "reportPrompt": "Did the drink function socially, not just taste interesting?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: coffee base, ice, sparkling element, citrus/bitters-style accent if non-alcoholic",
+        "Tools: glass, spoon, espresso/cold brew tools, towel",
+        "Cup/glass/vessel: rocks glass/highball/coupe",
+        "Garnish or sensory accent: citrus peel, herb, berry, or salt rim if intentional",
+        "Machine readiness: coffee base ready; glass chilled; carbonation preserved",
+        "Counter/staging area: bar-like clean station",
+        "Serving path: serve as a social drink, not a science project",
+        "Script readiness: zero-proof introduction ready"
+      ],
+      "machineReadiness": [
+        "coffee base ready; glass chilled; carbonation preserved",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "coffee base, ice, sparkling element, citrus/bitters-style accent if non-alcoholic",
+        "glass, spoon, espresso/cold brew tools, towel",
+        "rocks glass/highball/coupe",
+        "citrus peel, herb, berry, or salt rim if intentional"
+      ],
+      "serviceReadiness": [
+        "bar-like clean station",
+        "serve as a social drink, not a science project",
+        "zero-proof introduction ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the zero-proof intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name that this is a social drink, not a substitute apology for alcohol. It should feel adult, bright, and intentional.",
+        "why": "The guest must understand it as a social beverage, not a compromise.",
+        "watch": "Avoid childish sweetness or mocktail clutter.",
+        "advisor": "Position the drink as hospitality with complexity and lift.",
+        "script": "I made this like a zero-proof coffee cocktail \u2014 sparkling, bright, and meant to feel social without being heavy. Take the first sip before stirring so you get the lift on top."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage chilled glass, ice, sparkling element, coffee base, garnish, spoon, towel, and serving path.",
+        "why": "Carbonation and temperature fade quickly, so readiness matters.",
+        "watch": "Do not pull espresso before the glass and sparkling layer are ready.",
+        "advisor": "Preparation begins with Mise en Place; preserve sparkle by staging first.",
+        "script": "The glass is ready before the coffee arrives."
+      },
+      {
+        "title": "Prepare glass and garnish first",
+        "suggestedTempo": "60 sec",
+        "action": "Chill the glass or fill with fresh ice. Cut/twist citrus or set herb/berry accent before adding liquid.",
+        "why": "A prepared glass makes the final build calm and polished.",
+        "watch": "Warm glass and late garnish flatten the social effect.",
+        "advisor": "Coach the artisan to stage like a cocktail bar but speak like a host.",
+        "script": "I am setting the glass first so the drink feels intentional."
+      },
+      {
+        "title": "Build the sparkling layer",
+        "suggestedTempo": "45 sec",
+        "action": "Pour tonic/sparkling water slowly down the side over ice, leaving 1\u20132 inches of headroom for coffee. Do not stir yet.",
+        "why": "Slow pouring preserves bubbles and creates a lighter top layer.",
+        "watch": "Pouring aggressively kills carbonation and muddies the drink.",
+        "advisor": "If the artisan says \u201cbuild the layer,\u201d explain carbonation, headroom, and no early stirring.",
+        "script": "I am keeping the sparkle alive before the coffee joins it."
+      },
+      {
+        "title": "Add the coffee element",
+        "suggestedTempo": "45 sec",
+        "action": "Pour espresso or cold brew gently over the back of a spoon or down the side to create contrast without collapsing the bubbles.",
+        "why": "The coffee should enter as a layer or ribbon, not a heavy dump.",
+        "watch": "If espresso is very bitter, reduce amount or add a softer coffee base next time.",
+        "advisor": "Protect visual contrast and balance; do not overcorrect during service.",
+        "script": "I am letting the coffee settle into the sparkling lift."
+      },
+      {
+        "title": "Check balance quickly",
+        "suggestedTempo": "30 sec",
+        "action": "Smell and, if appropriate, taste with a straw/spoon from the side: bitter, bright, sweet, sparkling, refreshing.",
+        "why": "A zero-proof drink needs balance before it gets handed over.",
+        "watch": "Too bitter needs softer dilution; too sweet needs citrus/sparkle.",
+        "advisor": "Recommend one small balancing move only if needed.",
+        "script": "I am checking that it feels social, not heavy."
+      },
+      {
+        "title": "Serve with stagecraft",
+        "suggestedTempo": "30 sec",
+        "action": "Deliver the drink immediately, before bubbles fade, and say the script.",
+        "why": "The service language tells the guest how to receive the drink.",
+        "watch": "Do not overexplain extraction; this is a social moment.",
+        "advisor": "Keep the Advisor focused on social fit and first sip.",
+        "script": "I made this like a zero-proof coffee cocktail \u2014 sparkling, bright, and meant to feel social without being heavy. Take the first sip before stirring so you get the lift on top."
+      },
+      {
+        "title": "First sip and Guest Resonance",
+        "suggestedTempo": "60 sec",
+        "action": "Take the first sip before stirring so the lift stays on top. Then ask: Would this work for you instead of a cocktail?",
+        "why": "The first sip determines whether the guest receives it as coffee, mocktail, or social ritual.",
+        "watch": "Do not lead the answer; capture what they actually say.",
+        "advisor": "Save the reaction in Guest Resonance and Doma Report.",
+        "script": "Tell me whether this feels like it could replace a cocktail for you."
+      },
+      {
+        "title": "Report the social result",
+        "suggestedTempo": "90 sec",
+        "action": "Save drink choice, coffee base, garnish, guest reaction, flavor notes, tempo, and whether to serve again.",
+        "why": "This tells Barista Doma whether the social alternative landed.",
+        "watch": "Do not only record taste; record social function.",
+        "advisor": "Make the report part of the second coffee brain.",
+        "script": "I am saving whether this worked as a social drink, not just a coffee drink."
+      }
+    ]
+  },
+  {
+    "id": "afternoon-reset",
+    "name": "The Afternoon Reset",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "Refresh",
+    "purpose": "Energy without heaviness for a later-day lift.",
+    "drink": "Lighter iced coffee, citrus cold brew, or sparkling coffee refresher",
+    "drinkChoices": "Citrus cold brew; iced Americano; sparkling coffee refresher",
+    "dose": "18g espresso or 3\u20134 oz cold brew",
+    "yield": "36g espresso diluted or cold brew base",
+    "time": "espresso 25\u201332 sec; total 6\u20139 min",
+    "ratioGuidance": "Use lighter dilution, colder temperature, and citrus/sparkle to avoid heaviness.",
+    "grindVessel": "chilled glass",
+    "suggestedTempo": "6\u20139 minutes",
+    "desiredFeeling": "clean, light, refreshing, energizing",
+    "artisanOpening": "I made this as an afternoon reset \u2014 bright, cold, and lighter than a latte. Try it before stirring; the citrus lifts first, then the coffee gives it a clean finish.",
+    "firstSipDirection": "Sip before stirring to catch citrus lift.",
+    "guestResonancePrompt": "Does this feel more refreshing or more energizing?",
+    "advisorDirection": "Advisor should keep the cup light and avoid pushing milk-heavy builds unless requested.",
+    "recoveryWatchouts": "too watery, too sour, not cold enough, too much caffeine",
+    "reportPrompt": "Did the drink reset energy without heaviness?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: coffee base, ice, citrus, optional sparkling water",
+        "Tools: glass, spoon, espresso/cold brew tools, towel",
+        "Cup/glass/vessel: chilled glass",
+        "Garnish or sensory accent: citrus peel/wheel",
+        "Machine readiness: machine/cold brew ready; glass chilled",
+        "Counter/staging area: quick clean cold-drink station",
+        "Serving path: serve before dilution weakens cup",
+        "Script readiness: afternoon reset line ready"
+      ],
+      "machineReadiness": [
+        "machine/cold brew ready; glass chilled",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "coffee base, ice, citrus, optional sparkling water",
+        "glass, spoon, espresso/cold brew tools, towel",
+        "chilled glass",
+        "citrus peel/wheel"
+      ],
+      "serviceReadiness": [
+        "quick clean cold-drink station",
+        "serve before dilution weakens cup",
+        "afternoon reset line ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the sensory intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name the purpose of The Afternoon Reset: Energy without heaviness for a later-day lift.",
+        "why": "Next-Gen drinks need a clear reason or they can feel gimmicky.",
+        "watch": "Avoid novelty without intention.",
+        "advisor": "Advisor should keep the cup light and avoid pushing milk-heavy builds unless requested.",
+        "script": "I made this as an afternoon reset \u2014 bright, cold, and lighter than a latte. Try it before stirring; the citrus lifts first, then the coffee gives it a clean finish."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage all cold/sensory ingredients, tools, vessel, garnish, machine readiness, serving path, and script before brewing.",
+        "why": "Cold and layered drinks punish missing pieces because ice, foam, and sparkle change quickly.",
+        "watch": "Do not start espresso until glass, ice, and accent are ready.",
+        "advisor": "Preparation begins with Mise en Place; stage the sensory elements first.",
+        "script": "Everything is staged so the drink can be built cleanly."
+      },
+      {
+        "title": "Confirm drink choice and build formula",
+        "suggestedTempo": "60 sec",
+        "action": "Select one build from: Citrus cold brew; iced Americano; sparkling coffee refresher. Use this guidance: Use lighter dilution, colder temperature, and citrus/sparkle to avoid heaviness.",
+        "why": "The Advisor needs selected drink choice, not just the Occasion name.",
+        "watch": "Do not assume the default if the artisan chooses a variant.",
+        "advisor": "Feed selected drink, dose/yield, and build method into Advisor context.",
+        "script": "I am choosing this build because it fits The Afternoon Reset."
+      },
+      {
+        "title": "Prepare base and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Prepare the vessel: chilled glass. Confirm machine and coffee base. Use 18g espresso or 3\u20134 oz cold brew toward 36g espresso diluted or cold brew base where espresso is involved.",
+        "why": "Temperature, vessel, and sequence shape perception.",
+        "watch": "Warm espresso in warm glass can melt ice too fast; cold glass protects texture.",
+        "advisor": "Coach sequence and readiness before taste correction.",
+        "script": "I am preparing the base so the first sip has the right structure."
+      },
+      {
+        "title": "Build the sensory structure",
+        "suggestedTempo": "2\u20133 min",
+        "action": "Build the drink deliberately: preserve layers, texture, temperature contrast, and aroma for Lighter iced coffee, citrus cold brew, or sparkling coffee refresher.",
+        "why": "The drink experience comes from sequence, not ingredients alone.",
+        "watch": "Stirring too early, over-sweetening, or losing foam/sparkle weakens the Occasion.",
+        "advisor": "Explain each build action in practical terms if asked.",
+        "script": "I am building the layers so the guest can experience the drink in order."
+      },
+      {
+        "title": "Serve with Artisan Stagecraft Script",
+        "suggestedTempo": "30 sec",
+        "action": "Use the script exactly enough to guide curiosity, then stop talking.",
+        "why": "Gen Z/Next-Gen guests often want an experience but not a lecture.",
+        "watch": "Too much explanation can reduce delight.",
+        "advisor": "Advisor should make the script short, social, and sensory.",
+        "script": "I made this as an afternoon reset \u2014 bright, cold, and lighter than a latte. Try it before stirring; the citrus lifts first, then the coffee gives it a clean finish."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Sip before stirring to catch citrus lift.",
+        "why": "First sip direction prevents the guest from collapsing the drink too early.",
+        "watch": "If they stir first, the intended contrast may disappear.",
+        "advisor": "Coach the guest gently; do not control them.",
+        "script": "Sip before stirring to catch citrus lift."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Does this feel more refreshing or more energizing?",
+        "why": "Guest Resonance tells whether the drink crossed from interesting to delightful.",
+        "watch": "Capture their words, not your hope.",
+        "advisor": "Use reaction, first thing noticed, quote, and serve-again choice.",
+        "script": "Does this feel more refreshing or more energizing?"
+      },
+      {
+        "title": "Doma Report and next adjustment",
+        "suggestedTempo": "90 sec",
+        "action": "Log drink variant, build sequence, sensory notes, Guest Resonance, timing, and next adjustment. Did the drink reset energy without heaviness?",
+        "why": "These drinks are learning engines for younger and sensory-led guests.",
+        "watch": "Do not lose the chosen variant or guest quote.",
+        "advisor": "Connect flavor wheel, graphs, and report trend to future builds.",
+        "script": "I am saving which version landed so I can make the next one better."
+      }
+    ]
+  },
+  {
+    "id": "flavor-layer-flight",
+    "name": "The Flavor Layer Flight",
+    "family": "Next-Gen Sensory Occasions",
+    "tag": "Group tasting",
+    "purpose": "Three mini drinks from one coffee: creamy, sparkling, and soft/sweet.",
+    "drink": "Three mini drinks from one coffee \u2014 creamy, sparkling, soft/sweet",
+    "drinkChoices": "Mini creamy; mini sparkling; mini soft/sweet",
+    "dose": "18g espresso split or brewed concentrate",
+    "yield": "36g espresso split across three minis",
+    "time": "25\u201332 sec espresso; total 12\u201316 min",
+    "ratioGuidance": "One coffee becomes three expressions; keep pours small and sequence left-to-right.",
+    "grindVessel": "three small glasses",
+    "suggestedTempo": "12\u201316 minutes",
+    "desiredFeeling": "playful, comparative, personal, surprising",
+    "artisanOpening": "I made three small versions from the same coffee. One is creamy, one is sparkling, and one is soft and sweet on top. Taste them left to right and tell me which one feels most like you.",
+    "firstSipDirection": "Taste left to right before choosing a favorite.",
+    "guestResonancePrompt": "Which one felt most like you \u2014 refreshing, comforting, surprising, or most personal?",
+    "advisorDirection": "Advisor should guide comparison and guest identity, not technical cupping jargon.",
+    "recoveryWatchouts": "uneven portions, confusing order, too many explanations, weak coffee base",
+    "reportPrompt": "Which layer taught us most about the guest?",
+    "machineContextNeeded": [
+      "machine",
+      "grinder",
+      "beans",
+      "basket",
+      "houseDose",
+      "houseYield",
+      "houseShotTime",
+      "milk capability",
+      "selected drink",
+      "guest/time pressure"
+    ],
+    "preparation": {
+      "miseEnPlace": [
+        "Ingredients: coffee base, milk/foam, sparkling element, soft sweet accent, ice if needed",
+        "Tools: three glasses, labels, spoon, espresso/cold brew tools, towel",
+        "Cup/glass/vessel: three matching mini glasses",
+        "Garnish or sensory accent: small labels or garnish differences",
+        "Machine readiness: machine ready, coffee base strong enough to split",
+        "Counter/staging area: left-to-right station setup",
+        "Serving path: serve as a flight with simple sequence",
+        "Script readiness: flight instruction script ready"
+      ],
+      "machineReadiness": [
+        "machine ready, coffee base strong enough to split",
+        "Confirm water level, heat, basket, portafilter lock-in, and grinder readiness before beginning.",
+        "Use the Machine Passport and House Formula so the Advisor has context."
+      ],
+      "drinkBuildReadiness": [
+        "coffee base, milk/foam, sparkling element, soft sweet accent, ice if needed",
+        "three glasses, labels, spoon, espresso/cold brew tools, towel",
+        "three matching mini glasses",
+        "small labels or garnish differences"
+      ],
+      "serviceReadiness": [
+        "left-to-right station setup",
+        "serve as a flight with simple sequence",
+        "flight instruction script ready"
+      ]
+    },
+    "steps": [
+      {
+        "title": "Set the sensory intention",
+        "suggestedTempo": "30 sec",
+        "action": "Name the purpose of The Flavor Layer Flight: Three mini drinks from one coffee: creamy, sparkling, and soft/sweet.",
+        "why": "Next-Gen drinks need a clear reason or they can feel gimmicky.",
+        "watch": "Avoid novelty without intention.",
+        "advisor": "Advisor should guide comparison and guest identity, not technical cupping jargon.",
+        "script": "I made three small versions from the same coffee. One is creamy, one is sparkling, and one is soft and sweet on top. Taste them left to right and tell me which one feels most like you."
+      },
+      {
+        "title": "Home Coffee Mise en Place",
+        "suggestedTempo": "90 sec",
+        "action": "Stage all cold/sensory ingredients, tools, vessel, garnish, machine readiness, serving path, and script before brewing.",
+        "why": "Cold and layered drinks punish missing pieces because ice, foam, and sparkle change quickly.",
+        "watch": "Do not start espresso until glass, ice, and accent are ready.",
+        "advisor": "Preparation begins with Mise en Place; stage the sensory elements first.",
+        "script": "Everything is staged so the drink can be built cleanly."
+      },
+      {
+        "title": "Confirm drink choice and build formula",
+        "suggestedTempo": "60 sec",
+        "action": "Select one build from: Mini creamy; mini sparkling; mini soft/sweet. Use this guidance: One coffee becomes three expressions; keep pours small and sequence left-to-right.",
+        "why": "The Advisor needs selected drink choice, not just the Occasion name.",
+        "watch": "Do not assume the default if the artisan chooses a variant.",
+        "advisor": "Feed selected drink, dose/yield, and build method into Advisor context.",
+        "script": "I am choosing this build because it fits The Flavor Layer Flight."
+      },
+      {
+        "title": "Prepare base and vessel",
+        "suggestedTempo": "60\u201390 sec",
+        "action": "Prepare the vessel: three small glasses. Confirm machine and coffee base. Use 18g espresso split or brewed concentrate toward 36g espresso split across three minis where espresso is involved.",
+        "why": "Temperature, vessel, and sequence shape perception.",
+        "watch": "Warm espresso in warm glass can melt ice too fast; cold glass protects texture.",
+        "advisor": "Coach sequence and readiness before taste correction.",
+        "script": "I am preparing the base so the first sip has the right structure."
+      },
+      {
+        "title": "Build the sensory structure",
+        "suggestedTempo": "2\u20133 min",
+        "action": "Build the drink deliberately: preserve layers, texture, temperature contrast, and aroma for Three mini drinks from one coffee \u2014 creamy, sparkling, soft/sweet.",
+        "why": "The drink experience comes from sequence, not ingredients alone.",
+        "watch": "Stirring too early, over-sweetening, or losing foam/sparkle weakens the Occasion.",
+        "advisor": "Explain each build action in practical terms if asked.",
+        "script": "I am building the layers so the guest can experience the drink in order."
+      },
+      {
+        "title": "Serve with Artisan Stagecraft Script",
+        "suggestedTempo": "30 sec",
+        "action": "Use the script exactly enough to guide curiosity, then stop talking.",
+        "why": "Gen Z/Next-Gen guests often want an experience but not a lecture.",
+        "watch": "Too much explanation can reduce delight.",
+        "advisor": "Advisor should make the script short, social, and sensory.",
+        "script": "I made three small versions from the same coffee. One is creamy, one is sparkling, and one is soft and sweet on top. Taste them left to right and tell me which one feels most like you."
+      },
+      {
+        "title": "First Sip Direction",
+        "suggestedTempo": "20\u201330 sec",
+        "action": "Taste left to right before choosing a favorite.",
+        "why": "First sip direction prevents the guest from collapsing the drink too early.",
+        "watch": "If they stir first, the intended contrast may disappear.",
+        "advisor": "Coach the guest gently; do not control them.",
+        "script": "Taste left to right before choosing a favorite."
+      },
+      {
+        "title": "Guest Resonance Check",
+        "suggestedTempo": "45\u201360 sec",
+        "action": "Which one felt most like you \u2014 refreshing, comforting, surprising, or most personal?",
+        "why": "Guest Resonance tells whether the drink crossed from interesting to delightful.",
+        "watch": "Capture their words, not your hope.",
+        "advisor": "Use reaction, first thing noticed, quote, and serve-again choice.",
+        "script": "Which one felt most like you \u2014 refreshing, comforting, surprising, or most personal?"
+      },
+      {
+        "title": "Doma Report and next adjustment",
+        "suggestedTempo": "90 sec",
+        "action": "Log drink variant, build sequence, sensory notes, Guest Resonance, timing, and next adjustment. Which layer taught us most about the guest?",
+        "why": "These drinks are learning engines for younger and sensory-led guests.",
+        "watch": "Do not lose the chosen variant or guest quote.",
+        "advisor": "Connect flavor wheel, graphs, and report trend to future builds.",
+        "script": "I am saving which version landed so I can make the next one better."
+      }
     ]
   }
 ];
+
 
 const recoveryMatrixCatalog = [
   { category:"Espresso Flow & Resistance", issue:"Shot choking / barely dripping", symptoms:"Shot barely drips, pump strains, flow is slow or stops.", likelyCause:"Grind likely too fine, dose too high, puck too compact, basket overloaded, or screen restricted.", advisor:"Stop if needed. Go slightly coarser, confirm dose, distribute evenly, and avoid changing milk or recipe at the same time.", oneNextMove:"Keep the dose steady and move the grind one small step coarser.", stagecraft:"Do not turn the moment into a repair session; make one clean resistance adjustment.", solutionSteps:["Stop the shot if it is not producing usable liquid.","Confirm your dose is not above the basket's comfortable range.","Move the grind one small step coarser.","Distribute evenly, tamp level, and repeat the same yield target.","If serving someone, narrate calmly: 'This one is tight, so I’m giving the coffee a little more room to flow.'"] },
@@ -984,7 +3484,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v7.9</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.6</small></div></div>
         {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -992,8 +3492,8 @@ Correction / added detail: ${newText}`.trim() : newText);
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v7.9</p>
-        <h1>Home Barista Occasion Simulator — 21 Occasions + Reports, Export + Setup Gate</h1>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.6</p>
+        <h1>Home Barista Occasion Simulator — Detailed Occasion Content Model</h1>
         <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
@@ -1078,7 +3578,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccas
         <div className="occasionTop"><span>Occasion {founderOccasions.findIndex((x)=>x.id===item.id) + 1}</span><em>{item.family || item.tag}</em></div>
         <h3>{item.name}</h3>
         <p>{item.purpose}</p>
-        <div className="specs"><p><strong>Drink / drink set</strong><span>{item.drink}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Suggested Tempo</strong><span>{item.suggestedTempo || item.time}</span></p><p><strong>Grind / Vessel</strong><span>{item.grindVessel}</span></p></div>
+        <div className="specs"><p><strong>Drink / drink set</strong><span>{item.drink}</span></p><p><strong>Drink choices</strong><span>{item.drinkChoices}</span></p><p><strong>Dose → Yield</strong><span>{item.dose} → {item.yield}</span></p><p><strong>Suggested Tempo</strong><span>{item.suggestedTempo || item.time}</span></p><p><strong>Ratio / Build</strong><span>{item.ratioGuidance || item.grindVessel}</span></p></div>
         <div className="scriptPreview"><strong>Artisan opening to guest</strong><p>{item.artisanOpening}</p></div>
         <div className="buttonRow"><button className="primary" onClick={() => openFounderOccasion(item)}>Open Occasion</button><button className="secondary" onClick={() => openFounderOccasion(item)}>Mark Complete</button></div>
       </article>)}
@@ -1132,7 +3632,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     }
   }
 
-  const scriptText = steps.map((step, idx) => `${idx + 1}. ${step.title}\nAdvisor: ${step.advisor}\nArtisan Script: ${step.script}`).join("\n\n");
+  const scriptText = steps.map((step, idx) => `${idx + 1}. ${step.title}\nAction: ${step.action || ""}\nAdvisor: ${step.advisor}\nArtisan Script: ${step.script}`).join("\n\n");
   const timingMetrics = buildTimingMetrics(occasionItem, stepTimings, occasionStartTime);
   return <section className="walkthroughPage">
     <section className="card heroMini">
@@ -1140,16 +3640,16 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <h2>{occasionItem.name}</h2>
       <p className="successBox"><strong>Active walkthrough:</strong> {occasionItem.name}. This page walks through the selected Occasion step by step.</p>
       <p>{occasionItem.purpose}</p>
-      <div className="specs"><p><strong>Drink / drink set</strong><span>{occasionItem.drink}</span></p><p><strong>Suggested total Occasion tempo</strong><span>{occasionItem.suggestedTempo || occasionItem.time}</span></p><p><strong>Intention</strong><span>{occasionItem.desiredFeeling}</span></p><p><strong>Guest Resonance prompt</strong><span>{occasionItem.guestResonancePrompt || "Did the cup and moment land with the guest?"}</span></p></div>
+      <div className="specs"><p><strong>Drink / drink set</strong><span>{occasionItem.drink}</span></p><p><strong>Drink choices</strong><span>{occasionItem.drinkChoices}</span></p><p><strong>Dose / Yield / Time</strong><span>{occasionItem.dose} → {occasionItem.yield} · {occasionItem.time}</span></p><p><strong>Ratio / Build Guidance</strong><span>{occasionItem.ratioGuidance}</span></p><p><strong>Suggested total Occasion tempo</strong><span>{occasionItem.suggestedTempo || occasionItem.time}</span></p><p><strong>Intention</strong><span>{occasionItem.desiredFeeling}</span></p><p><strong>Guest Resonance prompt</strong><span>{occasionItem.guestResonancePrompt || "Did the cup and moment land with the guest?"}</span></p></div>
       <div className="noteBox"><strong>Preparation begins with Mise en Place.</strong> The goal is not speed. The goal is calm, repeatable readiness.</div>
     </section>
-    <section className="card"><h2>Preparation</h2><div className="grid"><div className="noteBox"><strong>Home Coffee Mise en Place</strong><ul><li>Ingredients</li><li>Tools</li><li>Cup / glass / vessel</li><li>Garnish or sensory accent</li><li>Machine readiness</li><li>Counter / staging area</li><li>Serving path</li><li>Script readiness</li></ul></div><div className="noteBox"><strong>Readiness flow</strong><ul><li>Machine readiness</li><li>Drink build / method readiness</li><li>Service readiness</li><li>First Sip Direction</li><li>Guest Resonance Check</li></ul></div></div></section>
+    <section className="card"><h2>Preparation</h2><div className="grid"><div className="noteBox"><strong>Home Coffee Mise en Place</strong><ul>{(occasionItem.preparation?.miseEnPlace || []).map((x, i) => <li key={i}>{x}</li>)}</ul></div><div className="noteBox"><strong>Machine readiness</strong><ul>{(occasionItem.preparation?.machineReadiness || []).map((x, i) => <li key={i}>{x}</li>)}</ul></div><div className="noteBox"><strong>Drink build / method readiness</strong><ul>{(occasionItem.preparation?.drinkBuildReadiness || []).map((x, i) => <li key={i}>{x}</li>)}</ul></div><div className="noteBox"><strong>Service readiness</strong><ul>{(occasionItem.preparation?.serviceReadiness || []).map((x, i) => <li key={i}>{x}</li>)}</ul></div></div><div className="noteBox"><strong>Advisor direction for this Occasion:</strong> {occasionItem.advisorDirection}<br/><strong>Recovery watchouts:</strong> {occasionItem.recoveryWatchouts}<br/><strong>First Sip Direction:</strong> {occasionItem.firstSipDirection}</div></section>
     <section className="card stepCard" ref={stepPanelRef}>
       <div className="stepProgress"><strong>Step {safeIndex + 1} of {steps.length}</strong><div className="stepDots">{steps.map((step, idx) => <button key={step.title + idx} className={idx === safeIndex ? "stepDot active" : stepTimings[idx] ? "stepDot done" : "stepDot"} onClick={() => goToStep(idx)} aria-label={`Go to step ${idx + 1}: ${step.title}`}>{idx + 1}</button>)}</div></div>
       <p className="eyebrow">Active stagecraft step</p>
       <h2>{current?.title}</h2>
       <p><strong>Suggested tempo:</strong> {current?.suggestedTempo || "60–90 sec"}</p>
-      <p><strong>Advisor guidance:</strong> {current?.advisor}</p>
+      <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
       <div className="buttonRow"><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
