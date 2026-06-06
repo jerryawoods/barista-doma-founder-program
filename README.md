@@ -1,4 +1,4 @@
-# Barista Doma v8.3 — Occasion Walkthrough Routing Hard Fix
+# Barista Doma v8.4 — Occasion Walkthrough Routing Hard Fix
 
 This patch makes the selected Occasion walkthrough explicit and persistent.
 

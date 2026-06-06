@@ -1008,7 +1008,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
-      {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} />}
+      {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
@@ -1042,10 +1042,18 @@ function Onboarding({ profile, updateProfile, setActive }) {
 }
 
 
-function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
+function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccasionId, setSelectedOccasionId }) {
   const [query, setQuery] = useState("");
   const [familyFilter, setFamilyFilter] = useState("All");
-  const [quickPick, setQuickPick] = useState(founderOccasions[0]?.id || "");
+  const [quickPick, setQuickPick] = useState(selectedOccasionId || founderOccasions[0]?.id || "");
+  useEffect(() => {
+    if (selectedOccasionId && selectedOccasionId !== quickPick) setQuickPick(selectedOccasionId);
+  }, [selectedOccasionId]);
+  function handleQuickPick(value) {
+    setQuickPick(value);
+    if (setSelectedOccasionId) setSelectedOccasionId(value);
+    try { localStorage.setItem("bd_selected_occasion_v83", value); } catch {}
+  }
   const families = ["All", "Core Occasions", "Next-Gen Sensory Occasions"];
   const filtered = founderOccasions.filter((item) => {
     const q = query.trim().toLowerCase();
@@ -1061,7 +1069,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion }) {
       <p className="small">Use the quick selector to jump directly into an Occasion on mobile, or browse the full card library below.</p>
       <div className="selectorPanel">
         <label className="label">Occasion quick-select menu</label>
-        <div className="selectorRow"><select value={quickPick} onChange={(e) => setQuickPick(e.target.value)}>{founderOccasions.map((item, i) => <option key={item.id} value={item.id}>{i + 1}. {item.name} — {item.drink}</option>)}</select><button className="primary" onClick={() => openFounderOccasion(selected)}>Open Selected Occasion</button></div>
+        <div className="selectorRow"><select value={quickPick} onChange={(e) => handleQuickPick(e.target.value)}>{founderOccasions.map((item, i) => <option key={item.id} value={item.id}>{i + 1}. {item.name} — {item.drink}</option>)}</select><button className="primary" onClick={() => openFounderOccasion(selected)}>Open Selected Occasion</button></div>
         <div className="selectorRow"><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find an occasion: matcha, guest, cold, apology, social…" /><select value={familyFilter} onChange={(e) => setFamilyFilter(e.target.value)}>{families.map((f) => <option key={f} value={f}>{f}</option>)}</select></div>
       </div>
     </section>
