@@ -5,16 +5,35 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const defaultProfile = {
   founderName: "Jerry",
   roleIdentity: "Home barista in training",
+  machineType: "Espresso machine with built-in grinder",
   machine: "Breville Barista Express",
+  espressoMachine: "Breville Barista Express",
+  allInOneMachine: "",
   grinder: "Built-in grinder",
+  grinderModel: "Built-in grinder",
   beans: "House espresso beans",
+  roastLevel: "Medium",
   experienceLevel: "Developing confidence",
   preferredDrinks: "Cappuccino, espresso, milk drinks",
   houseDose: "18g",
   houseYield: "36g",
   houseShotTime: "About 25-30 seconds when dialed in",
-  milkStyle: "Creamy microfoam for warmth and comfort"
+  targetRatio: "1:2 espresso ratio",
+  grinderSetting: "Current house setting",
+  basketSize: "18g basket",
+  portafilterSize: "54mm",
+  waterSource: "Filtered water",
+  warmupRoutine: "Warm machine and portafilter before the Occasion",
+  milkStyle: "Creamy microfoam for warmth and comfort",
+  dialInNotes: "Keep dose and yield steady before changing grind."
 };
+
+const machineTypeOptions = ["Espresso machine", "Espresso machine with built-in grinder", "All-in-one / automatic", "Superautomatic", "Filter / brewer", "Other"];
+const espressoMachineOptions = ["Breville Barista Express", "Breville Barista Pro", "Breville Dual Boiler", "Meraki Gen 2", "Gaggia Classic Pro", "Rancilio Silvia", "Lelit Bianca", "Profitec Pro", "ECM", "Rocket", "La Marzocco Linea Mini", "Decent DE1", "Ascaso Steel", "Other espresso machine"];
+const grinderOptions = ["Built-in grinder", "Baratza", "DF64 / DF83", "Niche Zero / Duo", "Eureka Mignon", "Fellow Opus / Ode", "Timemore", "Mazzer", "Weber", "Mahlkönig", "Other grinder"];
+const allInOneOptions = ["Ninja Luxe Café / Ninja espresso system", "Jura", "DeLonghi", "Philips / Saeco", "Terra Kaffe", "Breville Oracle", "Breville Barista Touch", "Meraki all-in-one", "xBloom", "Other all-in-one"];
+const roastLevelOptions = ["Light", "Medium-light", "Medium", "Medium-dark", "Dark", "Decaf", "Unknown"];
+const experienceOptions = ["First-time / learning", "Developing confidence", "Comfortable but inconsistent", "Serious home barista", "Advanced enthusiast"];
 
 const defaultOccasion = {
   occasionName: "Before-church coffee at home",
@@ -3219,6 +3238,7 @@ export default function Home() {
   const [sensoryScores, setSensoryScores] = useState(defaultSensoryScores);
   const [tastingNote, setTastingNote] = useState("Creamy cappuccino impression with sweetness, body, and a touch of citrus brightness.");
   const [guestResonance, setGuestResonance] = useState(defaultGuestResonance);
+  const [uploadAsset, setUploadAsset] = useState({ fileName: "", fileType: "", kind: "", notes: "", previewUrl: "" });
   const [stepTimings, setStepTimings] = useState({});
   const [occasionStartTime, setOccasionStartTime] = useState(null);
   const recorderRef = useRef(null);
@@ -3263,8 +3283,16 @@ export default function Home() {
   useEffect(() => { try { localStorage.setItem("bd_tasting_note_v77", tastingNote); } catch {} }, [tastingNote]);
 
   const context = useMemo(() => ({
+    machineType: profile.machineType,
     machine: profile.machine,
+    espressoMachine: profile.espressoMachine,
+    allInOneMachine: profile.allInOneMachine,
     grinder: profile.grinder,
+    grinderModel: profile.grinderModel,
+    basketSize: profile.basketSize,
+    portafilterSize: profile.portafilterSize,
+    waterSource: profile.waterSource,
+    warmupRoutine: profile.warmupRoutine,
     dose: profile.houseDose,
     yield: profile.houseYield,
     shotTime: occasion.currentShotTime,
@@ -3275,10 +3303,15 @@ export default function Home() {
     timePressure: occasion.timePressure,
     desiredFeeling: occasion.desiredFeeling,
     beans: profile.beans,
+    roastLevel: profile.roastLevel,
+    targetRatio: profile.targetRatio,
+    grinderSetting: profile.grinderSetting,
     experienceLevel: profile.experienceLevel,
     milkStyle: profile.milkStyle,
-    momentIntent: occasion.momentIntent
-  }), [profile, occasion]);
+    dialInNotes: profile.dialInNotes,
+    momentIntent: occasion.momentIntent,
+    uploadedAsset: uploadAsset?.fileName ? { fileName: uploadAsset.fileName, fileType: uploadAsset.fileType, kind: uploadAsset.kind, notes: uploadAsset.notes } : null
+  }), [profile, occasion, uploadAsset]);
 
   const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
   const walkthroughFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === walkthroughOccasionId) || selectedFounderOccasion || founderOccasions[0], [walkthroughOccasionId, selectedFounderOccasion]);
@@ -3291,6 +3324,13 @@ export default function Home() {
   }
   function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: value })); }
   function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
+  function handleAdvisorUpload(file, kind = "photo/video") {
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setUploadAsset((prev) => ({ ...prev, fileName: file.name, fileType: file.type || "unknown", kind, previewUrl }));
+    setStatus("Advisor upload attached. Add notes or ask the Advisor to analyze it with the form and voice context.");
+    log(`Attached Advisor upload: ${file.name} (${file.type || "unknown"})`);
+  }
   function requireSetupThen(nextActive) {
     const missing = getSetupMissing(profile, occasion);
     if (missing.length) {
@@ -3445,11 +3485,11 @@ Correction / added detail: ${newText}`.trim() : newText);
     const report = {
       id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
       drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
-      synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics,
+      synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics, uploadAsset: uploadAsset?.fileName ? { ...uploadAsset, previewUrl: "" } : null,
       profileSnapshot: { ...profile },
       occasionSnapshot: { ...occasion },
-      machineInfo: { machine: profile.machine, grinder: profile.grinder, beans: profile.beans, experienceLevel: profile.experienceLevel, milkStyle: profile.milkStyle },
-      dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, currentShotTime: occasion.currentShotTime, drink: occasion.drink },
+      machineInfo: { machineType: profile.machineType, machine: profile.machine, espressoMachine: profile.espressoMachine, allInOneMachine: profile.allInOneMachine, grinder: profile.grinder, grinderModel: profile.grinderModel, beans: profile.beans, roastLevel: profile.roastLevel, basketSize: profile.basketSize, portafilterSize: profile.portafilterSize, waterSource: profile.waterSource, warmupRoutine: profile.warmupRoutine, experienceLevel: profile.experienceLevel, milkStyle: profile.milkStyle },
+      dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, targetRatio: profile.targetRatio, grinderSetting: profile.grinderSetting, dialInNotes: profile.dialInNotes, currentShotTime: occasion.currentShotTime, drink: occasion.drink },
       confidenceMetrics: { machineConfidence: sensoryScores.machineConfidence, tasteClarity: sensoryScores.tasteClarity, stagecraft: sensoryScores.stagecraft, recoveryConfidence: sensoryScores.recoveryConfidence, guestResonance: guestResonance.score, occasionTempo: timingMetrics.totalActualSeconds },
       trendSummary: reportTrendSummary(priorReport, sensoryScores, guestResonance)
     };
@@ -3484,7 +3524,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.6</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.7</small></div></div>
         {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -3492,8 +3532,8 @@ Correction / added detail: ${newText}`.trim() : newText);
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.6</p>
-        <h1>Home Barista Occasion Simulator — Detailed Occasion Content Model</h1>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.7</p>
+        <h1>Home Barista Occasion Simulator — Machine Passport + Upload Analysis</h1>
         <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
@@ -3510,7 +3550,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
-      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport }} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
@@ -3538,7 +3578,51 @@ function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasio
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
 function Onboarding({ profile, updateProfile, setActive }) {
-  return <section className="card"><h2>Doma Profile / Machine Passport</h2><p className="small">This is the structured context that makes the Advisor different from a generic AI answer.</p><div className="grid"><Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} /><Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} /><Field label="Machine" value={profile.machine} onChange={(v) => updateProfile("machine", v)} /><Field label="Grinder" value={profile.grinder} onChange={(v) => updateProfile("grinder", v)} /><Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} /><Field label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} /><Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} /><Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} /><Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} /><Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} /></div><label className="label">Milk style / service preference</label><input value={profile.milkStyle} onChange={(e) => updateProfile("milkStyle", e.target.value)} /><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button></section>;
+  return <section className="card">
+    <p className="eyebrow">Onboarding split into layers</p>
+    <h2>Doma Profile + Machine Passport + Dial-In Profile</h2>
+    <p className="small">Initial onboarding stays simple, while Machine Passport and Dial-In Profile capture the structured context the Advisor needs for better guidance.</p>
+    <div className="setupStack">
+      <div className="noteBox"><strong>1. Doma Profile</strong><br/>Who is the artisan, what are they trying to serve, and what confidence level are they bringing to the machine?</div>
+      <div className="grid">
+        <Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} />
+        <Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} />
+        <SelectField label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} options={experienceOptions} />
+        <Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} />
+      </div>
+      <div className="noteBox"><strong>2. Machine Passport</strong><br/>Choose the machine category first, then identify the specific machine and grinder. This is where Ninja, Jura, DeLonghi, Oracle, Meraki, Breville, Decent, and other machine types belong.</div>
+      <div className="grid">
+        <SelectField label="Machine type" value={profile.machineType} onChange={(v) => updateProfile("machineType", v)} options={machineTypeOptions} />
+        <SelectField label="Espresso machine" value={profile.espressoMachine} onChange={(v) => { updateProfile("espressoMachine", v); updateProfile("machine", v); }} options={espressoMachineOptions} />
+        <SelectField label="All-in-one / automatic machine" value={profile.allInOneMachine} onChange={(v) => { updateProfile("allInOneMachine", v); if (v) updateProfile("machine", v); }} options={["", ...allInOneOptions]} />
+        <Field label="Primary machine shown to Advisor" value={profile.machine} onChange={(v) => updateProfile("machine", v)} />
+        <SelectField label="Grinder" value={profile.grinderModel || profile.grinder} onChange={(v) => { updateProfile("grinderModel", v); updateProfile("grinder", v); }} options={grinderOptions} />
+        <Field label="Basket size" value={profile.basketSize} onChange={(v) => updateProfile("basketSize", v)} />
+        <Field label="Portafilter size" value={profile.portafilterSize} onChange={(v) => updateProfile("portafilterSize", v)} />
+        <Field label="Water source" value={profile.waterSource} onChange={(v) => updateProfile("waterSource", v)} />
+      </div>
+      <label className="label">Machine warm-up / behavior notes</label>
+      <textarea value={profile.warmupRoutine} onChange={(e) => updateProfile("warmupRoutine", e.target.value)} placeholder="Example: warms up in 10 minutes, needs portafilter locked in, steam takes 30 seconds…" />
+      <div className="noteBox"><strong>3. Dial-In Profile / House Formula</strong><br/>This is separate from onboarding. It captures how the machine is currently dialed in so the Advisor can interpret choking, fast shots, sourness, milk issues, and repeatability.</div>
+      <div className="grid">
+        <Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} />
+        <SelectField label="Roast level" value={profile.roastLevel} onChange={(v) => updateProfile("roastLevel", v)} options={roastLevelOptions} />
+        <Field label="House dose" value={profile.houseDose} onChange={(v) => updateProfile("houseDose", v)} />
+        <Field label="House yield" value={profile.houseYield} onChange={(v) => updateProfile("houseYield", v)} />
+        <Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} />
+        <Field label="Target ratio" value={profile.targetRatio} onChange={(v) => updateProfile("targetRatio", v)} />
+        <Field label="Current grinder setting" value={profile.grinderSetting} onChange={(v) => updateProfile("grinderSetting", v)} />
+        <Field label="Milk style / service preference" value={profile.milkStyle} onChange={(v) => updateProfile("milkStyle", v)} />
+      </div>
+      <label className="label">Dial-in notes</label>
+      <textarea value={profile.dialInNotes} onChange={(e) => updateProfile("dialInNotes", e.target.value)} placeholder="Current behavior, last adjustment, what worked, what keeps recurring…" />
+    </div>
+    <div className="buttonRow"><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Advisor Session</button></div>
+  </section>;
+}
+
+function SelectField({ label, value, onChange, options }) {
+  return <div><label className="label">{label}</label><select value={value || ""} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option || "blank"} value={option}>{option || "Select…"}</option>)}</select></div>;
 }
 
 
@@ -3724,7 +3808,7 @@ function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot,
 }
 
 function Simulator(props) {
-  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport } = props;
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload } = props;
   return <>
     <section className="card">
       <h2>Occasion Simulator</h2>
@@ -3737,6 +3821,18 @@ function Simulator(props) {
       {audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}
       <label className="label">Artisan transcript / comment</label>
       <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened. Corrections are appended here." />
+      <div className="uploadPanel">
+        <h3>Advisor visual upload</h3>
+        <p className="small">Restore photo/video context for puck, basket, espresso flow, milk texture, latte art, machine screen, or cup result. The Advisor uses this with the form and voice notes.</p>
+        <div className="grid">
+          <div><label className="label">Upload photo</label><input type="file" accept="image/*" onChange={(e) => handleAdvisorUpload(e.target.files?.[0], "photo")} /></div>
+          <div><label className="label">Upload video</label><input type="file" accept="video/*" onChange={(e) => handleAdvisorUpload(e.target.files?.[0], "video")} /></div>
+        </div>
+        {uploadAsset?.fileName ? <div className="successBox"><strong>Attached:</strong> {uploadAsset.fileName}<br/><strong>Type:</strong> {uploadAsset.kind} · {uploadAsset.fileType}<br/>{uploadAsset.previewUrl && uploadAsset.kind === "photo" ? <img src={uploadAsset.previewUrl} alt="Advisor upload preview" className="uploadPreview" /> : null}</div> : <div className="noteBox">No photo or video attached yet.</div>}
+        <label className="label">What should the Advisor inspect in the photo/video?</label>
+        <textarea value={uploadAsset?.notes || ""} onChange={(e) => setUploadAsset((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Example: look at the puck, only a few drops came out, milk is too foamy, flow is spraying, crema disappeared…" />
+        <div className="buttonRow"><button className="secondary" onClick={() => setUploadAsset({ fileName: "", fileType: "", kind: "", notes: "", previewUrl: "" })}>Clear Upload</button></div>
+      </div>
       <button className="primary" onClick={generateAdvisorResponse} disabled={respondBusy}>{respondBusy ? "Assessing…" : "Generate Advisor Response"}</button>
     </section>
     <section className="card advisorCard">
