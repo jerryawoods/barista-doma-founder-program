@@ -217,6 +217,10 @@ function contextSummary(context) {
   if (clean(context.guest)) pieces.push(`serving ${clean(context.guest)}`);
   if (clean(context.timePressure)) pieces.push(clean(context.timePressure));
   if (clean(context.desiredFeeling)) pieces.push(`desired feeling: ${clean(context.desiredFeeling)}`);
+  if (clean(context.advisorGuidanceLevel)) pieces.push(`guidance level: ${clean(context.advisorGuidanceLevel)}`);
+  if (clean(context.confirmedRecipe)) pieces.push(`dial-in status: ${clean(context.confirmedRecipe)}`);
+  if (clean(context.puckPrepWorkflow)) pieces.push(`puck prep: ${clean(context.puckPrepWorkflow)}`);
+  if (context.uploadedAsset?.fileName) pieces.push(`upload: ${context.uploadedAsset.fileName} (${context.uploadedAsset.kind})`);
   return pieces.join("; ");
 }
 
@@ -245,6 +249,9 @@ Core doctrine:
 - If the spoken comment adds only a few words, combine those words with the form: "I heard you say X, and your form tells me Y."
 - If the spoken comment clearly describes a cup or occasion issue, synthesize the voice + form + matrix into guidance.
 - The Premium Advisor helps the home barista recover the cup and preserve the occasion.
+- Use the Advisor Guidance Level to adjust detail: explain more for New to the Machine, focus repeatability for Building Consistency, be concise and sharper for Confident Home Barista, and include variables/trends for Data-Minded Artisan.
+- Consider tamping, distribution, WDT, basket, puck screen, and puck prep when diagnosing choking, channeling, spraying, messy pucks, or uneven flow.
+- If an upload is attached, acknowledge what the artisan wants inspected and explain that the visual context is being treated as part of the diagnostic record.
 - Sound warm, calm, composed, premium, practical, and advisory.
 - Do not sound like a help desk, chatbot, espresso forum, or machine manual.
 
@@ -275,6 +282,15 @@ Occasion: ${context.occasion || "Not provided"}
 Who is being served: ${context.guest || "Not provided"}
 Time pressure: ${context.timePressure || "Not provided"}
 Desired feeling / delight: ${context.desiredFeeling || "Not provided"}
+Advisor Guidance Level: ${context.advisorGuidanceLevel || "Not provided"}
+Confirmed recipe / dial-in status: ${context.confirmedRecipe || "Not provided"}
+Tamper: ${context.tamper || "Not provided"}
+Distribution tool: ${context.distributionTool || "Not provided"}
+WDT tool: ${context.wdtTool || "Not provided"}
+Puck screen: ${context.puckScreen || "Not provided"}
+Puck prep workflow: ${context.puckPrepWorkflow || "Not provided"}
+Saved dial-in attempts: ${Array.isArray(context.dialInAttempts) ? context.dialInAttempts.length : 0}
+Advisor upload: ${context.uploadedAsset?.fileName ? `${context.uploadedAsset.fileName} (${context.uploadedAsset.kind}) — ${context.uploadedAsset.notes || "no notes"}` : "No upload provided"}
 
 Supporting context summary:
 ${supportingContext}

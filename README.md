@@ -1,17 +1,24 @@
-# Barista Doma Home Barista Occasion Simulator v8.7
+# Barista Doma / Occasions.coffee — v8.8 Development Platform Refinement
 
-Additive patch restoring split onboarding, Machine Passport, Dial-In Profile, and Advisor photo/video upload context.
+Additive refinement over the working founder prototype.
 
-Preserves existing working features: 21 Occasions, detailed stagecraft walkthroughs, read-aloud, voice capture, Advisor Voice, Recovery Library, natural-language matrix matching, Tasting Studio, flavor wheel, Doma Reports, print, and CSV export.
+## Adds
+- Advisor Guidance Level / Artisan Fluency calibration
+- Level confirmation language in onboarding
+- Puck prep toolkit fields: tamper, distribution, WDT, puck screen, dosing funnel, workflow
+- Dial-In Journal with multiple attempts and Set as House Formula
+- Dial-In Readiness in Doma Reports
+- Occasion Presentation Score / Home Barista Fluency feedback
+- Guest Resonance status indicator
+- Photo/video upload visibility in Advisor Session
+- Advisor context pack now includes Doma Profile + Machine Passport + Dial-In Profile + puck prep + upload notes + voice/form context
 
-## v8.7 additions
-
-- Split onboarding into Doma Profile, Machine Passport, and Dial-In Profile / House Formula.
-- Added dropdowns for espresso machines, grinders, all-in-one/automatic machines, roast level, and experience level.
-- Added machine context fields such as basket size, portafilter size, water source, warm-up notes, grinder setting, target ratio, and dial-in notes.
-- Restored Advisor visual upload area for photo/video context.
-- Upload notes now feed into the Advisor context alongside form and voice.
-
-## Deploy
-
-Upload `app`, `.gitignore`, `README.md`, `package.json`, and `package-lock.json` to GitHub. Do not upload `node_modules`.
+## Preserves
+- 21 Occasions
+- Step-by-step walkthroughs
+- Step read-aloud
+- Advisor Voice
+- Recovery Library
+- What Went Wrong search
+- Tasting Studio / flavor wheel
+- Doma Reports, charts, print and CSV

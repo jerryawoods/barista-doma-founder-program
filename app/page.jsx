@@ -14,6 +14,8 @@ const defaultProfile = {
   beans: "House espresso beans",
   roastLevel: "Medium",
   experienceLevel: "Developing confidence",
+  advisorGuidanceLevel: "Building Consistency",
+  advisorGuidanceNotes: "Help me improve consistency and recover faster.",
   preferredDrinks: "Cappuccino, espresso, milk drinks",
   houseDose: "18g",
   houseYield: "36g",
@@ -24,7 +26,25 @@ const defaultProfile = {
   portafilterSize: "54mm",
   waterSource: "Filtered water",
   warmupRoutine: "Warm machine and portafilter before the Occasion",
+  tamper: "Spring-loaded tamper",
+  tamperSize: "54mm",
+  distributionTool: "WDT tool",
+  wdtTool: "0.35mm needle WDT",
+  puckScreen: "No puck screen",
+  dosingFunnel: "Yes",
+  puckPrepWorkflow: "Dose, WDT evenly, level bed, tamp level, wipe rim.",
   milkStyle: "Creamy microfoam for warmth and comfort",
+  confirmedRecipe: "Not yet confirmed",
+  lastDialInResult: "Working toward house formula",
+  dialInAttemptDose: "18g",
+  dialInAttemptYield: "36g",
+  dialInAttemptTime: "20 sec",
+  dialInAttemptGrind: "Current setting",
+  dialInAttemptTaste: "Thin / needs more body",
+  dialInAttemptFlow: "Runs fast",
+  dialInAttemptPuckPrep: "WDT + level tamp",
+  dialInAttemptAdvisorNote: "Keep dose and yield steady; adjust grind one step finer if fast.",
+  dialInAttempts: [],
   dialInNotes: "Keep dose and yield steady before changing grind."
 };
 
@@ -34,6 +54,37 @@ const grinderOptions = ["Built-in grinder", "Baratza", "DF64 / DF83", "Niche Zer
 const allInOneOptions = ["Ninja Luxe Café / Ninja espresso system", "Jura", "DeLonghi", "Philips / Saeco", "Terra Kaffe", "Breville Oracle", "Breville Barista Touch", "Meraki all-in-one", "xBloom", "Other all-in-one"];
 const roastLevelOptions = ["Light", "Medium-light", "Medium", "Medium-dark", "Dark", "Decaf", "Unknown"];
 const experienceOptions = ["First-time / learning", "Developing confidence", "Comfortable but inconsistent", "Serious home barista", "Advanced enthusiast"];
+const guidanceLevelOptions = ["New to the Machine", "Building Consistency", "Confident Home Barista", "Data-Minded Artisan"];
+const guidanceLevelProfiles = {
+  "New to the Machine": {
+    promise: "Barista Doma will walk you through the machine in plain language, explain terms, protect setup readiness, and keep guidance calm and step-by-step.",
+    expectedFluency: "You may need frequent Advisor support while learning dose, yield, timing, puck prep, and recovery basics.",
+    nextLevel: "Building Consistency"
+  },
+  "Building Consistency": {
+    promise: "Barista Doma will focus on repeatability: setup, house formula, puck prep, one-variable adjustments, and faster recovery.",
+    expectedFluency: "You should complete the Occasion with some guidance, but fewer repeated corrections and a clearer dial-in record.",
+    nextLevel: "Confident Home Barista"
+  },
+  "Confident Home Barista": {
+    promise: "Barista Doma will give sharper diagnosis, less handholding, stronger fluency feedback, and more refined Occasion coaching.",
+    expectedFluency: "You should complete most steps cleanly, ask for limited help, and recover with one calm adjustment.",
+    nextLevel: "Data-Minded Artisan"
+  },
+  "Data-Minded Artisan": {
+    promise: "Barista Doma will emphasize variables, charts, trends, exports, repeatability, and deeper performance evidence.",
+    expectedFluency: "You should maintain complete records, use Advisor support selectively, and value detailed Doma Report analysis.",
+    nextLevel: "Founder Benchmarks"
+  }
+};
+const confirmedRecipeOptions = ["Confirmed house formula", "Close but still tuning", "Not yet confirmed", "Need Advisor help dialing in"];
+const guestResonanceStatusOptions = ["Green — landed well", "Yellow — partially landed", "Red — missed the moment", "Blah", "Curious", "Warm", "Delighted", "Bodacious"];
+const guidanceLevelTargets = {
+  "New to the Machine": { supportMax: 6, recoveryMax: 4, correctionMax: 3, minimumStepCompletion: 0.6 },
+  "Building Consistency": { supportMax: 4, recoveryMax: 2, correctionMax: 2, minimumStepCompletion: 0.75 },
+  "Confident Home Barista": { supportMax: 2, recoveryMax: 1, correctionMax: 1, minimumStepCompletion: 0.9 },
+  "Data-Minded Artisan": { supportMax: 1, recoveryMax: 1, correctionMax: 1, minimumStepCompletion: 0.95 }
+};
 
 const defaultOccasion = {
   occasionName: "Before-church coffee at home",
@@ -3239,6 +3290,9 @@ export default function Home() {
   const [tastingNote, setTastingNote] = useState("Creamy cappuccino impression with sweetness, body, and a touch of citrus brightness.");
   const [guestResonance, setGuestResonance] = useState(defaultGuestResonance);
   const [uploadAsset, setUploadAsset] = useState({ fileName: "", fileType: "", kind: "", notes: "", previewUrl: "" });
+  const [advisorSupportCount, setAdvisorSupportCount] = useState(0);
+  const [correctionCount, setCorrectionCount] = useState(0);
+  const [recoverySupportCount, setRecoverySupportCount] = useState(0);
   const [stepTimings, setStepTimings] = useState({});
   const [occasionStartTime, setOccasionStartTime] = useState(null);
   const recorderRef = useRef(null);
@@ -3308,10 +3362,25 @@ export default function Home() {
     grinderSetting: profile.grinderSetting,
     experienceLevel: profile.experienceLevel,
     milkStyle: profile.milkStyle,
+    advisorGuidanceLevel: profile.advisorGuidanceLevel,
+    advisorGuidanceNotes: profile.advisorGuidanceNotes,
+    tamper: profile.tamper,
+    tamperSize: profile.tamperSize,
+    distributionTool: profile.distributionTool,
+    wdtTool: profile.wdtTool,
+    puckScreen: profile.puckScreen,
+    dosingFunnel: profile.dosingFunnel,
+    puckPrepWorkflow: profile.puckPrepWorkflow,
+    confirmedRecipe: profile.confirmedRecipe,
+    lastDialInResult: profile.lastDialInResult,
+    dialInAttempts: profile.dialInAttempts || [],
     dialInNotes: profile.dialInNotes,
+    advisorSupportCount,
+    correctionCount,
+    recoverySupportCount,
     momentIntent: occasion.momentIntent,
     uploadedAsset: uploadAsset?.fileName ? { fileName: uploadAsset.fileName, fileType: uploadAsset.fileType, kind: uploadAsset.kind, notes: uploadAsset.notes } : null
-  }), [profile, occasion, uploadAsset]);
+  }), [profile, occasion, uploadAsset, advisorSupportCount, correctionCount, recoverySupportCount]);
 
   const selectedFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === selectedOccasionId) || founderOccasions[0], [selectedOccasionId]);
   const walkthroughFounderOccasion = useMemo(() => founderOccasions.find((item) => item.id === walkthroughOccasionId) || selectedFounderOccasion || founderOccasions[0], [walkthroughOccasionId, selectedFounderOccasion]);
@@ -3436,6 +3505,7 @@ Correction / added detail: ${newText}`.trim() : newText);
 
   function beginCorrection() {
     stopAdvisorVoice();
+    setCorrectionCount((count) => count + 1);
     setCorrectionMode(true);
     setStatus("Correction mode: speak what the Advisor misunderstood.");
     log("Correction mode started. Artisan can add a spoken correction.");
@@ -3451,7 +3521,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       setActive("onboarding");
       return;
     }
-    setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setStatus("Assessing Matrix + generating Advisor response…"); log("Sending form + voice to /api/respond.");
+    setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setAdvisorSupportCount((count) => count + 1); setStatus("Assessing Matrix + generating Advisor response…"); log("Sending form + voice to /api/respond.");
     try {
       const response = await fetch("/api/respond", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript, context }) });
       const data = await response.json().catch(() => ({}));
@@ -3482,14 +3552,18 @@ Correction / added detail: ${newText}`.trim() : newText);
   function createReport() {
     const timingMetrics = buildTimingMetrics(selectedFounderOccasion, stepTimings, occasionStartTime);
     const priorReport = reports[0] || null;
+    const fluency = buildFluencyAssessment({ profile, selectedFounderOccasion, stepTimings, advisorSupportCount, correctionCount, recoverySupportCount: recoverySupportCount + (matrixMatch ? 1 : 0), guestResonance, sensoryScores, timingMetrics });
+    const dialInReadiness = buildDialInReadiness(profile);
     const report = {
       id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
       drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
       synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics, uploadAsset: uploadAsset?.fileName ? { ...uploadAsset, previewUrl: "" } : null,
+      fluency, dialInReadiness,
+      supportCounts: { advisorSupportCount, correctionCount, recoverySupportCount: recoverySupportCount + (matrixMatch ? 1 : 0) },
       profileSnapshot: { ...profile },
       occasionSnapshot: { ...occasion },
-      machineInfo: { machineType: profile.machineType, machine: profile.machine, espressoMachine: profile.espressoMachine, allInOneMachine: profile.allInOneMachine, grinder: profile.grinder, grinderModel: profile.grinderModel, beans: profile.beans, roastLevel: profile.roastLevel, basketSize: profile.basketSize, portafilterSize: profile.portafilterSize, waterSource: profile.waterSource, warmupRoutine: profile.warmupRoutine, experienceLevel: profile.experienceLevel, milkStyle: profile.milkStyle },
-      dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, targetRatio: profile.targetRatio, grinderSetting: profile.grinderSetting, dialInNotes: profile.dialInNotes, currentShotTime: occasion.currentShotTime, drink: occasion.drink },
+      machineInfo: { machineType: profile.machineType, machine: profile.machine, espressoMachine: profile.espressoMachine, allInOneMachine: profile.allInOneMachine, grinder: profile.grinder, grinderModel: profile.grinderModel, beans: profile.beans, roastLevel: profile.roastLevel, basketSize: profile.basketSize, portafilterSize: profile.portafilterSize, waterSource: profile.waterSource, warmupRoutine: profile.warmupRoutine, experienceLevel: profile.experienceLevel, advisorGuidanceLevel: profile.advisorGuidanceLevel, tamper: profile.tamper, distributionTool: profile.distributionTool, wdtTool: profile.wdtTool, puckScreen: profile.puckScreen, puckPrepWorkflow: profile.puckPrepWorkflow, milkStyle: profile.milkStyle },
+      dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, targetRatio: profile.targetRatio, grinderSetting: profile.grinderSetting, confirmedRecipe: profile.confirmedRecipe, lastDialInResult: profile.lastDialInResult, dialInNotes: profile.dialInNotes, dialInAttempts: profile.dialInAttempts || [], currentShotTime: occasion.currentShotTime, drink: occasion.drink },
       confidenceMetrics: { machineConfidence: sensoryScores.machineConfidence, tasteClarity: sensoryScores.tasteClarity, stagecraft: sensoryScores.stagecraft, recoveryConfidence: sensoryScores.recoveryConfidence, guestResonance: guestResonance.score, occasionTempo: timingMetrics.totalActualSeconds },
       trendSummary: reportTrendSummary(priorReport, sensoryScores, guestResonance)
     };
@@ -3499,7 +3573,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   function printReport(report) {
     const w = window.open("", "_blank");
     if (!w) return;
-    const html = `<!doctype html><html><head><title>Doma Report</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.45;color:#1c140f} h1{color:#3a2318} .box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0} pre{white-space:pre-wrap;background:#f7f3ee;padding:12px;border-radius:10px}</style></head><body><h1>Doma Report — ${report.title}</h1><p>${report.createdAt}</p><div class=box><h2>Machine + Formula</h2><p><strong>Machine:</strong> ${report.machineInfo?.machine || ""}<br/><strong>Grinder:</strong> ${report.machineInfo?.grinder || ""}<br/><strong>Beans:</strong> ${report.machineInfo?.beans || ""}<br/><strong>Dose → Yield:</strong> ${report.dosingInfo?.dose || ""} → ${report.dosingInfo?.yield || ""}<br/><strong>House shot time:</strong> ${report.dosingInfo?.houseShotTime || ""}<br/><strong>Current shot time:</strong> ${report.dosingInfo?.currentShotTime || ""}</p></div><div class=box><h2>Occasion</h2><p><strong>Drink:</strong> ${report.drink}<br/><strong>Served to:</strong> ${report.guest}<br/><strong>Matrix:</strong> ${report.matrixMatch?.label || "None"}</p><p><strong>Trend:</strong> ${report.trendSummary || ""}</p></div><div class=box><h2>Confidence Metrics</h2><p>Machine Confidence: ${report.confidenceMetrics?.machineConfidence ?? ""}<br/>Taste Clarity: ${report.confidenceMetrics?.tasteClarity ?? ""}<br/>Stagecraft: ${report.confidenceMetrics?.stagecraft ?? ""}<br/>Recovery Confidence: ${report.confidenceMetrics?.recoveryConfidence ?? ""}<br/>Guest Resonance: ${report.confidenceMetrics?.guestResonance ?? ""}/5</p></div><div class=box><h2>Flavor + Sensory</h2><p>${(report.selectedFlavorNotes || []).join(", ")}</p><p>${report.tastingNote || ""}</p></div><div class=box><h2>Artisan Transcript</h2><pre>${report.transcript || ""}</pre></div><div class=box><h2>Advisor Response</h2><pre>${report.advisorText || ""}</pre></div><script>window.print()</script></body></html>`;
+    const html = `<!doctype html><html><head><title>Doma Report</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.45;color:#1c140f} h1{color:#3a2318} .box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0} pre{white-space:pre-wrap;background:#f7f3ee;padding:12px;border-radius:10px}</style></head><body><h1>Doma Report — ${report.title}</h1><p>${report.createdAt}</p><div class=box><h2>Machine + Formula</h2><p><strong>Machine:</strong> ${report.machineInfo?.machine || ""}<br/><strong>Grinder:</strong> ${report.machineInfo?.grinder || ""}<br/><strong>Beans:</strong> ${report.machineInfo?.beans || ""}<br/><strong>Dose → Yield:</strong> ${report.dosingInfo?.dose || ""} → ${report.dosingInfo?.yield || ""}<br/><strong>House shot time:</strong> ${report.dosingInfo?.houseShotTime || ""}<br/><strong>Current shot time:</strong> ${report.dosingInfo?.currentShotTime || ""}</p></div><div class=box><h2>Occasion</h2><p><strong>Drink:</strong> ${report.drink}<br/><strong>Served to:</strong> ${report.guest}<br/><strong>Matrix:</strong> ${report.matrixMatch?.label || "None"}</p><p><strong>Trend:</strong> ${report.trendSummary || ""}</p></div><div class=box><h2>Dial-In Readiness</h2><p><strong>Confirmed recipe:</strong> ${report.dialInReadiness?.status || report.dosingInfo?.confirmedRecipe || "Not captured"}<br/><strong>Actual recipe:</strong> ${report.dialInReadiness?.actualRecipe || "Not captured"}<br/><strong>Dial-in note:</strong> ${report.dialInReadiness?.recommendation || "Not captured"}</p></div><div class=box><h2>Occasion Presentation Score</h2><p><strong>Score:</strong> ${report.fluency?.score ?? ""}/100<br/><strong>Selected level:</strong> ${report.fluency?.selectedLevel || ""}<br/><strong>Observed zone:</strong> ${report.fluency?.observedZone || ""}<br/><strong>Advisor support:</strong> ${report.fluency?.advisorSupportCount ?? ""}<br/><strong>Recovery support:</strong> ${report.fluency?.recoverySupportCount ?? ""}<br/><strong>Corrections:</strong> ${report.fluency?.correctionCount ?? ""}<br/><strong>Step completion:</strong> ${report.fluency?.stepCompletionPercent ?? ""}%</p><p>${report.fluency?.feedback || ""}</p></div><div class=box><h2>Confidence Metrics</h2><p>Machine Confidence: ${report.confidenceMetrics?.machineConfidence ?? ""}<br/>Taste Clarity: ${report.confidenceMetrics?.tasteClarity ?? ""}<br/>Stagecraft: ${report.confidenceMetrics?.stagecraft ?? ""}<br/>Recovery Confidence: ${report.confidenceMetrics?.recoveryConfidence ?? ""}<br/>Guest Resonance: ${report.confidenceMetrics?.guestResonance ?? ""}/5</p></div><div class=box><h2>Flavor + Sensory</h2><p>${(report.selectedFlavorNotes || []).join(", ")}</p><p>${report.tastingNote || ""}</p></div><div class=box><h2>Artisan Transcript</h2><pre>${report.transcript || ""}</pre></div><div class=box><h2>Advisor Response</h2><pre>${report.advisorText || ""}</pre></div><script>window.print()</script></body></html>`;
     w.document.write(html);
     w.document.close();
   }
@@ -3573,7 +3647,7 @@ function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasion
 
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen }) {
   const setupComplete = !setupMissing?.length;
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button></div></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience — a premium home barista development platform and second coffee brain.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
@@ -3588,8 +3662,10 @@ function Onboarding({ profile, updateProfile, setActive }) {
         <Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} />
         <Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} />
         <SelectField label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} options={experienceOptions} />
+        <SelectField label="Advisor Guidance Level" value={profile.advisorGuidanceLevel} onChange={(v) => { updateProfile("advisorGuidanceLevel", v); updateProfile("advisorGuidanceNotes", guidanceLevelProfiles[v]?.promise || ""); }} options={guidanceLevelOptions} />
         <Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} />
       </div>
+      <div className="successBox"><strong>You selected: {profile.advisorGuidanceLevel || "Building Consistency"}.</strong><br/>{guidanceLevelProfiles[profile.advisorGuidanceLevel]?.promise || "Barista Doma will calibrate guidance to your selected level."}<br/><br/><strong>What this level expects:</strong> {guidanceLevelProfiles[profile.advisorGuidanceLevel]?.expectedFluency || "The Advisor will compare your selected level with actual Occasion performance."}</div>
       <div className="noteBox"><strong>2. Machine Passport</strong><br/>Choose the machine category first, then identify the specific machine and grinder. This is where Ninja, Jura, DeLonghi, Oracle, Meraki, Breville, Decent, and other machine types belong.</div>
       <div className="grid">
         <SelectField label="Machine type" value={profile.machineType} onChange={(v) => updateProfile("machineType", v)} options={machineTypeOptions} />
@@ -3603,6 +3679,17 @@ function Onboarding({ profile, updateProfile, setActive }) {
       </div>
       <label className="label">Machine warm-up / behavior notes</label>
       <textarea value={profile.warmupRoutine} onChange={(e) => updateProfile("warmupRoutine", e.target.value)} placeholder="Example: warms up in 10 minutes, needs portafilter locked in, steam takes 30 seconds…" />
+      <div className="noteBox"><strong>Puck Prep / Distribution Toolkit</strong><br/>Capture tamping, distribution, and WDT because channeling, choking, and uneven flow are often puck-prep issues, not only grind issues.</div>
+      <div className="grid">
+        <Field label="Tamper type / brand" value={profile.tamper} onChange={(v) => updateProfile("tamper", v)} />
+        <Field label="Tamper size" value={profile.tamperSize} onChange={(v) => updateProfile("tamperSize", v)} />
+        <Field label="Distribution tool" value={profile.distributionTool} onChange={(v) => updateProfile("distributionTool", v)} />
+        <Field label="WDT tool / needle style" value={profile.wdtTool} onChange={(v) => updateProfile("wdtTool", v)} />
+        <Field label="Puck screen use" value={profile.puckScreen} onChange={(v) => updateProfile("puckScreen", v)} />
+        <Field label="Dosing funnel" value={profile.dosingFunnel} onChange={(v) => updateProfile("dosingFunnel", v)} />
+      </div>
+      <label className="label">Typical puck prep workflow</label>
+      <textarea value={profile.puckPrepWorkflow} onChange={(e) => updateProfile("puckPrepWorkflow", e.target.value)} placeholder="Example: dose into funnel, WDT from bottom to top, tap level, tamp once level, add puck screen…" />
       <div className="noteBox"><strong>3. Dial-In Profile / House Formula</strong><br/>This is separate from onboarding. It captures how the machine is currently dialed in so the Advisor can interpret choking, fast shots, sourness, milk issues, and repeatability.</div>
       <div className="grid">
         <Field label="Beans" value={profile.beans} onChange={(v) => updateProfile("beans", v)} />
@@ -3612,12 +3699,61 @@ function Onboarding({ profile, updateProfile, setActive }) {
         <Field label="House shot time" value={profile.houseShotTime} onChange={(v) => updateProfile("houseShotTime", v)} />
         <Field label="Target ratio" value={profile.targetRatio} onChange={(v) => updateProfile("targetRatio", v)} />
         <Field label="Current grinder setting" value={profile.grinderSetting} onChange={(v) => updateProfile("grinderSetting", v)} />
+        <SelectField label="Confirmed recipe / house formula status" value={profile.confirmedRecipe} onChange={(v) => updateProfile("confirmedRecipe", v)} options={confirmedRecipeOptions} />
+        <Field label="Last dial-in result" value={profile.lastDialInResult} onChange={(v) => updateProfile("lastDialInResult", v)} />
         <Field label="Milk style / service preference" value={profile.milkStyle} onChange={(v) => updateProfile("milkStyle", v)} />
       </div>
       <label className="label">Dial-in notes</label>
       <textarea value={profile.dialInNotes} onChange={(e) => updateProfile("dialInNotes", e.target.value)} placeholder="Current behavior, last adjustment, what worked, what keeps recurring…" />
+      <DialInJournal profile={profile} updateProfile={updateProfile} />
     </div>
     <div className="buttonRow"><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Advisor Session</button></div>
+  </section>;
+}
+
+
+function DialInJournal({ profile, updateProfile }) {
+  const attempts = Array.isArray(profile.dialInAttempts) ? profile.dialInAttempts : [];
+  function saveAttempt() {
+    const attempt = {
+      id: Date.now(),
+      createdAt: new Date().toLocaleString(),
+      beans: profile.beans,
+      dose: profile.dialInAttemptDose || profile.houseDose,
+      yield: profile.dialInAttemptYield || profile.houseYield,
+      shotTime: profile.dialInAttemptTime,
+      grind: profile.dialInAttemptGrind || profile.grinderSetting,
+      taste: profile.dialInAttemptTaste,
+      flow: profile.dialInAttemptFlow,
+      puckPrep: profile.dialInAttemptPuckPrep || profile.puckPrepWorkflow,
+      advisorNote: profile.dialInAttemptAdvisorNote
+    };
+    updateProfile("dialInAttempts", [attempt, ...attempts].slice(0, 12));
+  }
+  function setAsHouse(attempt) {
+    updateProfile("houseDose", attempt.dose || profile.houseDose);
+    updateProfile("houseYield", attempt.yield || profile.houseYield);
+    updateProfile("houseShotTime", attempt.shotTime || profile.houseShotTime);
+    updateProfile("grinderSetting", attempt.grind || profile.grinderSetting);
+    updateProfile("confirmedRecipe", "Confirmed house formula");
+    updateProfile("lastDialInResult", `Saved from attempt: ${attempt.dose} in / ${attempt.yield} out / ${attempt.shotTime}`);
+  }
+  return <section className="dialInJournal">
+    <div className="noteBox"><strong>Dial-In Journal</strong><br/>Record each attempt so the Advisor can see whether the recipe is confirmed or still being developed. This is part of the second coffee brain.</div>
+    <div className="grid">
+      <Field label="Attempt dose" value={profile.dialInAttemptDose} onChange={(v) => updateProfile("dialInAttemptDose", v)} />
+      <Field label="Attempt yield" value={profile.dialInAttemptYield} onChange={(v) => updateProfile("dialInAttemptYield", v)} />
+      <Field label="Attempt shot time" value={profile.dialInAttemptTime} onChange={(v) => updateProfile("dialInAttemptTime", v)} />
+      <Field label="Attempt grind setting" value={profile.dialInAttemptGrind} onChange={(v) => updateProfile("dialInAttemptGrind", v)} />
+      <Field label="Taste result" value={profile.dialInAttemptTaste} onChange={(v) => updateProfile("dialInAttemptTaste", v)} />
+      <Field label="Flow behavior" value={profile.dialInAttemptFlow} onChange={(v) => updateProfile("dialInAttemptFlow", v)} />
+    </div>
+    <label className="label">Puck prep notes for this attempt</label>
+    <textarea value={profile.dialInAttemptPuckPrep || ""} onChange={(e) => updateProfile("dialInAttemptPuckPrep", e.target.value)} />
+    <label className="label">Advisor feedback / next adjustment for this attempt</label>
+    <textarea value={profile.dialInAttemptAdvisorNote || ""} onChange={(e) => updateProfile("dialInAttemptAdvisorNote", e.target.value)} />
+    <div className="buttonRow"><button className="primary" type="button" onClick={saveAttempt}>Save Dial-In Attempt</button></div>
+    {attempts.length ? <div className="attemptList">{attempts.map((a) => <div className="noteBox" key={a.id}><strong>{a.createdAt}</strong><br/>{a.beans} · {a.dose} in → {a.yield} out · {a.shotTime} · grind {a.grind}<br/><strong>Taste:</strong> {a.taste}<br/><strong>Flow:</strong> {a.flow}<br/><strong>Puck prep:</strong> {a.puckPrep}<br/><strong>Advisor:</strong> {a.advisorNote}<div className="buttonRow"><button className="secondary green" type="button" onClick={() => setAsHouse(a)}>Set as House Formula</button></div></div>)}</div> : <p className="small">No dial-in attempts saved yet.</p>}
   </section>;
 }
 
@@ -3796,6 +3932,39 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   </section>;
 }
 
+
+function buildDialInReadiness(profile) {
+  const attempts = Array.isArray(profile.dialInAttempts) ? profile.dialInAttempts : [];
+  const hasRecipe = String(profile.confirmedRecipe || "").toLowerCase().includes("confirmed");
+  const actualRecipe = `${profile.houseDose || "?"} in / ${profile.houseYield || "?"} out / ${profile.houseShotTime || "?"} · ratio ${profile.targetRatio || "?"} · grind ${profile.grinderSetting || "?"}`;
+  let recommendation = hasRecipe
+    ? "A house formula is confirmed. The Advisor can separate recipe issues from stagecraft and Occasion issues."
+    : "Complete at least one Dial-In Session and save a house formula before judging the full Occasion presentation.";
+  if (attempts.length && !hasRecipe) recommendation = `You have ${attempts.length} saved dial-in attempt${attempts.length === 1 ? "" : "s"}. Pick the strongest attempt and set it as the House Formula when it is repeatable.`;
+  return { status: profile.confirmedRecipe || "Not captured", actualRecipe, attempts: attempts.length, recommendation };
+}
+function buildFluencyAssessment({ profile, selectedFounderOccasion, stepTimings, advisorSupportCount, correctionCount, recoverySupportCount, guestResonance, sensoryScores, timingMetrics }) {
+  const selectedLevel = profile.advisorGuidanceLevel || "Building Consistency";
+  const stepsTotal = selectedFounderOccasion?.steps?.length || 0;
+  const stepsCompleted = Object.keys(stepTimings || {}).length;
+  const stepCompletionPercent = stepsTotal ? Math.round((stepsCompleted / stepsTotal) * 100) : 0;
+  const guestScore = Number(guestResonance?.score || 0);
+  const tasteScore = Number(sensoryScores?.tasteClarity || 0);
+  const stagecraftScore = Number(sensoryScores?.stagecraft || 0);
+  const recoveryScore = Number(sensoryScores?.recoveryConfidence || 0);
+  const setupScore = buildDialInReadiness(profile).status?.toLowerCase().includes("confirmed") ? 15 : 8;
+  const completionScore = Math.min(20, Math.round(stepCompletionPercent / 5));
+  const supportPenalty = Math.min(18, Number(advisorSupportCount || 0) * 3 + Number(recoverySupportCount || 0) * 4 + Number(correctionCount || 0) * 2);
+  const sensoryContribution = Math.round(((tasteScore + stagecraftScore + recoveryScore + guestScore) / 20) * 35);
+  const score = Math.max(0, Math.min(100, setupScore + completionScore + sensoryContribution + 30 - supportPenalty));
+  let observedZone = "New to the Machine";
+  if (score >= 88 && advisorSupportCount <= 1 && stepCompletionPercent >= 95) observedZone = "Data-Minded Artisan";
+  else if (score >= 78 && advisorSupportCount <= 2 && stepCompletionPercent >= 90) observedZone = "Confident Home Barista";
+  else if (score >= 62 && advisorSupportCount <= 4 && stepCompletionPercent >= 75) observedZone = "Building Consistency";
+  const feedback = `You selected ${selectedLevel}. During this Occasion presentation, you used Advisor support ${advisorSupportCount || 0} time${advisorSupportCount === 1 ? "" : "s"}, Recovery support ${recoverySupportCount || 0} time${recoverySupportCount === 1 ? "" : "s"}, and correction/reassessment ${correctionCount || 0} time${correctionCount === 1 ? "" : "s"}. You completed ${stepsCompleted} of ${stepsTotal || "?"} stagecraft steps (${stepCompletionPercent}%). This suggests the Occasion performed in the ${observedZone} zone. Repeat with focus on confirmed dial-in, complete Mise en Place, puck prep, one calm recovery move, and Guest Resonance capture.`;
+  return { score, selectedLevel, observedZone, advisorSupportCount: advisorSupportCount || 0, recoverySupportCount: recoverySupportCount || 0, correctionCount: correctionCount || 0, stepsCompleted, stepsTotal, stepCompletionPercent, feedback };
+}
+
 function buildTimingMetrics(occasionItem, stepTimings, occasionStartTime) {
   const totalActualSeconds = Object.values(stepTimings || {}).reduce((sum, item) => sum + (Number(item.actualSeconds) || 0), 0);
   return { suggestedTotalTempo: occasionItem?.suggestedTempo || occasionItem?.time || "Not set", totalActualSeconds, stepLevel: stepTimings || {}, previousAttempt: null, personalBest: null, improvementNote: "First captured attempt or no prior local attempt yet.", tempoReflection: "The goal is not speed. The goal is calm, repeatable readiness." };
@@ -3811,8 +3980,8 @@ function Simulator(props) {
   const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload } = props;
   return <>
     <section className="card">
-      <h2>Occasion Simulator</h2>
-      <p className="small">Speak what is happening with the cup, machine, room, guest, or occasion. The form grounds; your voice clarifies; corrections can update the Advisor.</p>
+      <h2>Advisor Session + Visual Upload</h2>
+      <p className="small">Speak what is happening with the cup, machine, room, guest, or occasion — or upload a photo/video of the puck, flow, milk, cup, or machine screen. The Advisor receives the Doma Profile, Machine Passport, Dial-In Profile, Occasion setup, voice, typed issue, and upload notes together.</p>
       <div className="buttonRow">
         <button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : () => startRecording("replace")}>{recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}</button>
         <button className="secondary" onClick={() => startRecording("append")} disabled={recording}>Add Spoken Detail / Correction</button>
@@ -3822,7 +3991,7 @@ function Simulator(props) {
       <label className="label">Artisan transcript / comment</label>
       <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened. Corrections are appended here." />
       <div className="uploadPanel">
-        <h3>Advisor visual upload</h3>
+        <h3>Upload Photo/Video for Advisor Analysis</h3>
         <p className="small">Restore photo/video context for puck, basket, espresso flow, milk texture, latte art, machine screen, or cup result. The Advisor uses this with the form and voice notes.</p>
         <div className="grid">
           <div><label className="label">Upload photo</label><input type="file" accept="image/*" onChange={(e) => handleAdvisorUpload(e.target.files?.[0], "photo")} /></div>
@@ -3874,11 +4043,13 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
         <div className="noteBox"><strong>Machine + Formula</strong><br/>Machine: {r.machineInfo?.machine || r.context?.machine || "Not captured"}<br/>Grinder: {r.machineInfo?.grinder || r.context?.grinder || "Not captured"}<br/>Beans: {r.machineInfo?.beans || r.context?.beans || "Not captured"}<br/>Dose → Yield: {r.dosingInfo?.dose || r.context?.dose || "?"} → {r.dosingInfo?.yield || r.context?.yield || "?"}<br/>House time: {r.dosingInfo?.houseShotTime || "Not captured"}<br/>Actual/observed time: {r.dosingInfo?.currentShotTime || r.context?.shotTime || "Not captured"}</div>
         <div className="successBox"><strong>Confidence + Trend</strong><br/>Machine Confidence: {r.confidenceMetrics?.machineConfidence ?? r.sensoryScores?.machineConfidence ?? "—"}<br/>Taste Clarity: {r.confidenceMetrics?.tasteClarity ?? r.sensoryScores?.tasteClarity ?? "—"}<br/>Stagecraft: {r.confidenceMetrics?.stagecraft ?? r.sensoryScores?.stagecraft ?? "—"}<br/>Recovery Confidence: {r.confidenceMetrics?.recoveryConfidence ?? r.sensoryScores?.recoveryConfidence ?? "—"}<br/>Trend: {r.trendSummary || "First report or no prior comparison."}</div>
       </div>
+      {r.fluency ? <div className="successBox"><strong>Occasion Presentation Score:</strong> {r.fluency.score}/100 · <strong>Selected:</strong> {r.fluency.selectedLevel} · <strong>Observed zone:</strong> {r.fluency.observedZone}<br/><strong>Advisor support:</strong> {r.fluency.advisorSupportCount} · <strong>Recovery support:</strong> {r.fluency.recoverySupportCount} · <strong>Corrections:</strong> {r.fluency.correctionCount} · <strong>Step completion:</strong> {r.fluency.stepCompletionPercent}%<br/>{r.fluency.feedback}</div> : null}
+      {r.dialInReadiness ? <div className="noteBox"><strong>Dial-In Readiness:</strong> {r.dialInReadiness.status}<br/><strong>Actual recipe:</strong> {r.dialInReadiness.actualRecipe}<br/><strong>Recommendation:</strong> {r.dialInReadiness.recommendation}</div> : null}
       <DomaPerformanceDashboard report={r} previous={reports[idx + 1]} reports={reports.slice(idx)} compact />
       <p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p>
       <p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p>
       <p><strong>Flavor notes:</strong> {(r.selectedFlavorNotes || []).join(", ") || "No flavor notes selected."}</p>
-      {r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}
+      {r.guestResonance ? <div className="successBox"><strong>Guest Resonance:</strong> {r.guestResonance.score}/5 · {r.guestResonance.status || "status not captured"} · {r.guestResonance.reaction} · first noticed {r.guestResonance.firstThingNoticed}<br/><strong>Would serve again:</strong> {r.guestResonance.wouldServeAgain} · <strong>Next adjustment:</strong> {r.guestResonance.nextAdjustment}<br/><strong>Guest quote/observation:</strong> {r.guestResonance.quote || "Not captured."}</div> : null}
       {r.timingMetrics ? <div className="noteBox"><strong>Occasion Tempo:</strong> Suggested {r.timingMetrics.suggestedTotalTempo}; actual captured {formatSeconds(r.timingMetrics.totalActualSeconds)}.<br/><strong>Improvement note:</strong> {r.timingMetrics.improvementNote}<br/><strong>Tempo reflection:</strong> {r.timingMetrics.tempoReflection}<br/><small>Founder Benchmarks placeholder: Suggested Tempo · Your Actual Tempo · Personal Best · Founder Cohort Average · Community Average later.</small></div> : null}
       <details><summary>Tasting note</summary><p>{r.tastingNote || "No tasting note captured."}</p></details>
       <details><summary>Advisor response</summary><pre>{r.advisorText}</pre></details>
@@ -3972,7 +4143,7 @@ function TastingStudio({ selectedFlavorNotes, toggleFlavor, sensoryScores, updat
 
 function GuestResonanceForm({ guestResonance, setGuestResonance }) {
   function update(field, value) { setGuestResonance((prev) => ({ ...prev, [field]: value })); }
-  return <section className="guestBox"><h3>Guest Resonance Check</h3><p className="small">The Occasion is not complete when the drink is made. It is complete when the drink is received.</p><div className="grid"><div><label className="label">Guest Resonance Score, 1–5</label><input type="range" min="1" max="5" value={guestResonance.score} onChange={(e) => update("score", Number(e.target.value))} /><strong>{guestResonance.score}</strong></div><div><label className="label">Guest reaction</label><select value={guestResonance.reaction} onChange={(e) => update("reaction", e.target.value)}>{["delighted","curious","neutral","confused","overwhelmed","comforted","surprised"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">First thing noticed</label><select value={guestResonance.firstThingNoticed} onChange={(e) => update("firstThingNoticed", e.target.value)}>{["aroma","sweetness","acidity","texture","temperature","visual presentation","story","finish"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Would serve again</label><select value={guestResonance.wouldServeAgain} onChange={(e) => update("wouldServeAgain", e.target.value)}>{["yes","adjust","no"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Next adjustment</label><select value={guestResonance.nextAdjustment} onChange={(e) => update("nextAdjustment", e.target.value)}>{["sweeter","brighter","colder","warmer","stronger","softer","more story","less explanation"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div></div><label className="label">Guest quote or observation</label><textarea value={guestResonance.quote} onChange={(e)=>update("quote", e.target.value)} placeholder="Capture what they said, noticed, or felt." /></section>;
+  return <section className="guestBox"><h3>Guest Resonance Check</h3><p className="small">The Occasion is not complete when the drink is made. It is complete when the drink is received.</p><div className="grid"><div><label className="label">Guest Resonance Score, 1–5</label><input type="range" min="1" max="5" value={guestResonance.score} onChange={(e) => update("score", Number(e.target.value))} /><strong>{guestResonance.score}</strong></div><div><label className="label">Guest reaction</label><select value={guestResonance.reaction} onChange={(e) => update("reaction", e.target.value)}>{["delighted","curious","neutral","confused","overwhelmed","comforted","surprised"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">First thing noticed</label><select value={guestResonance.firstThingNoticed} onChange={(e) => update("firstThingNoticed", e.target.value)}>{["aroma","sweetness","acidity","texture","temperature","visual presentation","story","finish"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Guest Resonance status</label><select value={guestResonance.status || "Green — landed well"} onChange={(e) => update("status", e.target.value)}>{guestResonanceStatusOptions.map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Would serve again</label><select value={guestResonance.wouldServeAgain} onChange={(e) => update("wouldServeAgain", e.target.value)}>{["yes","adjust","no"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div><div><label className="label">Next adjustment</label><select value={guestResonance.nextAdjustment} onChange={(e) => update("nextAdjustment", e.target.value)}>{["sweeter","brighter","colder","warmer","stronger","softer","more story","less explanation"].map((x)=><option key={x} value={x}>{x}</option>)}</select></div></div><label className="label">Guest quote or observation</label><textarea value={guestResonance.quote} onChange={(e)=>update("quote", e.target.value)} placeholder="Capture what they said, noticed, or felt." /></section>;
 }
 
 function FlavorWheel({ selectedFlavorNotes }) {
