@@ -1,12 +1,14 @@
-# Barista Doma Home Barista Occasion Simulator — v8.8.1
+# Barista Doma Home Barista Occasion Simulator v8.8.3
 
-Additive refinement over v8.8.
+Focused report graph restoration patch.
 
-Fixes / additions:
-- Advisor Guidance Level confirmation now updates with the selected guidance level.
-- Dial-In Journal is accessible as its own navigation section.
-- Set as House Formula now visibly updates the current House Formula summary and marks the selected attempt.
-- Doma Reports includes a Load Sample Reports button with synthetic score/chart/report data so artisans can see the value of the reporting layer immediately.
-- Preserves existing v8.x features: 21 Occasions, detailed walkthroughs, read-aloud, Recovery Library, natural issue matching, Advisor Voice, upload area, Tasting Studio, charts, print, CSV export.
+## Fixes
+- Keeps v8.8.2 guidance-level display fix.
+- Adds live Session Report Preview graphs inside Advisor Session.
+- Ensures saved Doma Reports display radar/spider, category bar chart, and cup-profile trend plot.
+- Adds printable report chart snapshot with category bars.
+- Keeps sample reports and full report dashboard.
+- Preserves voice, Advisor, upload, onboarding, Machine Passport, Dial-In Journal, Recovery Library, Tasting Studio, reports, print, and CSV export.
 
-Suggested commit: Deploy v8.8.1 journal samples fixes
+## Suggested commit
+Deploy v8.8.3 report graph restoration

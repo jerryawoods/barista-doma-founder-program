@@ -86,6 +86,14 @@ const guidanceLevelTargets = {
   "Data-Minded Artisan": { supportMax: 1, recoveryMax: 1, correctionMax: 1, minimumStepCompletion: 0.95 }
 };
 
+const experienceToGuidanceLevel = {
+  "First-time / learning": "New to the Machine",
+  "Developing confidence": "Building Consistency",
+  "Comfortable but inconsistent": "Building Consistency",
+  "Serious home barista": "Confident Home Barista",
+  "Advanced enthusiast": "Data-Minded Artisan"
+};
+
 const defaultOccasion = {
   occasionName: "Before-church coffee at home",
   drink: "Cappuccino",
@@ -3609,7 +3617,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   function printReport(report) {
     const w = window.open("", "_blank");
     if (!w) return;
-    const html = `<!doctype html><html><head><title>Doma Report</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.45;color:#1c140f} h1{color:#3a2318} .box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0} pre{white-space:pre-wrap;background:#f7f3ee;padding:12px;border-radius:10px}</style></head><body><h1>Doma Report — ${report.title}</h1><p>${report.createdAt}</p><div class=box><h2>Machine + Formula</h2><p><strong>Machine:</strong> ${report.machineInfo?.machine || ""}<br/><strong>Grinder:</strong> ${report.machineInfo?.grinder || ""}<br/><strong>Beans:</strong> ${report.machineInfo?.beans || ""}<br/><strong>Dose → Yield:</strong> ${report.dosingInfo?.dose || ""} → ${report.dosingInfo?.yield || ""}<br/><strong>House shot time:</strong> ${report.dosingInfo?.houseShotTime || ""}<br/><strong>Current shot time:</strong> ${report.dosingInfo?.currentShotTime || ""}</p></div><div class=box><h2>Occasion</h2><p><strong>Drink:</strong> ${report.drink}<br/><strong>Served to:</strong> ${report.guest}<br/><strong>Matrix:</strong> ${report.matrixMatch?.label || "None"}</p><p><strong>Trend:</strong> ${report.trendSummary || ""}</p></div><div class=box><h2>Dial-In Readiness</h2><p><strong>Confirmed recipe:</strong> ${report.dialInReadiness?.status || report.dosingInfo?.confirmedRecipe || "Not captured"}<br/><strong>Actual recipe:</strong> ${report.dialInReadiness?.actualRecipe || "Not captured"}<br/><strong>Dial-in note:</strong> ${report.dialInReadiness?.recommendation || "Not captured"}</p></div><div class=box><h2>Occasion Presentation Score</h2><p><strong>Score:</strong> ${report.fluency?.score ?? ""}/100<br/><strong>Selected level:</strong> ${report.fluency?.selectedLevel || ""}<br/><strong>Observed zone:</strong> ${report.fluency?.observedZone || ""}<br/><strong>Advisor support:</strong> ${report.fluency?.advisorSupportCount ?? ""}<br/><strong>Recovery support:</strong> ${report.fluency?.recoverySupportCount ?? ""}<br/><strong>Corrections:</strong> ${report.fluency?.correctionCount ?? ""}<br/><strong>Step completion:</strong> ${report.fluency?.stepCompletionPercent ?? ""}%</p><p>${report.fluency?.feedback || ""}</p></div><div class=box><h2>Confidence Metrics</h2><p>Machine Confidence: ${report.confidenceMetrics?.machineConfidence ?? ""}<br/>Taste Clarity: ${report.confidenceMetrics?.tasteClarity ?? ""}<br/>Stagecraft: ${report.confidenceMetrics?.stagecraft ?? ""}<br/>Recovery Confidence: ${report.confidenceMetrics?.recoveryConfidence ?? ""}<br/>Guest Resonance: ${report.confidenceMetrics?.guestResonance ?? ""}/5</p></div><div class=box><h2>Flavor + Sensory</h2><p>${(report.selectedFlavorNotes || []).join(", ")}</p><p>${report.tastingNote || ""}</p></div><div class=box><h2>Artisan Transcript</h2><pre>${report.transcript || ""}</pre></div><div class=box><h2>Advisor Response</h2><pre>${report.advisorText || ""}</pre></div><script>window.print()</script></body></html>`;
+    const html = `<!doctype html><html><head><title>Doma Report</title><style>body{font-family:Arial,sans-serif;padding:28px;line-height:1.45;color:#1c140f} h1{color:#3a2318} .box{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0} pre{white-space:pre-wrap;background:#f7f3ee;padding:12px;border-radius:10px}.printBarRow{display:grid;grid-template-columns:130px 1fr 50px;gap:10px;align-items:center;margin:8px 0}.printBarTrack{height:14px;border-radius:999px;background:#eee;overflow:hidden}.printBarFill{height:100%;background:#8b5a2b}.scoreHero{font-size:34px;font-weight:800;color:#3a2318}.chartNote{font-size:13px;color:#665}</style></head><body><h1>Doma Report — ${report.title}</h1><p>${report.createdAt}</p><div class=box><h2>Occasion Presentation Score</h2><div class=scoreHero>${report.fluency?.score ?? ""}/100</div><p><strong>Selected level:</strong> ${report.fluency?.selectedLevel || ""}<br/><strong>Observed zone:</strong> ${report.fluency?.observedZone || ""}<br/><strong>Advisor support:</strong> ${report.fluency?.advisorSupportCount ?? ""}<br/><strong>Recovery support:</strong> ${report.fluency?.recoverySupportCount ?? ""}<br/><strong>Corrections:</strong> ${report.fluency?.correctionCount ?? ""}<br/><strong>Step completion:</strong> ${report.fluency?.stepCompletionPercent ?? ""}%</p><p>${report.fluency?.feedback || ""}</p></div><div class=box><h2>Report Graphs / Category Bar Chart</h2>${printableBarsHtml(report)}<p class=chartNote>Printable chart snapshot. In the live app, this report also shows the spider/radar chart and cup-profile trend plot.</p></div><div class=box><h2>Machine + Formula</h2><p><strong>Machine:</strong> ${report.machineInfo?.machine || ""}<br/><strong>Grinder:</strong> ${report.machineInfo?.grinder || ""}<br/><strong>Beans:</strong> ${report.machineInfo?.beans || ""}<br/><strong>Dose → Yield:</strong> ${report.dosingInfo?.dose || ""} → ${report.dosingInfo?.yield || ""}<br/><strong>House shot time:</strong> ${report.dosingInfo?.houseShotTime || ""}<br/><strong>Current shot time:</strong> ${report.dosingInfo?.currentShotTime || ""}</p></div><div class=box><h2>Occasion</h2><p><strong>Drink:</strong> ${report.drink}<br/><strong>Served to:</strong> ${report.guest}<br/><strong>Matrix:</strong> ${report.matrixMatch?.label || "None"}</p><p><strong>Trend:</strong> ${report.trendSummary || ""}</p></div><div class=box><h2>Dial-In Readiness</h2><p><strong>Confirmed recipe:</strong> ${report.dialInReadiness?.status || report.dosingInfo?.confirmedRecipe || "Not captured"}<br/><strong>Actual recipe:</strong> ${report.dialInReadiness?.actualRecipe || "Not captured"}<br/><strong>Dial-in note:</strong> ${report.dialInReadiness?.recommendation || "Not captured"}</p></div><div class=box><h2>Confidence Metrics</h2><p>Machine Confidence: ${report.confidenceMetrics?.machineConfidence ?? ""}<br/>Taste Clarity: ${report.confidenceMetrics?.tasteClarity ?? ""}<br/>Stagecraft: ${report.confidenceMetrics?.stagecraft ?? ""}<br/>Recovery Confidence: ${report.confidenceMetrics?.recoveryConfidence ?? ""}<br/>Guest Resonance: ${report.confidenceMetrics?.guestResonance ?? ""}/5</p></div><div class=box><h2>Flavor + Sensory</h2><p>${(report.selectedFlavorNotes || []).join(", ")}</p><p>${report.tastingNote || ""}</p></div><div class=box><h2>Artisan Transcript</h2><pre>${report.transcript || ""}</pre></div><div class=box><h2>Advisor Response</h2><pre>${report.advisorText || ""}</pre></div><script>window.print()</script></body></html>`;
     w.document.write(html);
     w.document.close();
   }
@@ -3661,7 +3669,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
-      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload }} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
@@ -3689,11 +3697,20 @@ function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasio
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
 function Onboarding({ profile, updateProfile, updateProfilePatch, setActive }) {
+  function handleExperienceLevel(value) {
+    const mappedGuidance = experienceToGuidanceLevel[value] || profile.advisorGuidanceLevel || "Building Consistency";
+    updateProfilePatch({
+      experienceLevel: value,
+      advisorGuidanceLevel: mappedGuidance,
+      advisorGuidanceNotes: guidanceLevelProfiles[mappedGuidance]?.promise || ""
+    });
+  }
   function handleGuidanceLevel(value) {
     const level = guidanceLevelProfiles[value] ? value : "Building Consistency";
     updateProfilePatch({ advisorGuidanceLevel: level, advisorGuidanceNotes: guidanceLevelProfiles[level]?.promise || "" });
   }
-  const guidanceProfile = guidanceLevelProfiles[profile.advisorGuidanceLevel] || guidanceLevelProfiles["Building Consistency"];
+  const effectiveGuidanceLevel = guidanceLevelProfiles[profile.advisorGuidanceLevel] ? profile.advisorGuidanceLevel : (experienceToGuidanceLevel[profile.experienceLevel] || "Building Consistency");
+  const guidanceProfile = guidanceLevelProfiles[effectiveGuidanceLevel] || guidanceLevelProfiles["Building Consistency"];
   return <section className="card">
     <p className="eyebrow">Onboarding split into layers</p>
     <h2>Doma Profile + Machine Passport + Dial-In Profile</h2>
@@ -3703,11 +3720,11 @@ function Onboarding({ profile, updateProfile, updateProfilePatch, setActive }) {
       <div className="grid">
         <Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} />
         <Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} />
-        <SelectField label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} options={experienceOptions} />
-        <SelectField label="Advisor Guidance Level" value={profile.advisorGuidanceLevel} onChange={handleGuidanceLevel} options={guidanceLevelOptions} />
+        <SelectField label="Experience level" value={profile.experienceLevel} onChange={handleExperienceLevel} options={experienceOptions} />
+        <SelectField label="Advisor Guidance Level" value={effectiveGuidanceLevel} onChange={handleGuidanceLevel} options={guidanceLevelOptions} />
         <Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} />
       </div>
-      <div className="successBox"><strong>You selected: {profile.advisorGuidanceLevel || "Building Consistency"}.</strong><br/>{guidanceProfile.promise}<br/><br/><strong>What this level expects:</strong> {guidanceProfile.expectedFluency}<br/><br/><strong>How Barista Doma will use this:</strong> The Advisor will compare this selected level with actual Occasion performance: step completion, Advisor help count, Recovery support, corrections, Guest Resonance, and Dial-In Readiness. If the evidence suggests a different growth zone, the report will recommend the right practice level without shame.</div>
+      <div className="successBox"><strong>Experience selected: {profile.experienceLevel || "Not selected"}.</strong><br/><strong>Advisor service mode: {effectiveGuidanceLevel}.</strong><br/>{guidanceProfile.promise}<br/><br/><strong>What this level expects:</strong> {guidanceProfile.expectedFluency}<br/><br/><strong>How Barista Doma will use this:</strong> The Advisor will compare this selected level with actual Occasion performance: step completion, Advisor help count, Recovery support, corrections, Guest Resonance, and Dial-In Readiness. If the evidence suggests a different growth zone, the report will recommend the right practice level without shame.</div>
       <div className="noteBox"><strong>2. Machine Passport</strong><br/>Choose the machine category first, then identify the specific machine and grinder. This is where Ninja, Jura, DeLonghi, Oracle, Meraki, Breville, Decent, and other machine types belong.</div>
       <div className="grid">
         <SelectField label="Machine type" value={profile.machineType} onChange={(v) => updateProfile("machineType", v)} options={machineTypeOptions} />
@@ -3814,7 +3831,8 @@ function DialInJournal({ profile, updateProfile }) {
 }
 
 function SelectField({ label, value, onChange, options }) {
-  return <div><label className="label">{label}</label><select value={value || ""} onChange={(e) => onChange(e.target.value)}>{options.map((option) => <option key={option || "blank"} value={option}>{option || "Select…"}</option>)}</select></div>;
+  function handleSelect(e) { onChange(e.currentTarget.value); }
+  return <div><label className="label">{label}</label><select value={value || ""} onChange={handleSelect} onInput={handleSelect}>{options.map((option) => <option key={option || "blank"} value={option}>{option || "Select…"}</option>)}</select></div>;
 }
 
 
@@ -4033,7 +4051,8 @@ function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot,
 }
 
 function Simulator(props) {
-  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload } = props;
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports } = props;
+  const liveSessionReport = buildLiveSessionReport({ profile, occasion, sensoryScores, guestResonance, transcript, advisorText, matrixMatch });
   return <>
     <section className="card">
       <h2>Advisor Session + Visual Upload</h2>
@@ -4075,6 +4094,11 @@ function Simulator(props) {
         <button className="secondary" onClick={createReport} disabled={!advisorText || advisorText === advisorStarterText}>Create Doma Report</button>
       </div>
       {advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio ref={advisorAudioRef} controls autoPlay src={advisorAudioUrl} /></> : null}
+    </section>
+    <section className="card">
+      <h2>Live Session Report Preview</h2>
+      <p className="small">These are the graphs that should also appear in the saved Doma Report. They update from the current session data so the artisan can see the Occasion Presentation before printing or exporting.</p>
+      <DomaPerformanceDashboard report={liveSessionReport} previous={(reports || [])[0]} reports={[...(reports || []), liveSessionReport]} compact />
     </section>
   </>;
 }
@@ -4118,6 +4142,41 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
 
 
 
+
+
+function buildLiveSessionReport({ profile, occasion, sensoryScores, guestResonance, transcript, advisorText, matrixMatch }) {
+  const safeScores = sensoryScores || defaultSensoryScores;
+  return {
+    id: "live-session-preview",
+    createdAt: new Date().toLocaleString(),
+    title: occasion?.occasionName || "Live Advisor Session",
+    drink: occasion?.drink || profile?.preferredDrinks || "Not selected",
+    guest: occasion?.guest || "Not captured",
+    transcript,
+    advisorText,
+    matrixMatch,
+    selectedFlavorNotes: [],
+    sensoryScores: safeScores,
+    guestResonance: guestResonance || defaultGuestResonance,
+    timingMetrics: { suggestedTotalTempo: occasion?.suggestedTempo || "Not selected", totalActualSeconds: 0, improvementNote: "Live preview. Save a Doma Report to start trend tracking.", tempoReflection: "The goal is calm, repeatable readiness — not speed." },
+    fluency: { score: calculateLivePreviewScore(safeScores, guestResonance), selectedLevel: profile?.advisorGuidanceLevel || "Not selected", observedZone: profile?.advisorGuidanceLevel || "Not selected", advisorSupportCount: 0, recoverySupportCount: matrixMatch ? 1 : 0, correctionCount: 0, stepCompletionPercent: 0, feedback: "Live session preview. Create a Doma Report after the Occasion to lock the score, charts, support counts, and fluency feedback." },
+    dialInReadiness: buildDialInReadiness(profile || {}),
+    machineInfo: { machineType: profile?.machineType, machine: profile?.machine || profile?.espressoMachine || profile?.allInOneMachine, grinder: profile?.grinder || profile?.grinderModel, beans: profile?.beans, roastLevel: profile?.roastLevel, tamper: profile?.tamper, distributionTool: profile?.distributionTool, wdtTool: profile?.wdtTool, puckScreen: profile?.puckScreen },
+    dosingInfo: { dose: profile?.houseDose, yield: profile?.houseYield, houseShotTime: profile?.houseShotTime, currentShotTime: occasion?.currentShotTime, targetRatio: profile?.targetRatio, grinderSetting: profile?.grinderSetting, confirmedRecipe: profile?.confirmedRecipe },
+    confidenceMetrics: { machineConfidence: safeScores.machineConfidence, tasteClarity: safeScores.tasteClarity, stagecraft: safeScores.stagecraft, recoveryConfidence: safeScores.recoveryConfidence, guestResonance: guestResonance?.score || safeScores.guestResonance || 0, occasionTempo: 0 },
+    trendSummary: "Live session preview. Save the report to compare against prior Occasions."
+  };
+}
+
+function calculateLivePreviewScore(scores, guestResonance) {
+  const vals = [scores?.machineConfidence, scores?.tasteClarity, scores?.stagecraft, scores?.recoveryConfidence, (guestResonance?.score || scores?.guestResonance || 0) * 2].map((x) => Number(x) || 0);
+  return Math.round((vals.reduce((a,b)=>a+b,0) / Math.max(1, vals.length)) * 10);
+}
+
+function printableBarsHtml(report) {
+  const rows = reportDashboardRows(report, null);
+  return rows.map((row) => `<div class="printBarRow"><span>${row.label}</span><div class="printBarTrack"><div class="printBarFill" style="width:${Math.max(0, Math.min(10, row.current))*10}%"></div></div><strong>${row.current}/10</strong></div>`).join("");
+}
 
 function getReportMetric(report, key) {
   const score = report?.sensoryScores?.[key] ?? report?.confidenceMetrics?.[key];
