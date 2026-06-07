@@ -1,24 +1,12 @@
-# Barista Doma / Occasions.coffee — v8.8 Development Platform Refinement
+# Barista Doma Home Barista Occasion Simulator — v8.8.1
 
-Additive refinement over the working founder prototype.
+Additive refinement over v8.8.
 
-## Adds
-- Advisor Guidance Level / Artisan Fluency calibration
-- Level confirmation language in onboarding
-- Puck prep toolkit fields: tamper, distribution, WDT, puck screen, dosing funnel, workflow
-- Dial-In Journal with multiple attempts and Set as House Formula
-- Dial-In Readiness in Doma Reports
-- Occasion Presentation Score / Home Barista Fluency feedback
-- Guest Resonance status indicator
-- Photo/video upload visibility in Advisor Session
-- Advisor context pack now includes Doma Profile + Machine Passport + Dial-In Profile + puck prep + upload notes + voice/form context
+Fixes / additions:
+- Advisor Guidance Level confirmation now updates with the selected guidance level.
+- Dial-In Journal is accessible as its own navigation section.
+- Set as House Formula now visibly updates the current House Formula summary and marks the selected attempt.
+- Doma Reports includes a Load Sample Reports button with synthetic score/chart/report data so artisans can see the value of the reporting layer immediately.
+- Preserves existing v8.x features: 21 Occasions, detailed walkthroughs, read-aloud, Recovery Library, natural issue matching, Advisor Voice, upload area, Tasting Studio, charts, print, CSV export.
 
-## Preserves
-- 21 Occasions
-- Step-by-step walkthroughs
-- Step read-aloud
-- Advisor Voice
-- Recovery Library
-- What Went Wrong search
-- Tasting Studio / flavor wheel
-- Doma Reports, charts, print and CSV
+Suggested commit: Deploy v8.8.1 journal samples fixes

@@ -3391,7 +3391,8 @@ export default function Home() {
     const stamp = new Date().toLocaleTimeString();
     setLogs((prev) => [...prev, `[${stamp}] ${message}`]);
   }
-  function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: value })); }
+  function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: typeof value === "function" ? value(prev[field], prev) : value })); }
+  function updateProfilePatch(patch) { setProfile((prev) => ({ ...prev, ...patch })); }
   function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
   function handleAdvisorUpload(file, kind = "photo/video") {
     if (!file) return;
@@ -3569,6 +3570,41 @@ Correction / added detail: ${newText}`.trim() : newText);
     };
     setReports((prev) => [report, ...prev]); setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
   }
+
+  function loadSampleReports() {
+    const now = new Date();
+    const sampleBase = [
+      { title: "The First Cup Diagnostic", score: 68, observedZone: "Building Consistency", machine: 5, taste: 5, stage: 6, recovery: 6, resonance: 3, support: 4, recoverySupport: 2, seconds: 720, shot: "20 seconds", status: "Yellow — partially landed" },
+      { title: "The Quiet Table", score: 78, observedZone: "Building Consistency", machine: 7, taste: 6, stage: 8, recovery: 7, resonance: 4, support: 2, recoverySupport: 1, seconds: 610, shot: "26 seconds", status: "Green — landed well" },
+      { title: "The First Sip Flex", score: 86, observedZone: "Confident Home Barista", machine: 8, taste: 8, stage: 9, recovery: 8, resonance: 5, support: 1, recoverySupport: 0, seconds: 545, shot: "28 seconds", status: "Bodacious" }
+    ];
+    const samples = sampleBase.map((x, idx) => ({
+      id: Date.now() + idx,
+      createdAt: new Date(now.getTime() - (sampleBase.length - idx) * 86400000).toLocaleString(),
+      title: x.title,
+      drink: idx === 2 ? "Chilled espresso tonic with citrus + berry lift" : "Cappuccino",
+      guest: idx === 2 ? "Friend / curious guest" : "Family",
+      transcript: idx === 0 ? "The shot ran a little fast and tasted thin. I needed help knowing whether to adjust grind." : "The cup felt steadier and the guest noticed the texture and aroma.",
+      advisorText: `Sample Advisor feedback: You selected ${profile.advisorGuidanceLevel || "Building Consistency"}. During this Occasion, Advisor support and Recovery use suggest ${x.observedZone}. Focus next on Mise en Place, puck prep, and one calm recovery move.`,
+      matrixMatch: idx === 0 ? { label: "Fast shot / low resistance", issue: "Shot runs too fast" } : null,
+      selectedFlavorNotes: idx === 2 ? ["citrus", "berry", "floral", "sparkling"] : ["caramel", "cocoa", "sweet"],
+      sensoryScores: { ...defaultSensoryScores, machineConfidence: x.machine, tasteClarity: x.taste, stagecraft: x.stage, recoveryConfidence: x.recovery, guestResonance: x.resonance, occasionTempo: 8 },
+      tastingNote: idx === 2 ? "Bright, sparkling, citrus-forward with a berry finish and strong guest curiosity." : "Warm, sweet, familiar, and improving in balance.",
+      guestResonance: { ...defaultGuestResonance, score: x.resonance, status: x.status, reaction: x.resonance >= 5 ? "delighted" : "comforted", firstThingNoticed: idx === 2 ? "visual presentation" : "texture", quote: idx === 2 ? "I didn’t know coffee could feel like a mocktail." : "This feels smoother than last time.", wouldServeAgain: "yes", nextAdjustment: "brighter" },
+      timingMetrics: { suggestedTotalTempo: "8–11 minutes", totalActualSeconds: x.seconds, improvementNote: idx ? "Tempo improved compared with the prior sample report." : "First sample baseline.", tempoReflection: "The goal is calm, repeatable readiness — not speed." },
+      fluency: { score: x.score, selectedLevel: profile.advisorGuidanceLevel || "Building Consistency", observedZone: x.observedZone, advisorSupportCount: x.support, recoverySupportCount: x.recoverySupport, correctionCount: idx === 0 ? 1 : 0, stepCompletionPercent: idx === 0 ? 82 : 100, feedback: `You selected ${profile.advisorGuidanceLevel || "Building Consistency"}. During this Occasion, you used Advisor support ${x.support} time(s) and Recovery support ${x.recoverySupport} time(s). This places the sample presentation in the ${x.observedZone} zone. Repeat with attention to Mise en Place, puck prep, and one calm recovery move.` },
+      dialInReadiness: { status: idx === 0 ? "Close but still tuning" : "Confirmed house formula", actualRecipe: `18g in / 36g out / ${x.shot}`, recommendation: idx === 0 ? "Complete one more dial-in attempt before treating this as a confirmed Occasion recipe." : "Recipe is ready for this sample Occasion." },
+      machineInfo: { machineType: profile.machineType, machine: profile.machine || "Breville Barista Express", grinder: profile.grinder || "Built-in grinder", beans: profile.beans || "Founder sample beans", roastLevel: profile.roastLevel, tamper: profile.tamper, distributionTool: profile.distributionTool, wdtTool: profile.wdtTool, puckScreen: profile.puckScreen },
+      dosingInfo: { dose: "18g", yield: "36g", houseShotTime: "26–30 seconds", currentShotTime: x.shot, targetRatio: "1:2", grinderSetting: profile.grinderSetting || "sample grind 6", confirmedRecipe: idx === 0 ? "Close but still tuning" : "Confirmed house formula" },
+      confidenceMetrics: { machineConfidence: x.machine, tasteClarity: x.taste, stagecraft: x.stage, recoveryConfidence: x.recovery, guestResonance: x.resonance, occasionTempo: x.seconds },
+      trendSummary: idx ? "Sample trend: support count fell and Guest Resonance improved." : "Sample baseline report for demonstration."
+    }));
+    setReports(samples);
+    setStatus("Loaded sample Doma Reports with synthetic performance data.");
+    log("Loaded synthetic sample Doma Reports for founder demo.");
+    setActive("reports");
+  }
+
   function clearReports() { setReports([]); log("Cleared local reports."); }
   function printReport(report) {
     const w = window.open("", "_blank");
@@ -3598,35 +3634,36 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.7</small></div></div>
-        {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.8.1</small></div></div>
+        {["dashboard", "onboarding", "dialin", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
         <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 21 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 7)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.7</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.8.1</p>
         <h1>Home Barista Occasion Simulator — Machine Passport + Upload Analysis</h1>
         <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
         <div className="navBar">
-          {["dashboard", "onboarding", "occasions", "walkthrough", "simulator", "tasting", "reports", "matrix"].map((tab) => (
+          {["dashboard", "onboarding", "dialin", "occasions", "walkthrough", "simulator", "tasting", "reports", "matrix"].map((tab) => (
             <button key={tab} className={active === tab ? "tab active" : "tab"} onClick={() => setActive(tab)} type="button">{tabLabel(tab)}</button>
           ))}
         </div>
       </section>
 
       {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
-      {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} setActive={setActive} />}
+      {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} updateProfilePatch={updateProfilePatch} setActive={setActive} />}
+      {active === "dialin" && <DialInJournalPage profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
-      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} />}
+      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
 
       <section className="card principleCard">
@@ -3642,16 +3679,21 @@ Correction / added detail: ${newText}`.trim() : newText);
   );
 }
 
-function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", simulator: "Advisor Session", tasting: "Tasting Studio", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
-function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", simulator: "🎙️", tasting: "🍯", reports: "📊", matrix: "🛠️" })[tab]; }
+function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", dialin: "Dial-In Journal", simulator: "Advisor Session", tasting: "Tasting Studio", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
+function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", dialin: "🧪", simulator: "🎙️", tasting: "🍯", reports: "📊", matrix: "🛠️" })[tab]; }
 
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen }) {
   const setupComplete = !setupMissing?.length;
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience — a premium home barista development platform and second coffee brain.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience — a premium home barista development platform and second coffee brain.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
-function Onboarding({ profile, updateProfile, setActive }) {
+function Onboarding({ profile, updateProfile, updateProfilePatch, setActive }) {
+  function handleGuidanceLevel(value) {
+    const level = guidanceLevelProfiles[value] ? value : "Building Consistency";
+    updateProfilePatch({ advisorGuidanceLevel: level, advisorGuidanceNotes: guidanceLevelProfiles[level]?.promise || "" });
+  }
+  const guidanceProfile = guidanceLevelProfiles[profile.advisorGuidanceLevel] || guidanceLevelProfiles["Building Consistency"];
   return <section className="card">
     <p className="eyebrow">Onboarding split into layers</p>
     <h2>Doma Profile + Machine Passport + Dial-In Profile</h2>
@@ -3662,10 +3704,10 @@ function Onboarding({ profile, updateProfile, setActive }) {
         <Field label="Founder / artisan name" value={profile.founderName} onChange={(v) => updateProfile("founderName", v)} />
         <Field label="Role identity" value={profile.roleIdentity} onChange={(v) => updateProfile("roleIdentity", v)} />
         <SelectField label="Experience level" value={profile.experienceLevel} onChange={(v) => updateProfile("experienceLevel", v)} options={experienceOptions} />
-        <SelectField label="Advisor Guidance Level" value={profile.advisorGuidanceLevel} onChange={(v) => { updateProfile("advisorGuidanceLevel", v); updateProfile("advisorGuidanceNotes", guidanceLevelProfiles[v]?.promise || ""); }} options={guidanceLevelOptions} />
+        <SelectField label="Advisor Guidance Level" value={profile.advisorGuidanceLevel} onChange={handleGuidanceLevel} options={guidanceLevelOptions} />
         <Field label="Preferred drinks" value={profile.preferredDrinks} onChange={(v) => updateProfile("preferredDrinks", v)} />
       </div>
-      <div className="successBox"><strong>You selected: {profile.advisorGuidanceLevel || "Building Consistency"}.</strong><br/>{guidanceLevelProfiles[profile.advisorGuidanceLevel]?.promise || "Barista Doma will calibrate guidance to your selected level."}<br/><br/><strong>What this level expects:</strong> {guidanceLevelProfiles[profile.advisorGuidanceLevel]?.expectedFluency || "The Advisor will compare your selected level with actual Occasion performance."}</div>
+      <div className="successBox"><strong>You selected: {profile.advisorGuidanceLevel || "Building Consistency"}.</strong><br/>{guidanceProfile.promise}<br/><br/><strong>What this level expects:</strong> {guidanceProfile.expectedFluency}<br/><br/><strong>How Barista Doma will use this:</strong> The Advisor will compare this selected level with actual Occasion performance: step completion, Advisor help count, Recovery support, corrections, Guest Resonance, and Dial-In Readiness. If the evidence suggests a different growth zone, the report will recommend the right practice level without shame.</div>
       <div className="noteBox"><strong>2. Machine Passport</strong><br/>Choose the machine category first, then identify the specific machine and grinder. This is where Ninja, Jura, DeLonghi, Oracle, Meraki, Breville, Decent, and other machine types belong.</div>
       <div className="grid">
         <SelectField label="Machine type" value={profile.machineType} onChange={(v) => updateProfile("machineType", v)} options={machineTypeOptions} />
@@ -3707,10 +3749,20 @@ function Onboarding({ profile, updateProfile, setActive }) {
       <textarea value={profile.dialInNotes} onChange={(e) => updateProfile("dialInNotes", e.target.value)} placeholder="Current behavior, last adjustment, what worked, what keeps recurring…" />
       <DialInJournal profile={profile} updateProfile={updateProfile} />
     </div>
-    <div className="buttonRow"><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Advisor Session</button></div>
+    <div className="buttonRow"><button className="primary" onClick={() => setActive("occasions")}>Continue to 21 Occasions</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("simulator")}>Go to Advisor Session</button></div>
   </section>;
 }
 
+
+function DialInJournalPage({ profile, updateProfile, setActive }) {
+  return <section className="card">
+    <p className="eyebrow">Dial-In Journal / House Formula</p>
+    <h2>Record attempts, confirm the recipe, and build the second coffee brain.</h2>
+    <p className="small">This is the dedicated place to record attempt 1, 2, 3, 4, or 5 while dialing in. Once an attempt works, set it as the House Formula so the Advisor can separate recipe problems from stagecraft problems.</p>
+    <DialInJournal profile={profile} updateProfile={updateProfile} />
+    <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Use Journal in Advisor Session</button><button className="secondary" onClick={() => setActive("onboarding")}>Back to Machine Passport</button><button className="secondary" onClick={() => setActive("reports")}>View Doma Reports</button></div>
+  </section>;
+}
 
 function DialInJournal({ profile, updateProfile }) {
   const attempts = Array.isArray(profile.dialInAttempts) ? profile.dialInAttempts : [];
@@ -3726,9 +3778,11 @@ function DialInJournal({ profile, updateProfile }) {
       taste: profile.dialInAttemptTaste,
       flow: profile.dialInAttemptFlow,
       puckPrep: profile.dialInAttemptPuckPrep || profile.puckPrepWorkflow,
-      advisorNote: profile.dialInAttemptAdvisorNote
+      advisorNote: profile.dialInAttemptAdvisorNote,
+      isHouse: false
     };
     updateProfile("dialInAttempts", [attempt, ...attempts].slice(0, 12));
+    updateProfile("lastDialInResult", `Saved dial-in attempt: ${attempt.dose || "?"} in / ${attempt.yield || "?"} out / ${attempt.shotTime || "?"}`);
   }
   function setAsHouse(attempt) {
     updateProfile("houseDose", attempt.dose || profile.houseDose);
@@ -3736,9 +3790,11 @@ function DialInJournal({ profile, updateProfile }) {
     updateProfile("houseShotTime", attempt.shotTime || profile.houseShotTime);
     updateProfile("grinderSetting", attempt.grind || profile.grinderSetting);
     updateProfile("confirmedRecipe", "Confirmed house formula");
-    updateProfile("lastDialInResult", `Saved from attempt: ${attempt.dose} in / ${attempt.yield} out / ${attempt.shotTime}`);
+    updateProfile("lastDialInResult", `House Formula confirmed from journal: ${attempt.dose || "?"} in / ${attempt.yield || "?"} out / ${attempt.shotTime || "?"} at grind ${attempt.grind || "?"}`);
+    updateProfile("dialInAttempts", attempts.map((a) => ({ ...a, isHouse: a.id === attempt.id })));
   }
   return <section className="dialInJournal">
+    <div className="successBox"><strong>Current House Formula</strong><br/>Dose → Yield: {profile.houseDose || "?"} → {profile.houseYield || "?"}<br/>Shot time: {profile.houseShotTime || "Not set"}<br/>Grind setting: {profile.grinderSetting || "Not set"}<br/>Recipe status: {profile.confirmedRecipe || "Not confirmed"}<br/>Last dial-in result: {profile.lastDialInResult || "No journal confirmation yet."}</div>
     <div className="noteBox"><strong>Dial-In Journal</strong><br/>Record each attempt so the Advisor can see whether the recipe is confirmed or still being developed. This is part of the second coffee brain.</div>
     <div className="grid">
       <Field label="Attempt dose" value={profile.dialInAttemptDose} onChange={(v) => updateProfile("dialInAttemptDose", v)} />
@@ -3749,11 +3805,11 @@ function DialInJournal({ profile, updateProfile }) {
       <Field label="Flow behavior" value={profile.dialInAttemptFlow} onChange={(v) => updateProfile("dialInAttemptFlow", v)} />
     </div>
     <label className="label">Puck prep notes for this attempt</label>
-    <textarea value={profile.dialInAttemptPuckPrep || ""} onChange={(e) => updateProfile("dialInAttemptPuckPrep", e.target.value)} />
+    <textarea value={profile.dialInAttemptPuckPrep || ""} onChange={(e) => updateProfile("dialInAttemptPuckPrep", e.target.value)} placeholder="WDT, distribution, tamp feel, puck screen, channeling, choking, spraying, or flow notes…" />
     <label className="label">Advisor feedback / next adjustment for this attempt</label>
-    <textarea value={profile.dialInAttemptAdvisorNote || ""} onChange={(e) => updateProfile("dialInAttemptAdvisorNote", e.target.value)} />
+    <textarea value={profile.dialInAttemptAdvisorNote || ""} onChange={(e) => updateProfile("dialInAttemptAdvisorNote", e.target.value)} placeholder="Example: 18g → 36g in 20 seconds tasted thin; Advisor suggested one step finer and repeat same yield." />
     <div className="buttonRow"><button className="primary" type="button" onClick={saveAttempt}>Save Dial-In Attempt</button></div>
-    {attempts.length ? <div className="attemptList">{attempts.map((a) => <div className="noteBox" key={a.id}><strong>{a.createdAt}</strong><br/>{a.beans} · {a.dose} in → {a.yield} out · {a.shotTime} · grind {a.grind}<br/><strong>Taste:</strong> {a.taste}<br/><strong>Flow:</strong> {a.flow}<br/><strong>Puck prep:</strong> {a.puckPrep}<br/><strong>Advisor:</strong> {a.advisorNote}<div className="buttonRow"><button className="secondary green" type="button" onClick={() => setAsHouse(a)}>Set as House Formula</button></div></div>)}</div> : <p className="small">No dial-in attempts saved yet.</p>}
+    {attempts.length ? <div className="attemptList">{attempts.map((a) => <div className={a.isHouse ? "successBox" : "noteBox"} key={a.id}><strong>{a.isHouse ? "House Formula · " : ""}{a.createdAt}</strong><br/>{a.beans} · {a.dose} in → {a.yield} out · {a.shotTime} · grind {a.grind}<br/><strong>Taste:</strong> {a.taste}<br/><strong>Flow:</strong> {a.flow}<br/><strong>Puck prep:</strong> {a.puckPrep}<br/><strong>Advisor:</strong> {a.advisorNote}<div className="buttonRow"><button className="secondary green" type="button" onClick={() => setAsHouse(a)}>Set as House Formula</button></div></div>)}</div> : <p className="small">No dial-in attempts saved yet.</p>}
   </section>;
 }
 
@@ -4023,7 +4079,7 @@ function Simulator(props) {
   </>;
 }
 
-function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV }) {
+function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV, loadSampleReports }) {
   const latest = reports[0] || null;
   const previous = reports[1] || null;
   return <section className="reportsPage">
@@ -4031,8 +4087,10 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
       <p className="eyebrow">Doma Reports / Second Coffee Brain</p>
       <h1>Performance reporting for the cup, the machine, and the Occasion.</h1>
       <p>Barista Doma should become the one true source for the artisan’s machine, recipes, dosing, recoveries, tasting notes, charts, Guest Resonance, and Occasion performance.</p>
-      <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div>
+      <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary green" onClick={loadSampleReports}>Load Sample Reports</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div>
     </section>
+
+    {!latest ? <div className="successBox"><strong>Sample reports available.</strong><br/>Click “Load Sample Reports” to show synthetic Doma Reports with scores, charts, Dial-In Readiness, Guest Resonance, trend plots, and print/export examples.</div> : null}
 
     {latest ? <section className="card"><h2>Current Performance Dashboard</h2><p className="small">Radar for balance, bar chart for category comparison, and a Decent-inspired plot for nerd-minded progression.</p><DomaPerformanceDashboard report={latest} previous={previous} reports={reports} /></section> : <div className="noteBox">No reports yet. Run the Simulator or Tasting Studio and create a Doma Report.</div>}
 
