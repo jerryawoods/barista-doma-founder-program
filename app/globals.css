@@ -231,3 +231,78 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .uploadPanel { margin-top: 18px; padding: 16px; border: 1px solid rgba(248, 211, 137, .35); border-radius: 18px; background: rgba(0,0,0,.18); }
 .uploadPreview { margin-top: 10px; max-width: 100%; max-height: 220px; border-radius: 14px; border: 1px solid rgba(255,255,255,.18); display: block; }
 .setupStack { display: grid; gap: 16px; }
+
+/* v8.9 Home + Dashboard operating model and mobile-first navigation */
+.heroPremium { background: radial-gradient(circle at top left, rgba(240,201,135,.18), transparent 34%), linear-gradient(135deg, #2b1d13, #17101d 70%); border-color:#8a674a; }
+.homeActionGrid { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; margin:16px 0; }
+.homeAction { display:flex; flex-direction:column; gap:10px; align-items:flex-start; text-align:left; min-height:180px; margin:0; padding:20px; border-radius:22px; border:1px solid rgba(240,201,135,.28); background:#17101d; color:#fff7ec; }
+.homeAction span { display:inline-grid; place-items:center; min-width:42px; height:32px; border-radius:999px; background:#33253c; color:#f0c987; font-size:13px; font-weight:900; letter-spacing:.08em; }
+.homeAction strong { font-size:20px; line-height:1.15; }
+.homeAction small { color:#ccb7a5; line-height:1.45; font-size:14px; }
+.homeAction.primaryAction { background:linear-gradient(135deg, #f0c987, #8a674a); color:#21160f; border-color:#f0c987; }
+.homeAction.primaryAction span { background:#21160f; color:#f0c987; }
+.homeAction.primaryAction small { color:#2d1c11; }
+.quickShotPage textarea { min-height:120px; }
+.quickShotPage .noteBox strong { color:#f0c987; }
+.mobileBottomNav { display:none; }
+@media (max-width: 860px) {
+  .sideNav { display:none; }
+  .page { padding-bottom:92px; }
+  .navBar { overflow-x:auto; flex-wrap:nowrap; padding-bottom:6px; -webkit-overflow-scrolling:touch; }
+  .navBar .tab { flex:0 0 auto; }
+  .mobileBottomNav { position:fixed; left:0; right:0; bottom:0; z-index:60; display:grid; grid-template-columns: repeat(5, 1fr); gap:4px; padding:8px 8px calc(8px + env(safe-area-inset-bottom)); background:rgba(18,13,21,.96); border-top:1px solid #3c2d4b; backdrop-filter: blur(14px); }
+  .mobileNavButton { margin:0; padding:8px 4px; border-radius:14px; background:transparent; color:#f7efe6; border:1px solid transparent; display:flex; flex-direction:column; align-items:center; gap:3px; min-height:56px; }
+  .mobileNavButton span { font-size:18px; line-height:1; }
+  .mobileNavButton small { font-size:11px; line-height:1.1; }
+  .mobileNavButton.active { background:#f0c987; color:#21160f; border-color:#f0c987; }
+}
+@media (max-width: 720px) { .homeActionGrid { grid-template-columns: 1fr; } .homeAction { min-height:auto; } }
+
+
+/* v8.9.1 Development Telemetry foundation */
+.telemetryPanel { margin-top:18px; padding:18px; border:1px solid rgba(240,201,135,.30); border-radius:22px; background:linear-gradient(135deg, rgba(23,16,29,.96), rgba(43,29,19,.88)); color:#fff7ec; }
+.telemetryPanel.compact { margin:14px 0; }
+.telemetryPanel h3 { margin:4px 0 8px; color:#f0c987; }
+.telemetryTiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:14px 0; }
+.telemetryGroups { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.telemetryPill { display:inline-flex; align-items:center; gap:6px; margin:4px 6px 4px 0; padding:7px 10px; border-radius:999px; background:#24182b; color:#f7efe6; border:1px solid rgba(240,201,135,.35); font-size:12px; font-weight:800; }
+.telemetryRecent { margin-top:12px; }
+.telemetryEvent { margin:8px 0; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); }
+@media(max-width:860px){ .telemetryTiles { grid-template-columns:1fr; } }
+
+/* v8.9.2 Certification Pathway + Occasion Patch Board */
+.certPage { display:flex; flex-direction:column; gap:18px; }
+.certProgress { height:18px; border-radius:999px; overflow:hidden; border:1px solid rgba(240,201,135,.32); background:#24182b; margin:12px 0; }
+.certProgress.large { height:24px; }
+.certProgress span { display:block; height:100%; background:linear-gradient(90deg, #f0c987, #9f7650); border-radius:999px; }
+.certMini { border-color:rgba(240,201,135,.32); }
+.patchGrid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; margin-top:16px; }
+.patch { min-height:190px; border-radius:22px; padding:16px; text-align:center; border:1px solid rgba(240,201,135,.28); background:#17101d; color:#f7efe6; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; }
+.patch h3 { margin:4px 0 0; color:#f0c987; font-size:16px; }
+.patch p { margin:0; color:#f7efe6; font-weight:800; }
+.patch small { color:#ccb7a5; line-height:1.35; }
+.patchMedal { width:62px; height:62px; border-radius:999px; display:grid; place-items:center; font-size:28px; font-weight:900; border:2px solid rgba(240,201,135,.38); background:#24182b; color:#f0c987; }
+.patch.earned { background:radial-gradient(circle at 50% 0%, rgba(240,201,135,.30), transparent 55%), #1d1510; border-color:#f0c987; box-shadow:0 18px 40px rgba(0,0,0,.20); }
+.patch.earned .patchMedal { background:linear-gradient(135deg, #f0c987, #8a674a); color:#21160f; border-color:#fff0c2; }
+.patch.locked { opacity:.68; filter:saturate(.65); }
+.allOccasionList { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
+.occasionLine { display:grid; grid-template-columns:26px 1fr; gap:8px; align-items:start; border:1px solid rgba(240,201,135,.20); border-radius:14px; padding:11px; background:rgba(23,16,29,.70); }
+.occasionLine span { color:#f0c987; font-weight:900; }
+.occasionLine strong { color:#fff7ec; }
+.occasionLine small { grid-column:2; color:#ccb7a5; }
+.occasionLine.done { border-color:#58c98b; background:rgba(15,60,38,.32); }
+.certificatePreview { text-align:center; border:2px solid rgba(240,201,135,.45); background:linear-gradient(135deg,#fff8e8,#efe0c3); color:#2b1d13; }
+.certificatePreview h2 { color:#2b1d13; font-size:32px; }
+.certificatePreview h3 { font-size:28px; color:#6b4322; }
+.certificatePreview .eyebrow { color:#6b4322; }
+@media(max-width:1000px){ .patchGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } .allOccasionList { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:680px){ .patchGrid, .allOccasionList { grid-template-columns:1fr; } .certificatePreview h2 { font-size:24px; } }
+
+/* v8.9.3 Dual Certification Pathways */
+.dualProgress { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:16px 0; }
+.certProgress.modern span, .pathTrack.modern span { background:linear-gradient(90deg, #94d6ff, #b995ff); }
+.certTrack { border-color:rgba(240,201,135,.30); }
+.patchGrid.sensory .patchMedal, .patch.sensory .patchMedal { border-color:rgba(148,214,255,.45); color:#94d6ff; }
+.patch.earned.sensory { background:radial-gradient(circle at 50% 0%, rgba(148,214,255,.28), transparent 55%), #121727; border-color:#94d6ff; }
+.patch.earned.sensory .patchMedal { background:linear-gradient(135deg, #94d6ff, #b995ff); color:#111827; border-color:#def3ff; }
+@media(max-width:780px){ .dualProgress { grid-template-columns:1fr; } }

@@ -44,6 +44,16 @@ const defaultProfile = {
   dialInAttemptFlow: "Runs fast",
   dialInAttemptPuckPrep: "WDT + level tamp",
   dialInAttemptAdvisorNote: "Keep dose and yield steady; adjust grind one step finer if fast.",
+  quickShotVoiceNote: "",
+  quickShotDose: "18g",
+  quickShotYield: "36g",
+  quickShotTime: "",
+  quickShotGrind: "",
+  quickShotLiked: "",
+  quickShotLikedNotes: "",
+  quickShotChange: "",
+  quickShotServeAgain: "",
+  quickShotFlavorNotes: "",
   dialInAttempts: [],
   dialInNotes: "Keep dose and yield steady before changing grind."
 };
@@ -2312,7 +2322,7 @@ const founderOccasions = [
   {
     "id": "first-sip-flex",
     "name": "The First Sip Flex",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "First-sip wow",
     "purpose": "For the guest who thinks they do not like serious coffee.",
     "drink": "Chilled espresso tonic with citrus + berry lift",
@@ -2457,7 +2467,7 @@ const founderOccasions = [
   {
     "id": "matcha-bridge",
     "name": "The Matcha Bridge",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "Tea bridge",
     "purpose": "For matcha, tea, and caf\u00e9-drink lovers who may not identify as espresso people.",
     "drink": "Iced matcha latte with espresso float or espresso sidecar",
@@ -2602,7 +2612,7 @@ const founderOccasions = [
   {
     "id": "cold-foam-treat",
     "name": "The Cold Foam Little Treat",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "Texture",
     "purpose": "A small indulgence with texture without becoming a sugar bomb.",
     "drink": "Iced latte or cold brew with lightly flavored cold foam",
@@ -2747,7 +2757,7 @@ const founderOccasions = [
   {
     "id": "zero-proof-social",
     "name": "The Zero-Proof Coffee Social",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "Zero-proof",
     "purpose": "Evening gathering, party, sober-curious moment, or social alternative to alcohol.",
     "drink": "Coffee mocktail, espresso tonic, or cold brew spritz",
@@ -2892,7 +2902,7 @@ const founderOccasions = [
   {
     "id": "afternoon-reset",
     "name": "The Afternoon Reset",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "Refresh",
     "purpose": "Energy without heaviness for a later-day lift.",
     "drink": "Lighter iced coffee, citrus cold brew, or sparkling coffee refresher",
@@ -3037,7 +3047,7 @@ const founderOccasions = [
   {
     "id": "flavor-layer-flight",
     "name": "The Flavor Layer Flight",
-    "family": "Next-Gen Sensory Occasions",
+    "family": "Modern Sensory Occasions",
     "tag": "Group tasting",
     "purpose": "Three mini drinks from one coffee: creamy, sparkling, and soft/sweet.",
     "drink": "Three mini drinks from one coffee \u2014 creamy, sparkling, soft/sweet",
@@ -3182,6 +3192,59 @@ const founderOccasions = [
 ];
 
 
+const coreCertificationOccasions = founderOccasions.filter((item) => item.family === "Core Occasions");
+const modernSensoryCertificationOccasions = founderOccasions.filter((item) => item.family === "Modern Sensory Occasions");
+const totalOccasionPathwayCount = founderOccasions.length;
+const coreCertificationPatchNames = [
+  "First Cup Seal", "Quiet Table Patch", "3 PM Reset Mark", "Welcome Home Seal", "Morning Launch Patch",
+  "Listening Cup Mark", "Repair Cup Seal", "Celebration Patch", "Guest-Ready Seal", "Lift Cup Mark",
+  "Counter Connection Patch", "Parent Visit Seal", "Neighbor Cup Mark", "Sunday Slow Seal", "Founder's Performance Crest"
+];
+const modernSensoryPatchNames = [
+  "First Sip Flex Seal", "Matcha Bridge Patch", "Cold Foam Treat Mark", "Zero-Proof Social Seal", "Afternoon Reset Patch", "Flavor Layer Flight Crest"
+];
+
+function slugifyName(value = "") {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function reportOccasionKey(report = {}) {
+  return report.occasionId || report.selectedOccasionId || report.occasionSnapshot?.occasionId || report.occasionSnapshot?.id || slugifyName(report.title || report.occasionSnapshot?.occasionName || "");
+}
+
+function buildCertificationProgress(reports = [], telemetryEvents = []) {
+  const completedKeys = new Set((reports || []).map(reportOccasionKey).filter(Boolean));
+  const completedCore = coreCertificationOccasions.filter((item) => completedKeys.has(item.id) || completedKeys.has(slugifyName(item.name)) || (reports || []).some((r) => String(r.title || "").toLowerCase() === item.name.toLowerCase()));
+  const completedModernSensory = modernSensoryCertificationOccasions.filter((item) => completedKeys.has(item.id) || completedKeys.has(slugifyName(item.name)) || (reports || []).some((r) => String(r.title || "").toLowerCase() === item.name.toLowerCase()));
+  const completedAll = founderOccasions.filter((item) => completedKeys.has(item.id) || completedKeys.has(slugifyName(item.name)) || (reports || []).some((r) => String(r.title || "").toLowerCase() === item.name.toLowerCase()));
+  const corePercent = Math.round((completedCore.length / Math.max(1, coreCertificationOccasions.length)) * 100);
+  const modernSensoryPercent = Math.round((completedModernSensory.length / Math.max(1, modernSensoryCertificationOccasions.length)) * 100);
+  const fullPercent = Math.round((completedAll.length / Math.max(1, founderOccasions.length)) * 100);
+  const reportCountByTitle = (reports || []).reduce((acc, r) => { const title = r.title || r.occasionSnapshot?.occasionName || "Unlabeled Occasion"; acc[title] = (acc[title] || 0) + 1; return acc; }, {});
+  const latestCertificationEvent = (telemetryEvents || []).find((e) => /certificate|patch|occasion_completed/.test(e.type || ""));
+  return {
+    coreTotal: coreCertificationOccasions.length,
+    modernSensoryTotal: modernSensoryCertificationOccasions.length,
+    allTotal: totalOccasionPathwayCount,
+    completedCore,
+    completedModernSensory,
+    completedAll,
+    coreCompleted: completedCore.length,
+    modernSensoryCompleted: completedModernSensory.length,
+    allCompleted: completedAll.length,
+    corePercent,
+    modernSensoryPercent,
+    fullPercent,
+    coreCertificateUnlocked: completedCore.length >= coreCertificationOccasions.length,
+    modernSensoryCertificateUnlocked: completedModernSensory.length >= modernSensoryCertificationOccasions.length,
+    certificateUnlocked: completedCore.length >= coreCertificationOccasions.length,
+    reportsCreated: (reports || []).length,
+    reportCountByTitle,
+    latestCertificationEvent
+  };
+}
+
+
 const recoveryMatrixCatalog = [
   { category:"Espresso Flow & Resistance", issue:"Shot choking / barely dripping", symptoms:"Shot barely drips, pump strains, flow is slow or stops.", likelyCause:"Grind likely too fine, dose too high, puck too compact, basket overloaded, or screen restricted.", advisor:"Stop if needed. Go slightly coarser, confirm dose, distribute evenly, and avoid changing milk or recipe at the same time.", oneNextMove:"Keep the dose steady and move the grind one small step coarser.", stagecraft:"Do not turn the moment into a repair session; make one clean resistance adjustment.", solutionSteps:["Stop the shot if it is not producing usable liquid.","Confirm your dose is not above the basket's comfortable range.","Move the grind one small step coarser.","Distribute evenly, tamp level, and repeat the same yield target.","If serving someone, narrate calmly: 'This one is tight, so I’m giving the coffee a little more room to flow.'"] },
   { category:"Espresso Flow & Resistance", issue:"Shot runs too fast", symptoms:"Shot finishes quickly, watery stream, thin body, pale crema, short contact time.", likelyCause:"Grind likely too coarse, dose too low, stale beans, channeling, or weak puck resistance.", advisor:"Go finer one notch, confirm dose, improve distribution, and repeat the same ratio.", oneNextMove:"Keep the dose steady and move the grind one step finer. Watch for a slower, more syrupy flow before changing anything else.", stagecraft:"Do not let the machine rush your presence. Reset calmly and preserve the occasion.", solutionSteps:["Let the shot finish only if it is useful for tasting; otherwise stop and mark it as fast.","Confirm the dose was not low and the basket was dry before dosing.","Move the grind one small step finer; do not change dose, yield, and grind all at once.","Improve distribution, tamp level, and repeat the same yield target.","Tell the guest: 'This one opened too quickly, so next I’m giving the coffee bed a little more resistance.'"] },
@@ -3271,7 +3334,7 @@ function findOccasionByName(name) {
 }
 
 export default function Home() {
-  const [active, setActive] = useState("occasions");
+  const [active, setActive] = useState("home");
   const [selectedOccasionId, setSelectedOccasionId] = useState(founderOccasions[0].id);
   const [walkthroughOccasionId, setWalkthroughOccasionId] = useState(founderOccasions[0].id);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -3293,6 +3356,7 @@ export default function Home() {
   const [respondBusy, setRespondBusy] = useState(false);
   const [advisorBusy, setAdvisorBusy] = useState(false);
   const [reports, setReports] = useState([]);
+  const [telemetryEvents, setTelemetryEvents] = useState([]);
   const [selectedFlavorNotes, setSelectedFlavorNotes] = useState(["caramel", "cocoa", "citrus"]);
   const [sensoryScores, setSensoryScores] = useState(defaultSensoryScores);
   const [tastingNote, setTastingNote] = useState("Creamy cappuccino impression with sweetness, body, and a touch of citrus brightness.");
@@ -3313,6 +3377,7 @@ export default function Home() {
       const savedProfile = localStorage.getItem("bd_profile_v7");
       const savedOccasion = localStorage.getItem("bd_occasion_v7");
       const savedReports = localStorage.getItem("bd_reports_v7");
+      const savedTelemetry = localStorage.getItem("bd_telemetry_v891");
       const savedFlavors = localStorage.getItem("bd_flavors_v77");
       const savedScores = localStorage.getItem("bd_scores_v77");
       const savedTastingNote = localStorage.getItem("bd_tasting_note_v77");
@@ -3328,6 +3393,7 @@ export default function Home() {
       setSelectedOccasionId(initialSelected);
       setWalkthroughOccasionId(initialWalkthrough);
       if (savedReports) setReports(JSON.parse(savedReports));
+      if (savedTelemetry) setTelemetryEvents(JSON.parse(savedTelemetry));
       if (savedFlavors) setSelectedFlavorNotes(JSON.parse(savedFlavors));
       if (savedScores) setSensoryScores(JSON.parse(savedScores));
       if (savedTastingNote) setTastingNote(savedTastingNote);
@@ -3338,6 +3404,7 @@ export default function Home() {
   useEffect(() => { try { localStorage.setItem("bd_profile_v7", JSON.stringify(profile)); } catch {} }, [profile]);
   useEffect(() => { try { localStorage.setItem("bd_occasion_v7", JSON.stringify(occasion)); } catch {} }, [occasion]);
   useEffect(() => { try { localStorage.setItem("bd_reports_v7", JSON.stringify(reports)); } catch {} }, [reports]);
+  useEffect(() => { try { localStorage.setItem("bd_telemetry_v891", JSON.stringify(telemetryEvents)); } catch {} }, [telemetryEvents]);
   useEffect(() => { try { localStorage.setItem("bd_selected_occasion_v83", selectedOccasionId); } catch {} }, [selectedOccasionId]);
   useEffect(() => { try { localStorage.setItem("bd_walkthrough_occasion_v83", walkthroughOccasionId); } catch {} }, [walkthroughOccasionId]);
   useEffect(() => { try { localStorage.setItem("bd_flavors_v77", JSON.stringify(selectedFlavorNotes)); } catch {} }, [selectedFlavorNotes]);
@@ -3399,6 +3466,21 @@ export default function Home() {
     const stamp = new Date().toLocaleTimeString();
     setLogs((prev) => [...prev, `[${stamp}] ${message}`]);
   }
+  function recordTelemetry(type, payload = {}) {
+    const event = {
+      id: Date.now() + Math.random(),
+      type,
+      createdAt: new Date().toLocaleString(),
+      category: telemetryCategory(type),
+      payload
+    };
+    setTelemetryEvents((prev) => [event, ...(prev || [])].slice(0, 200));
+    return event;
+  }
+  function clearTelemetry() {
+    setTelemetryEvents([]);
+    log("Cleared local development telemetry.");
+  }
   function updateProfile(field, value) { setProfile((prev) => ({ ...prev, [field]: typeof value === "function" ? value(prev[field], prev) : value })); }
   function updateProfilePatch(patch) { setProfile((prev) => ({ ...prev, ...patch })); }
   function updateOccasion(field, value) { setOccasion((prev) => ({ ...prev, [field]: value })); }
@@ -3408,6 +3490,7 @@ export default function Home() {
     setUploadAsset((prev) => ({ ...prev, fileName: file.name, fileType: file.type || "unknown", kind, previewUrl }));
     setStatus("Advisor upload attached. Add notes or ask the Advisor to analyze it with the form and voice context.");
     log(`Attached Advisor upload: ${file.name} (${file.type || "unknown"})`);
+    recordTelemetry("advisor_upload_attached", { fileName: file.name, fileType: file.type || "unknown", kind });
   }
   function requireSetupThen(nextActive) {
     const missing = getSetupMissing(profile, occasion);
@@ -3442,6 +3525,7 @@ export default function Home() {
     setTranscript(item.artisanOpening || "");
     setActive("walkthrough");
     log(`Opened Occasion: ${item.name}`);
+    recordTelemetry("occasion_started", { occasion: item.name, family: item.family, drink: item.drink, suggestedTempo: item.suggestedTempo || item.time });
   }
 
   async function checkServer() {
@@ -3531,6 +3615,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       return;
     }
     setError(""); setRespondBusy(true); setAdvisorAudioUrl(""); setAdvisorSupportCount((count) => count + 1); setStatus("Assessing Matrix + generating Advisor response…"); log("Sending form + voice to /api/respond.");
+    recordTelemetry("advisor_requested", { occasion: occasion.occasionName, helpMode: correctionMode ? "correction" : (matrixMatch ? "recovery" : "open_advisor"), transcriptLength: String(transcript || "").length, machine: profile.machine, houseFormula: `${profile.houseDose || "?"} → ${profile.houseYield || "?"}` });
     try {
       const response = await fetch("/api/respond", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transcript, context }) });
       const data = await response.json().catch(() => ({}));
@@ -3538,6 +3623,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       setAdvisorText(data.advisorText || ""); setMatrixMatch(data.matrixMatch || null); setSynthesis(data.synthesis || null);
       setStatus("Advisor response ready. Generate Advisor Voice or create Doma Report.");
       log(`Advisor response returned ${String(data.advisorText || "").length} chars. Intent: ${data.synthesis?.detectedArtisanIntent || "unknown"}.`);
+      recordTelemetry("advisor_response_ready", { intent: data.synthesis?.detectedArtisanIntent || "unknown", matrixApplied: Boolean(data.matrixMatch), matrixLabel: data.matrixMatch?.label || data.matrixMatch?.issue || "", responseLength: String(data.advisorText || "").length });
       setActive("simulator");
     } catch (err) { setStatus("Advisor response failed"); setError(err.message || String(err)); log(`Advisor response failed: ${err.message || String(err)}`); }
     finally { setRespondBusy(false); }
@@ -3549,6 +3635,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: advisorText, voice: advisorVoice }) });
       if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor Voice failed with HTTP ${response.status}`); }
       const blob = await response.blob(); setAdvisorAudioUrl(URL.createObjectURL(blob)); setStatus("Advisor Voice ready"); log(`Advisor Voice returned audio: ${blob.size} bytes.`);
+      recordTelemetry("advisor_voice_generated", { voice: advisorVoice, bytes: blob.size });
     } catch (err) { setStatus("Advisor Voice failed"); setError(err.message || String(err)); log(`Advisor Voice failed: ${err.message || String(err)}`); }
     finally { setAdvisorBusy(false); }
   }
@@ -3556,7 +3643,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   function loadClearFastShot() {
     setProfile(defaultProfile); setOccasion(defaultOccasion);
     setTranscript("Good morning, Advisor. I need help with my family this morning. The shot ran too fast and tasted thin, and I do not want to ruin the moment before church.");
-    setStatus("Sample Occasion loaded."); log("Loaded integrated sample Occasion."); setActive("simulator");
+    setStatus("Sample Occasion loaded."); log("Loaded integrated sample Occasion."); recordTelemetry("sample_advisor_flow_loaded", { occasion: defaultOccasion.occasionName, drink: defaultOccasion.drink }); setActive("simulator");
   }
   function createReport() {
     const timingMetrics = buildTimingMetrics(selectedFounderOccasion, stepTimings, occasionStartTime);
@@ -3565,6 +3652,9 @@ Correction / added detail: ${newText}`.trim() : newText);
     const dialInReadiness = buildDialInReadiness(profile);
     const report = {
       id: Date.now(), createdAt: new Date().toLocaleString(), title: occasion.occasionName || "Home Coffee Occasion",
+      occasionId: selectedFounderOccasion?.id || slugifyName(occasion.occasionName || "Home Coffee Occasion"),
+      occasionFamily: selectedFounderOccasion?.family || "Custom Occasion",
+      certificationEligible: selectedFounderOccasion?.family === "Core Occasions",
       drink: occasion.drink, guest: occasion.guest, transcript, advisorText,
       synthesis, matrixMatch, context, selectedFlavorNotes, sensoryScores, tastingNote, guestResonance, stepTimings, timingMetrics, uploadAsset: uploadAsset?.fileName ? { ...uploadAsset, previewUrl: "" } : null,
       fluency, dialInReadiness,
@@ -3574,9 +3664,14 @@ Correction / added detail: ${newText}`.trim() : newText);
       machineInfo: { machineType: profile.machineType, machine: profile.machine, espressoMachine: profile.espressoMachine, allInOneMachine: profile.allInOneMachine, grinder: profile.grinder, grinderModel: profile.grinderModel, beans: profile.beans, roastLevel: profile.roastLevel, basketSize: profile.basketSize, portafilterSize: profile.portafilterSize, waterSource: profile.waterSource, warmupRoutine: profile.warmupRoutine, experienceLevel: profile.experienceLevel, advisorGuidanceLevel: profile.advisorGuidanceLevel, tamper: profile.tamper, distributionTool: profile.distributionTool, wdtTool: profile.wdtTool, puckScreen: profile.puckScreen, puckPrepWorkflow: profile.puckPrepWorkflow, milkStyle: profile.milkStyle },
       dosingInfo: { dose: profile.houseDose, yield: profile.houseYield, houseShotTime: profile.houseShotTime, targetRatio: profile.targetRatio, grinderSetting: profile.grinderSetting, confirmedRecipe: profile.confirmedRecipe, lastDialInResult: profile.lastDialInResult, dialInNotes: profile.dialInNotes, dialInAttempts: profile.dialInAttempts || [], currentShotTime: occasion.currentShotTime, drink: occasion.drink },
       confidenceMetrics: { machineConfidence: sensoryScores.machineConfidence, tasteClarity: sensoryScores.tasteClarity, stagecraft: sensoryScores.stagecraft, recoveryConfidence: sensoryScores.recoveryConfidence, guestResonance: guestResonance.score, occasionTempo: timingMetrics.totalActualSeconds },
+      telemetrySnapshot: buildTelemetrySummary(telemetryEvents),
+      telemetryEvents: (telemetryEvents || []).slice(0, 12),
       trendSummary: reportTrendSummary(priorReport, sensoryScores, guestResonance)
     };
-    setReports((prev) => [report, ...prev]); setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
+    setReports((prev) => [report, ...prev]);
+    recordTelemetry("report_created", { title: report.title, occasionId: report.occasionId, score: fluency.score, observedZone: fluency.observedZone, guestResonance: guestResonance.score, telemetryGroups: buildTelemetrySummary(telemetryEvents).groups });
+    recordTelemetry("occasion_completed", { title: report.title, occasionId: report.occasionId, family: report.occasionFamily, certificationEligible: report.certificationEligible, stepsCompleted: Object.keys(stepTimings || {}).length, totalSteps: selectedFounderOccasion?.steps?.length || 0 });
+    setStatus("Doma Report created."); log("Created Doma Report from current Occasion."); setActive("reports");
   }
 
   function loadSampleReports() {
@@ -3605,9 +3700,11 @@ Correction / added detail: ${newText}`.trim() : newText);
       machineInfo: { machineType: profile.machineType, machine: profile.machine || "Breville Barista Express", grinder: profile.grinder || "Built-in grinder", beans: profile.beans || "Founder sample beans", roastLevel: profile.roastLevel, tamper: profile.tamper, distributionTool: profile.distributionTool, wdtTool: profile.wdtTool, puckScreen: profile.puckScreen },
       dosingInfo: { dose: "18g", yield: "36g", houseShotTime: "26–30 seconds", currentShotTime: x.shot, targetRatio: "1:2", grinderSetting: profile.grinderSetting || "sample grind 6", confirmedRecipe: idx === 0 ? "Close but still tuning" : "Confirmed house formula" },
       confidenceMetrics: { machineConfidence: x.machine, tasteClarity: x.taste, stagecraft: x.stage, recoveryConfidence: x.recovery, guestResonance: x.resonance, occasionTempo: x.seconds },
+      telemetrySnapshot: { total: 12 + idx, groups: { "Shot telemetry": 4 + idx, "Dial-In telemetry": 2, "Occasion telemetry": 2 + idx, "Advisor telemetry": 2, "Taste telemetry": 1, "Guest Resonance telemetry": 1 }, latestFocus: idx === 0 ? "Dial-in and recovery support" : "Guest Resonance and repeatability" },
       trendSummary: idx ? "Sample trend: support count fell and Guest Resonance improved." : "Sample baseline report for demonstration."
     }));
     setReports(samples);
+    recordTelemetry("sample_reports_loaded", { reportCount: samples.length, groups: ["Shot telemetry", "Dial-In telemetry", "Occasion telemetry", "Advisor telemetry", "Taste telemetry", "Guest Resonance telemetry"] });
     setStatus("Loaded sample Doma Reports with synthetic performance data.");
     log("Loaded synthetic sample Doma Reports for founder demo.");
     setActive("reports");
@@ -3642,28 +3739,31 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.8.1</small></div></div>
-        {["dashboard", "onboarding", "dialin", "occasions", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.9</small></div></div>
+        {["home", "dashboard", "quickshot", "onboarding", "dialin", "occasions", "certification", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
-        <div className="pathwayBox"><strong>Founder Pathway</strong><p>Cup 0 of 21 completed · 0%</p><div className="pathTrack"><span style={{ width: `${Math.min(100, reports.length * 7)}%` }} /></div><small>Every Occasion can become a Doma Report.</small></div>
+        <PathwayMiniProgress reports={reports} />
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.8.1</p>
-        <h1>Home Barista Occasion Simulator — Machine Passport + Upload Analysis</h1>
-        <p>This starts with 21 selectable Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions. The machine makes the beverage; the home barista prepares the moment. The Occasion is complete when the drink is received.</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9</p>
+        <h1>Home Barista Development Platform — Premium Home + Dashboard</h1>
+        <p>Home prepares the artisan. Dashboard runs the work. Pull shots, dial in, ask Advisor, recover, taste, and report without losing the moment.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
         <div className="navBar">
-          {["dashboard", "onboarding", "dialin", "occasions", "walkthrough", "simulator", "tasting", "reports", "matrix"].map((tab) => (
+          {["home", "dashboard", "quickshot", "onboarding", "dialin", "occasions", "certification", "walkthrough", "simulator", "tasting", "reports", "matrix"].map((tab) => (
             <button key={tab} className={active === tab ? "tab active" : "tab"} onClick={() => setActive(tab)} type="button">{tabLabel(tab)}</button>
           ))}
         </div>
       </section>
 
-      {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
+      {active === "home" && <HomeLanding setActive={setActive} profile={profile} occasion={occasion} reports={reports} setupMissing={setupMissing} />}
+      {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} telemetryEvents={telemetryEvents} clearTelemetry={clearTelemetry} />}
+      {active === "certification" && <CertificationPathway reports={reports} telemetryEvents={telemetryEvents} setActive={setActive} recordTelemetry={recordTelemetry} profile={profile} />}
+      {active === "quickshot" && <QuickShotLogPage profile={profile} updateProfile={updateProfile} setActive={setActive} recordTelemetry={recordTelemetry} />}
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} updateProfilePatch={updateProfilePatch} setActive={setActive} />}
       {active === "dialin" && <DialInJournalPage profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
@@ -3671,8 +3771,8 @@ Correction / added detail: ${newText}`.trim() : newText);
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
       {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
-      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} />}
-      {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} />}
+      {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} telemetryEvents={telemetryEvents} />}
+      {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} recordTelemetry={recordTelemetry} />}
 
       <section className="card principleCard">
         <h2>Product Principle</h2>
@@ -3683,16 +3783,243 @@ Correction / added detail: ${newText}`.trim() : newText);
 
       <section className="card"><h2>Diagnostic Log</h2><div className="log">{logs.join("\n")}</div></section>
       </div>
+      <nav className="mobileBottomNav" aria-label="Mobile primary navigation">
+        {["home", "dashboard", "quickshot", "simulator", "reports"].map((tab) => (
+          <button key={tab} className={active === tab ? "mobileNavButton active" : "mobileNavButton"} onClick={() => setActive(tab)} type="button"><span>{tabIcon(tab)}</span><small>{tabLabel(tab)}</small></button>
+        ))}
+      </nav>
     </main>
   );
 }
 
-function tabLabel(tab) { return ({ dashboard: "Home", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", dialin: "Dial-In Journal", simulator: "Advisor Session", tasting: "Tasting Studio", reports: "Doma Reports", matrix: "Recovery Library" })[tab]; }
-function tabIcon(tab) { return ({ dashboard: "🏠", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", dialin: "🧪", simulator: "🎙️", tasting: "🍯", reports: "📊", matrix: "🛠️" })[tab]; }
+function tabLabel(tab) { return ({ home: "Home", dashboard: "Dashboard", quickshot: "Pull Shots", onboarding: "Onboarding", occasions: "21 Occasions", walkthrough: "Stagecraft Walkthrough", occasion: "Occasion Setup", dialin: "Dial-In Journal", simulator: "Advisor", tasting: "Tasting Studio", reports: "Doma Reports", certification: "Certification", matrix: "Recovery Library" })[tab]; }
+function tabIcon(tab) { return ({ home: "🏠", dashboard: "📍", quickshot: "⚡", onboarding: "☕", occasions: "🎭", walkthrough: "📜", occasion: "🎭", dialin: "🧪", simulator: "🎙️", tasting: "🍯", reports: "📊", certification: "🏅", matrix: "🛠️" })[tab]; }
 
-function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen }) {
+
+
+function PathwayMiniProgress({ reports }) {
+  const progress = buildCertificationProgress(reports || [], []);
+  return <div className="pathwayBox"><strong>Certification Pathways</strong><p>Core: {progress.coreCompleted}/{progress.coreTotal} · {progress.corePercent}%</p><div className="pathTrack"><span style={{ width: `${progress.corePercent}%` }} /></div><p>Modern Sensory: {progress.modernSensoryCompleted}/{progress.modernSensoryTotal} · {progress.modernSensoryPercent}%</p><div className="pathTrack modern"><span style={{ width: `${progress.modernSensoryPercent}%` }} /></div><small>21 total Occasions: 15 Core plus 6 Modern Sensory. The two certificate tracks unlock separately.</small></div>;
+}
+
+function CertificationProgressReport({ reports, telemetryEvents, setActive }) {
+  const progress = buildCertificationProgress(reports || [], telemetryEvents || []);
+  const nextCore = coreCertificationOccasions.find((item) => !progress.completedCore.some((done) => done.id === item.id));
+  const nextModern = modernSensoryCertificationOccasions.find((item) => !progress.completedModernSensory.some((done) => done.id === item.id));
+  return <section className="certMini card"><h3>Certification Progress Report</h3><p className="small">Barista Doma tracks two certificate pathways through Development Telemetry, Doma Reports, taste notes, Guest Resonance, and completed Occasion work.</p><div className="tiles"><Tile title="Core Practitioner" value={`${progress.coreCompleted}/${progress.coreTotal}`} /><Tile title="Core readiness" value={`${progress.corePercent}%`} /><Tile title="Modern Sensory" value={`${progress.modernSensoryCompleted}/${progress.modernSensoryTotal}`} /><Tile title="Total library" value={`${progress.allCompleted}/${progress.allTotal}`} /></div><div className="dualProgress"><div><strong>Certified Occasion Practitioner</strong><div className="certProgress"><span style={{ width: `${progress.corePercent}%` }} /></div></div><div><strong>Modern Sensory Occasion Practitioner</strong><div className="certProgress modern"><span style={{ width: `${progress.modernSensoryPercent}%` }} /></div></div></div><p className="small">Next Core Occasion: <strong>{nextCore ? nextCore.name : "Core certificate ready"}</strong></p><p className="small">Next Modern Sensory Occasion: <strong>{nextModern ? nextModern.name : "Modern Sensory certificate ready"}</strong></p><div className="buttonRow"><button className="secondary" onClick={() => setActive("certification")}>Open Certification Journey</button></div></section>;
+}
+
+function CertificationPathway({ reports, telemetryEvents, setActive, recordTelemetry, profile }) {
+  const progress = buildCertificationProgress(reports || [], telemetryEvents || []);
+  const artisanKey = String(profile?.name || "ARTISAN").replace(/[^A-Za-z0-9]/g, "").slice(0,6).toUpperCase() || "ARTISAN";
+  const coreCertificateId = `BD-COP-${artisanKey}-${new Date().getFullYear()}-${String(progress.coreCompleted).padStart(2,"0")}`;
+  const sensoryCertificateId = `BD-MSO-${artisanKey}-${new Date().getFullYear()}-${String(progress.modernSensoryCompleted).padStart(2,"0")}`;
+  const missingCore = coreCertificationOccasions.filter((item) => !progress.completedCore.some((done) => done.id === item.id));
+  const missingModern = modernSensoryCertificationOccasions.filter((item) => !progress.completedModernSensory.some((done) => done.id === item.id));
+  const printCertificate = (track, certificateId, unlocked, percent) => {
+    if (recordTelemetry) recordTelemetry("certificate_printed", { track, certificateId, progress: percent, unlocked });
+    window.print();
+  };
+  return <section className="certPage"><section className="card heroPremium"><p className="eyebrow">Barista Doma Certification Pathways</p><h1>Two Occasion-centered certificates. One 21-Occasion development platform.</h1><p>Barista Doma certification is built around completing real home coffee Occasions, not merely reading lessons. The 15 Core Occasions lead to the Certified Occasion Practitioner certificate. The 6 Modern Sensory Occasions lead to a separate Modern Sensory Occasion Practitioner certificate.</p><div className="tiles"><Tile title="Core Practitioner" value={`${progress.coreCompleted}/${progress.coreTotal}`} /><Tile title="Modern Sensory" value={`${progress.modernSensoryCompleted}/${progress.modernSensoryTotal}`} /><Tile title="Total Occasion Library" value={`${progress.allCompleted}/${progress.allTotal}`} /><Tile title="Patches earned" value={`${progress.coreCompleted + progress.modernSensoryCompleted}`} /></div><div className="dualProgress"><div><strong>Certified Occasion Practitioner</strong><div className="certProgress large"><span style={{ width: `${progress.corePercent}%` }} /></div><small>{progress.corePercent}% complete</small></div><div><strong>Modern Sensory Occasion Practitioner</strong><div className="certProgress large modern"><span style={{ width: `${progress.modernSensoryPercent}%` }} /></div><small>{progress.modernSensoryPercent}% complete</small></div></div><div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("reports")}>View Doma Reports</button><button className="secondary" onClick={() => setActive("dashboard")}>Back to Dashboard</button></div></section>
+
+    <CertificationProgressReport reports={reports} telemetryEvents={telemetryEvents || []} setActive={setActive} />
+
+    <section className="card certTrack"><p className="eyebrow">Certificate Track 1</p><h2>Barista Doma Certified Occasion Practitioner</h2><p className="small">Earned by completing the 15 Core Home Barista Occasions with step completion evidence, a Doma Report, preference-first taste capture, Guest Resonance, and Development Telemetry.</p><div className={progress.coreCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.coreCertificateUnlocked ? "Core certificate unlocked." : "Core certificate locked."}</strong><br/>{progress.coreCertificateUnlocked ? "All 15 Core Occasions have completion evidence in local Doma Reports." : `Complete ${missingCore.length} more Core Occasion${missingCore.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid">{coreCertificationOccasions.map((item, idx) => { const earned = progress.completedCore.some((done) => done.id === item.id); return <article className={earned ? "patch earned" : "patch locked"} key={item.id}><div className="patchMedal">{earned ? "★" : idx + 1}</div><h3>{coreCertificationPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small></article>; })}</div></section>
+
+    <section className="card certTrack"><p className="eyebrow">Certificate Track 2</p><h2>Barista Doma Certified Modern Sensory Occasion Practitioner</h2><p className="small">Earned by completing the 6 Modern Sensory Occasions — cold, contemporary, and sensory-forward service experiences. This is not labeled by generation inside the app; it is positioned as modern sensory fluency.</p><div className={progress.modernSensoryCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.modernSensoryCertificateUnlocked ? "Modern Sensory certificate unlocked." : "Modern Sensory certificate locked."}</strong><br/>{progress.modernSensoryCertificateUnlocked ? "All 6 Modern Sensory Occasions have completion evidence in local Doma Reports." : `Complete ${missingModern.length} more Modern Sensory Occasion${missingModern.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid sensory">{modernSensoryCertificationOccasions.map((item, idx) => { const earned = progress.completedModernSensory.some((done) => done.id === item.id); return <article className={earned ? "patch earned sensory" : "patch locked sensory"} key={item.id}><div className="patchMedal">{earned ? "✦" : idx + 1}</div><h3>{modernSensoryPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small></article>; })}</div></section>
+
+    <section className="card"><h2>21-Occasion Library Progress</h2><p className="small">The complete library includes 15 Core Occasions plus 6 Modern Sensory cold drink / contemporary service Occasions. The app shows both certificate pathways without using generation labels.</p><div className="allOccasionList">{founderOccasions.map((item) => { const done = progress.completedAll.some((x) => x.id === item.id); return <div className={done ? "occasionLine done" : "occasionLine"} key={item.id}><span>{done ? "✓" : "○"}</span><strong>{item.name}</strong><small>{item.family}</small></div>; })}</div></section>
+
+    <section className="certificatePreview card"><p className="eyebrow">Certificate Preview — Core Track</p><h2>Barista Doma Certified Occasion Practitioner</h2><p>Awarded to</p><h3>{profile?.name || "Founder Artisan"}</h3><p>For completing the Barista Doma Core Occasion Pathway, a guided home barista development course focused on machine fluency, dial-in discipline, taste development, recovery confidence, stagecraft, Guest Resonance, and the preparation of meaningful home coffee Occasions.</p><p><strong>Completion verified through Barista Doma Development Telemetry.</strong></p><p>Certificate ID: {coreCertificateId}</p><div className="buttonRow"><button className="primary" disabled={!progress.coreCertificateUnlocked} onClick={() => printCertificate("core", coreCertificateId, progress.coreCertificateUnlocked, progress.corePercent)}>Print Core Certificate</button></div>{!progress.coreCertificateUnlocked ? <p className="small">Printing unlocks after all 15 Core Occasion patches are earned.</p> : null}</section>
+
+    <section className="certificatePreview card"><p className="eyebrow">Certificate Preview — Modern Sensory Track</p><h2>Barista Doma Certified Modern Sensory Occasion Practitioner</h2><p>Awarded to</p><h3>{profile?.name || "Founder Artisan"}</h3><p>For completing the Barista Doma Modern Sensory Occasion Pathway, a guided development course focused on contemporary service, cold drink fluency, sensory presentation, preference-first taste capture, Guest Resonance, and modern home coffee Occasions.</p><p><strong>Completion verified through Barista Doma Development Telemetry.</strong></p><p>Certificate ID: {sensoryCertificateId}</p><div className="buttonRow"><button className="primary" disabled={!progress.modernSensoryCertificateUnlocked} onClick={() => printCertificate("modern_sensory", sensoryCertificateId, progress.modernSensoryCertificateUnlocked, progress.modernSensoryPercent)}>Print Modern Sensory Certificate</button></div>{!progress.modernSensoryCertificateUnlocked ? <p className="small">Printing unlocks after all 6 Modern Sensory Occasion patches are earned.</p> : null}</section>
+  </section>;
+}
+
+function HomeLanding({ setActive, profile, occasion, reports, setupMissing }) {
+  const ready = !setupMissing?.length;
+  return <section className="homePage">
+    <section className="card heroPremium">
+      <p className="eyebrow">Home / First Impression</p>
+      <h2>Prepare the artisan before the Occasion begins.</h2>
+      <p className="small">Home is the clean starting point: set up the Doma Profile, capture the Machine Passport, pull practice shots, and build a house formula. Then the Dashboard becomes the operating hub.</p>
+      <div className="tiles">
+        <Tile title="Setup" value={ready ? "Ready" : `${setupMissing.length} items left`} />
+        <Tile title="Machine" value={profile.machine || "Not set"} />
+        <Tile title="House formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} />
+        <Tile title="Taste path" value="Preference first" />
+        <Tile title="Reports" value={`${reports.length} saved`} />
+      </div>
+    </section>
+    <section className="homeActionGrid">
+      <button className="homeAction" type="button" onClick={() => setActive("onboarding")}><span>01</span><strong>Onboarding + Machine Passport</strong><small>Capture the machine, grinder, water, basket, puck-prep tools, and guidance level.</small></button>
+      <button className="homeAction" type="button" onClick={() => setActive("quickshot")}><span>02</span><strong>Pull Some Shots</strong><small>Quickly log dose, yield, time, grind, whether you liked it, and what you would change.</small></button>
+      <button className="homeAction" type="button" onClick={() => setActive("dialin")}><span>03</span><strong>Dial-In Journal</strong><small>Turn repeated attempts into a house formula and a second coffee brain.</small></button>
+      <button className="homeAction" type="button" onClick={() => setActive("certification")}><span>04</span><strong>Certification Journey</strong><small>See the 15 Core Occasion pathway, earned patches, remaining requirements, and certificate readiness.</small></button>
+        <button className="homeAction primaryAction" type="button" onClick={() => setActive("dashboard")}><span>05</span><strong>Go to Dashboard</strong><small>Start an Occasion, ask Advisor, recover, taste, review reports, and continue development.</small></button>
+    </section>
+    <section className="card principleCard">
+      <h2>Preference-first taste development</h2>
+      <p><strong>Do you like it?</strong> comes before forcing Q-grader language. If the artisan likes the cup, Barista Doma helps capture the dose, yield, time, grind, bean, and notes so they can make it again.</p>
+      <p>The flavor wheel stays, but it becomes an exploration layer after the artisan records honest preference and recipe evidence.</p>
+    </section>
+  </section>;
+}
+
+function parseQuickShotNote(text) {
+  const lower = String(text || "").toLowerCase();
+  const pick = (patterns) => {
+    for (const re of patterns) { const m = lower.match(re); if (m) return m[1]; }
+    return "";
+  };
+  const dose = pick([/(\d+(?:\.\d+)?)\s*(?:g|grams?)\s*(?:in|dose)/, /dose\s*(?:was|is|:)?\s*(\d+(?:\.\d+)?)/]);
+  const yld = pick([/(\d+(?:\.\d+)?)\s*(?:g|grams?)\s*(?:out|yield)/, /yield\s*(?:was|is|:)?\s*(\d+(?:\.\d+)?)/]);
+  const time = pick([/(\d+(?:\.\d+)?)\s*(?:seconds?|sec)\b/, /time\s*(?:was|is|:)?\s*(\d+(?:\.\d+)?)/]);
+  const grind = pick([/grind(?: setting)?\s*(?:was|is|:)?\s*([a-z0-9.\- ]{1,18})/]);
+  const liked = lower.includes("did not like") || lower.includes("don't like") || lower.includes("didn't like") || lower.includes("not like") ? "No" : (lower.includes("somewhat") || lower.includes("kind of") ? "Somewhat" : (lower.includes("liked") || lower.includes("i like") || lower.includes("i loved") || lower.includes("good") ? "Yes" : ""));
+  const serve = lower.includes("would not serve") || lower.includes("not serve") ? "No" : (lower.includes("maybe serve") ? "Maybe after adjustment" : (lower.includes("serve it") || lower.includes("would serve") ? "Yes" : ""));
+  const descriptors = [];
+  ["sweet","smooth","bright","thin","bitter","sour","sharp","creamy","heavy","light","chocolate","caramel","nutty","citrus","berry","floral","balanced","watery"].forEach((w) => { if (lower.includes(w)) descriptors.push(w); });
+  return {
+    dose: dose ? `${dose}g` : "",
+    yield: yld ? `${yld}g` : "",
+    time: time ? `${time} sec` : "",
+    grind: grind ? grind.trim() : "",
+    liked,
+    serve,
+    likedNotes: descriptors.length ? descriptors.join(", ") : "",
+    change: lower.includes("more body") ? "More body" : lower.includes("sweeter") ? "Sweeter" : lower.includes("less bitter") ? "Less bitter" : lower.includes("less sour") ? "Less sour" : lower.includes("finer") ? "Finer grind" : lower.includes("coarser") ? "Coarser grind" : ""
+  };
+}
+
+function QuickShotLogPage({ profile, updateProfile, setActive, recordTelemetry }) {
+  const [listening, setListening] = useState(false);
+  const attempts = profile.dialInAttempts || [];
+  function applyParsed(parsed) {
+    if (parsed.dose) updateProfile("quickShotDose", parsed.dose);
+    if (parsed.yield) updateProfile("quickShotYield", parsed.yield);
+    if (parsed.time) updateProfile("quickShotTime", parsed.time);
+    if (parsed.grind) updateProfile("quickShotGrind", parsed.grind);
+    if (parsed.liked) updateProfile("quickShotLiked", parsed.liked);
+    if (parsed.serve) updateProfile("quickShotServeAgain", parsed.serve);
+    if (parsed.likedNotes) updateProfile("quickShotLikedNotes", parsed.likedNotes);
+    if (parsed.change) updateProfile("quickShotChange", parsed.change);
+    if (recordTelemetry) recordTelemetry("voice_quick_capture_parsed", { fields: Object.entries(parsed).filter(([,v]) => Boolean(v)).map(([k]) => k), source: "Pull Some Shots" });
+  }
+  function parseVoiceNote() { applyParsed(parseQuickShotNote(profile.quickShotVoiceNote)); }
+  function startQuickVoice() {
+    const SR = typeof window !== "undefined" ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+    if (!SR) { alert("This browser does not expose quick speech recognition here. Use the spoken-note box, or use Advisor voice capture."); return; }
+    const rec = new SR();
+    rec.lang = "en-US"; rec.interimResults = false; rec.continuous = false;
+    rec.onstart = () => setListening(true);
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    rec.onresult = (event) => {
+      const text = Array.from(event.results || []).map((r) => r[0]?.transcript || "").join(" ").trim();
+      updateProfile("quickShotVoiceNote", text);
+      applyParsed(parseQuickShotNote(text));
+    };
+    rec.start();
+  }
+  function saveQuickShot() {
+    const now = new Date().toLocaleString();
+    const attempt = {
+      id: Date.now(), kind: "Quick Shot Log", createdAt: now,
+      beans: profile.beans || "House beans", dose: profile.quickShotDose, yield: profile.quickShotYield, shotTime: profile.quickShotTime,
+      grind: profile.quickShotGrind, taste: `${profile.quickShotLiked || "Not marked"}${profile.quickShotLikedNotes ? ` — ${profile.quickShotLikedNotes}` : ""}`,
+      flow: profile.quickShotVoiceNote || "Quick shot capture", puckPrep: profile.puckPrepWorkflow || "Not captured",
+      advisorNote: `Preference-first log. Would serve: ${profile.quickShotServeAgain || "Not captured"}. Change next: ${profile.quickShotChange || "Not captured"}. Optional flavor notes: ${profile.quickShotFlavorNotes || "Not captured"}.`,
+      telemetryGroup: "Shot telemetry",
+      liked: profile.quickShotLiked, likedNotes: profile.quickShotLikedNotes, wouldServe: profile.quickShotServeAgain, changeNext: profile.quickShotChange, flavorNotes: profile.quickShotFlavorNotes
+    };
+    updateProfile("dialInAttempts", [attempt, ...attempts]);
+    updateProfile("lastDialInResult", `Quick Shot saved: ${attempt.dose || "?"} → ${attempt.yield || "?"} / ${attempt.shotTime || "?"}. Liked: ${attempt.liked || "not marked"}.`);
+    if (recordTelemetry) recordTelemetry("shot_logged", { dose: attempt.dose, yield: attempt.yield, shotTime: attempt.shotTime, grind: attempt.grind, liked: attempt.liked, wouldServe: attempt.wouldServe, likedNotes: attempt.likedNotes, flavorNotes: attempt.flavorNotes });
+  }
+  function setAsHouse(a) {
+    updateProfile("houseDose", a.dose || profile.houseDose);
+    updateProfile("houseYield", a.yield || profile.houseYield);
+    updateProfile("houseShotTime", a.shotTime || profile.houseShotTime);
+    updateProfile("grinderSetting", a.grind || profile.grinderSetting);
+    updateProfile("confirmedRecipe", "Confirmed from Quick Shot preference log");
+    updateProfile("lastDialInResult", `House Formula selected from Quick Shot: ${a.dose} → ${a.yield} / ${a.shotTime}.`);
+    if (recordTelemetry) recordTelemetry("house_formula_set", { source: a.kind || "Quick Shot", dose: a.dose, yield: a.yield, shotTime: a.shotTime, grind: a.grind, preference: a.liked || a.taste });
+  }
+  return <section className="card quickShotPage">
+    <p className="eyebrow">Pull Some Shots / Quick Capture</p>
+    <h2>Log what you pulled, then decide if you liked it.</h2>
+    <p className="small">This is not a full Occasion. It is the convenient shot notebook: voice or type the shot, capture the recipe, mark whether you liked it, and optionally add flavor-wheel notes.</p>
+    <div className="noteBox"><strong>Say it naturally:</strong> “18 grams in, 36 grams out, 27 seconds, grind 8. I liked the sweetness and body. I would serve it.”</div>
+    <div className="buttonRow"><button className={listening ? "danger" : "primary"} type="button" onClick={startQuickVoice}>{listening ? "Listening…" : "🎙️ Speak Shot Log"}</button><button className="secondary" type="button" onClick={parseVoiceNote}>Parse Spoken Note into Fields</button></div>
+    <label className="label">Spoken / typed shot note</label>
+    <textarea value={profile.quickShotVoiceNote || ""} onChange={(e) => updateProfile("quickShotVoiceNote", e.target.value)} placeholder="Speak or type: dose, yield, time, grind, whether you liked it, what you liked, what you would change, and whether you would serve it." />
+    <div className="grid">
+      <Field label="Dose in" value={profile.quickShotDose || ""} onChange={(v) => updateProfile("quickShotDose", v)} />
+      <Field label="Yield out" value={profile.quickShotYield || ""} onChange={(v) => updateProfile("quickShotYield", v)} />
+      <Field label="Shot time" value={profile.quickShotTime || ""} onChange={(v) => updateProfile("quickShotTime", v)} />
+      <Field label="Grind setting" value={profile.quickShotGrind || ""} onChange={(v) => updateProfile("quickShotGrind", v)} />
+    </div>
+    <div className="grid">
+      <SelectField label="Did you like it?" value={profile.quickShotLiked || ""} onChange={(v) => updateProfile("quickShotLiked", v)} options={["", "Yes", "Somewhat", "No"]} />
+      <SelectField label="Would you serve it?" value={profile.quickShotServeAgain || ""} onChange={(v) => updateProfile("quickShotServeAgain", v)} options={["", "Yes", "Maybe after adjustment", "No"]} />
+    </div>
+    <label className="label">What did you like / notice?</label>
+    <textarea value={profile.quickShotLikedNotes || ""} onChange={(e) => updateProfile("quickShotLikedNotes", e.target.value)} placeholder="Sweet, smooth, bright, heavy body, nice finish, good with milk, guest would like this…" />
+    <label className="label">What would you change next time?</label>
+    <input value={profile.quickShotChange || ""} onChange={(e) => updateProfile("quickShotChange", e.target.value)} placeholder="More body, sweeter, less bitter, longer/shorter yield, finer/coarser grind…" />
+    <label className="label">Optional flavor-wheel notes</label>
+    <input value={profile.quickShotFlavorNotes || ""} onChange={(e) => updateProfile("quickShotFlavorNotes", e.target.value)} placeholder="Optional: cocoa, caramel, citrus, berry, floral, nutty…" />
+    <div className="buttonRow"><button className="primary" type="button" onClick={saveQuickShot}>Save Quick Shot Log</button><button className="secondary" type="button" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" type="button" onClick={() => setActive("dashboard")}>Go to Dashboard</button></div>
+    {attempts.length ? <div className="attemptList"><h3>Recent shot records</h3>{attempts.slice(0,5).map((a) => <div className="noteBox" key={a.id}><strong>{a.kind || "Dial-In Attempt"} · {a.createdAt}</strong><br/>{a.beans} · {a.dose} in → {a.yield} out · {a.shotTime} · grind {a.grind}<br/><strong>Preference:</strong> {a.taste}<br/><strong>Next:</strong> {a.changeNext || a.advisorNote}<div className="buttonRow"><button className="secondary green" type="button" onClick={() => setAsHouse(a)}>Set as House Formula</button></div></div>)}</div> : <p className="small">No quick shot records yet.</p>}
+  </section>;
+}
+
+function telemetryCategory(type) {
+  if (/shot|house_formula|voice_quick_capture/.test(type)) return "Shot telemetry";
+  if (/dial/i.test(type)) return "Dial-In telemetry";
+  if (/occasion|step/.test(type)) return "Occasion telemetry";
+  if (/advisor|upload|voice/.test(type)) return "Advisor telemetry";
+  if (/recovery|matrix/.test(type)) return "Recovery telemetry";
+  if (/taste|flavor/.test(type)) return "Taste telemetry";
+  if (/guest|resonance/.test(type)) return "Guest Resonance telemetry";
+  if (/report|sample/.test(type)) return "Report telemetry";
+  return "Development telemetry";
+}
+
+function buildTelemetrySummary(events = []) {
+  const groups = {};
+  (events || []).forEach((event) => {
+    const group = event.category || telemetryCategory(event.type || "");
+    groups[group] = (groups[group] || 0) + 1;
+  });
+  const latestFocus = Object.entries(groups).sort((a,b) => b[1] - a[1])[0]?.[0] || "No telemetry yet";
+  return { total: (events || []).length, groups, latestFocus };
+}
+
+function TelemetryPanel({ summary, events, clearTelemetry, compact = false }) {
+  const groups = Object.entries(summary?.groups || {});
+  return <section className={compact ? "telemetryPanel compact" : "telemetryPanel"}>
+    <div>
+      <p className="eyebrow">Development Telemetry</p>
+      <h3>Signals that turn the app into a growth platform.</h3>
+      <p className="small">Telemetry groups the artisan’s actions into shot, dial-in, taste, Occasion, Advisor, Recovery, report, and Guest Resonance signals. This is the vocabulary for personalization and future coaching — not surveillance.</p>
+    </div>
+    <div className="telemetryTiles">
+      <Tile title="Signals captured" value={String(summary?.total || 0)} />
+      <Tile title="Current focus" value={summary?.latestFocus || "No telemetry yet"} />
+      <Tile title="Latest event" value={events?.[0]?.type ? events[0].type.replaceAll("_", " ") : "None yet"} />
+    </div>
+    {groups.length ? <div className="telemetryGroups">{groups.map(([group, count]) => <span className="telemetryPill" key={group}>{group}: {count}</span>)}</div> : <div className="noteBox"><strong>No telemetry yet.</strong><br/>Log a shot, set a house formula, use Advisor, choose a Recovery issue, or create a report to begin building the development record.</div>}
+    {events?.length ? <details className="telemetryRecent"><summary>Recent telemetry events</summary>{events.slice(0, 8).map((event) => <div className="telemetryEvent" key={event.id}><strong>{event.type.replaceAll("_", " ")}</strong><br/><small>{event.createdAt} · {event.category}</small></div>)}</details> : null}
+    {clearTelemetry ? <div className="buttonRow"><button className="secondary" type="button" onClick={clearTelemetry}>Clear Local Telemetry</button></div> : null}
+  </section>;
+}
+
+function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen, telemetryEvents, clearTelemetry }) {
   const setupComplete = !setupMissing?.length;
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">A single front door for the Founder Program experience — a premium home barista development platform and second coffee brain.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div></section>;
+  const telemetrySummary = buildTelemetrySummary(telemetryEvents || []);
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">The operating hub: continue the current Occasion, pull shots, ask Advisor, recover, taste, and review progress. Home prepares the artisan; Dashboard runs the product experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("quickshot")}>Pull Some Shots</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div><TelemetryPanel summary={telemetrySummary} events={telemetryEvents || []} clearTelemetry={clearTelemetry} /></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
@@ -3848,7 +4175,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccas
     if (setSelectedOccasionId) setSelectedOccasionId(value);
     try { localStorage.setItem("bd_selected_occasion_v83", value); } catch {}
   }
-  const families = ["All", "Core Occasions", "Next-Gen Sensory Occasions"];
+  const families = ["All", "Core Occasions", "Modern Sensory Occasions"];
   const filtered = founderOccasions.filter((item) => {
     const q = query.trim().toLowerCase();
     const familyName = item.family || "Core Occasions";
@@ -3859,7 +4186,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccas
   return <section className="occasionPage">
     <section className="card heroMini">
       <p className="eyebrow">21 Founder Occasions</p>
-      <h2>Twenty-one stagecraft Occasions: 15 Core Occasions plus 6 Next-Gen Sensory Occasions.</h2>
+      <h2>Twenty-one stagecraft Occasions: 15 Core Occasions plus 6 Modern Sensory Occasions.</h2>
       <p className="small">Use the quick selector to jump directly into an Occasion on mobile, or browse the full card library below.</p>
       <div className="selectorPanel">
         <label className="label">Occasion quick-select menu</label>
@@ -4103,7 +4430,7 @@ function Simulator(props) {
   </>;
 }
 
-function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV, loadSampleReports }) {
+function Reports({ reports, clearReports, setActive, printReport, exportReportsCSV, loadSampleReports, telemetryEvents }) {
   const latest = reports[0] || null;
   const previous = reports[1] || null;
   return <section className="reportsPage">
@@ -4111,8 +4438,11 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
       <p className="eyebrow">Doma Reports / Second Coffee Brain</p>
       <h1>Performance reporting for the cup, the machine, and the Occasion.</h1>
       <p>Barista Doma should become the one true source for the artisan’s machine, recipes, dosing, recoveries, tasting notes, charts, Guest Resonance, and Occasion performance.</p>
-      <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary green" onClick={loadSampleReports}>Load Sample Reports</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div>
+      <div className="buttonRow"><button className="primary" onClick={() => setActive("simulator")}>Create New Occasion Report</button><button className="secondary" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" onClick={exportReportsCSV} disabled={!reports.length}>Export CSV</button><button className="secondary green" onClick={loadSampleReports}>Load Sample Reports</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="secondary" onClick={clearReports}>Clear Local Reports</button></div>
     </section>
+
+    <TelemetryPanel summary={buildTelemetrySummary(telemetryEvents || [])} events={telemetryEvents || []} compact />
+    <CertificationProgressReport reports={reports} telemetryEvents={telemetryEvents || []} setActive={setActive} />
 
     {!latest ? <div className="successBox"><strong>Sample reports available.</strong><br/>Click “Load Sample Reports” to show synthetic Doma Reports with scores, charts, Dial-In Readiness, Guest Resonance, trend plots, and print/export examples.</div> : null}
 
@@ -4127,6 +4457,7 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
       </div>
       {r.fluency ? <div className="successBox"><strong>Occasion Presentation Score:</strong> {r.fluency.score}/100 · <strong>Selected:</strong> {r.fluency.selectedLevel} · <strong>Observed zone:</strong> {r.fluency.observedZone}<br/><strong>Advisor support:</strong> {r.fluency.advisorSupportCount} · <strong>Recovery support:</strong> {r.fluency.recoverySupportCount} · <strong>Corrections:</strong> {r.fluency.correctionCount} · <strong>Step completion:</strong> {r.fluency.stepCompletionPercent}%<br/>{r.fluency.feedback}</div> : null}
       {r.dialInReadiness ? <div className="noteBox"><strong>Dial-In Readiness:</strong> {r.dialInReadiness.status}<br/><strong>Actual recipe:</strong> {r.dialInReadiness.actualRecipe}<br/><strong>Recommendation:</strong> {r.dialInReadiness.recommendation}</div> : null}
+      {r.telemetrySnapshot ? <div className="noteBox"><strong>Development Telemetry Snapshot:</strong> {r.telemetrySnapshot.total} captured signal(s)<br/>{Object.entries(r.telemetrySnapshot.groups || {}).map(([group, count]) => <span key={group} className="telemetryPill">{group}: {count}</span>)}<br/><small>Telemetry groups the artisan’s shot, dial-in, taste, recovery, Advisor, Occasion, report, and Guest Resonance signals so future coaching can become more personal.</small></div> : null}
       <DomaPerformanceDashboard report={r} previous={reports[idx + 1]} reports={reports.slice(idx)} compact />
       <p><strong>Artisan said:</strong> {r.transcript || "No transcript captured."}</p>
       <p><strong>Matrix:</strong> {r.matrixMatch?.label || "None"}</p>
@@ -4387,7 +4718,7 @@ function matrixConfidence(score) {
   return "none";
 }
 
-function Matrix({ setActive, setTranscript, updateOccasion }) {
+function Matrix({ setActive, setTranscript, updateOccasion, recordTelemetry }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -4408,6 +4739,7 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
     setTranscript(`I selected this What Went Wrong Matrix issue: ${item.issue}. Likely cause: ${item.likelyCause}. Advisor note: ${item.advisor}. Please blend this selected issue with my form and any voice note, then guide me with one next move while preserving the occasion.`);
     updateOccasion("recurrence", item.issue);
     updateOccasion("momentIntent", item.stagecraft);
+    if (recordTelemetry) recordTelemetry("recovery_issue_used", { issue: item.issue, category: item.category, likelyCause: item.likelyCause, oneNextMove: item.oneNextMove });
     setSelectedIssue(null);
     setActive("simulator");
   }
@@ -4417,6 +4749,7 @@ function Matrix({ setActive, setTranscript, updateOccasion }) {
     setTranscript(`The artisan typed this What Went Wrong description: ${typed}. Please search the Recovery Matrix, identify the closest issue, and blend this with the form and any voice note before advising.`);
     updateOccasion("recurrence", `Typed issue: ${typed}`);
     updateOccasion("momentIntent", "Typed What Went Wrong note should be synthesized with the Occasion context.");
+    if (recordTelemetry) recordTelemetry("recovery_typed_issue_used", { description: typed, bestMatch: bestMatch?.item?.issue || "none" });
     setActive("simulator");
   }
   async function readText(text) {

@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-occasion-simulator-v881-journal-samples",
-  "version": "8.8.1",
+  "name": "barista-doma-home-barista-development-platform-v893-dual-certification-pathways",
+  "version": "8.9.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
