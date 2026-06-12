@@ -3371,6 +3371,14 @@ export default function Home() {
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const advisorAudioRef = useRef(null);
+  const handsFreeRecognitionRef = useRef(null);
+  const handsFreeEnabledRef = useRef(false);
+  const handsFreeCaptureRef = useRef(false);
+  const handsFreeBufferRef = useRef("");
+  const handsFreeTimerRef = useRef(null);
+  const [handsFreeEnabled, setHandsFreeEnabled] = useState(false);
+  const [handsFreeCaptureActive, setHandsFreeCaptureActive] = useState(false);
+  const [handsFreeStatus, setHandsFreeStatus] = useState("Hands-free Advisor is off. Enable it, then say ‘Advisor’ when your hands are wet or occupied.");
 
   useEffect(() => {
     try {
@@ -3410,6 +3418,11 @@ export default function Home() {
   useEffect(() => { try { localStorage.setItem("bd_flavors_v77", JSON.stringify(selectedFlavorNotes)); } catch {} }, [selectedFlavorNotes]);
   useEffect(() => { try { localStorage.setItem("bd_scores_v77", JSON.stringify(sensoryScores)); } catch {} }, [sensoryScores]);
   useEffect(() => { try { localStorage.setItem("bd_tasting_note_v77", tastingNote); } catch {} }, [tastingNote]);
+  useEffect(() => { handsFreeEnabledRef.current = handsFreeEnabled; }, [handsFreeEnabled]);
+  useEffect(() => () => {
+    try { handsFreeRecognitionRef.current?.stop?.(); } catch {}
+    try { if (handsFreeTimerRef.current) clearTimeout(handsFreeTimerRef.current); } catch {}
+  }, []);
 
   const context = useMemo(() => ({
     machineType: profile.machineType,
@@ -3586,6 +3599,118 @@ Correction / added detail: ${newText}`.trim() : newText;
     try { if (recorderRef.current && recorderRef.current.state !== "inactive") { recorderRef.current.stop(); setStatus("Stopping…"); log("Stop requested."); } }
     catch (err) { setError(err.message); log(`Stop failed: ${err.message}`); }
   }
+  function finalizeHandsFreeCapture() {
+    const finalText = handsFreeBufferRef.current.trim();
+    if (!finalText) {
+      handsFreeCaptureRef.current = false;
+      setHandsFreeCaptureActive(false);
+      setHandsFreeStatus("Advisor is listening for the next hands-free note. Say ‘Advisor’ again when you need me.");
+      return;
+    }
+    const changedFields = applyVoiceTextToFields(finalText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
+    const fieldPhrase = changedFields.length ? changedFields.join(", ") : "your conversation note";
+    setHandsFreeStatus(`Advisor recorded the conversation and placed: ${fieldPhrase}.`);
+    setStatus(`Hands-free Advisor recorded and placed: ${fieldPhrase}.`);
+    log(`Hands-free Advisor finalized. Fields: ${fieldPhrase}.`);
+    recordTelemetry("hands_free_advisor_finalized", { fields: changedFields, transcriptLength: finalText.length });
+    speakFastLocal(`I heard you. I placed ${fieldPhrase} in the form. Final note: ${finalText}`, { rate: 0.92 });
+    handsFreeBufferRef.current = "";
+    handsFreeCaptureRef.current = false;
+    setHandsFreeCaptureActive(false);
+  }
+
+  function handleHandsFreeText(rawText) {
+    const text = String(rawText || "").trim();
+    if (!text) return;
+    const wakeMatch = /\badvisor\b/i.test(text);
+    if (wakeMatch && !handsFreeCaptureRef.current) {
+      const afterWake = text.replace(/^.*?\badvisor\b[,.!?:;\s-]*/i, "").trim();
+      setActive("simulator");
+      handsFreeCaptureRef.current = true;
+      setHandsFreeCaptureActive(true);
+      handsFreeBufferRef.current = "";
+      setHandsFreeStatus("Advisor heard the wake word. Speak slowly; I will record, repeat back, and place details into the right fields.");
+      setStatus("Hands-free Advisor is active. Speak slowly.");
+      recordTelemetry("hands_free_advisor_wake_word", { source: "speech_recognition" });
+      speakFastLocal("I'm here. Speak slowly and I will record our conversation. I will repeat it back and place the information into the right form fields.", { rate: 0.9 });
+      if (afterWake) setTimeout(() => handleHandsFreeText(afterWake), 900);
+      return;
+    }
+    if (!handsFreeCaptureRef.current) {
+      setHandsFreeStatus("Listening for wake word: say ‘Advisor’ when you need hands-free capture.");
+      return;
+    }
+    const newBuffer = `${handsFreeBufferRef.current} ${text}`.trim();
+    handsFreeBufferRef.current = newBuffer;
+    setTranscript((prev) => `${prev ? `${prev}\n` : ""}Hands-free Advisor note: ${text}`);
+    const changedFields = applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
+    setHandsFreeStatus(changedFields.length ? `Captured: ${text} · Placed ${changedFields.join(", ")}.` : `Captured comment: ${text}.`);
+    setStatus(changedFields.length ? `Hands-free fields updated: ${changedFields.join(", ")}.` : "Hands-free comment captured.");
+    recordTelemetry("hands_free_advisor_capture", { transcript: text, fields: changedFields });
+    try { if (handsFreeTimerRef.current) clearTimeout(handsFreeTimerRef.current); } catch {}
+    handsFreeTimerRef.current = setTimeout(finalizeHandsFreeCapture, 2600);
+  }
+
+  function startHandsFreeAdvisor() {
+    setError("");
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) throw new Error("This browser does not expose hands-free speech recognition. Use Chrome on HTTPS for the best hands-free Advisor experience.");
+      try { handsFreeRecognitionRef.current?.stop?.(); } catch {}
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+      recognition.onstart = () => {
+        setHandsFreeEnabled(true);
+        handsFreeEnabledRef.current = true;
+        setHandsFreeStatus("Hands-free Advisor is listening. Say ‘Advisor’ when your hands are wet or occupied.");
+        setStatus("Hands-free Advisor enabled.");
+        log("Hands-free Advisor listening enabled.");
+        recordTelemetry("hands_free_advisor_enabled", { mode: "wake_word" });
+      };
+      recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          if (event.results[i].isFinal) handleHandsFreeText(event.results[i][0]?.transcript || "");
+        }
+      };
+      recognition.onerror = (event) => {
+        const message = event?.error ? `Hands-free Advisor recognition issue: ${event.error}` : "Hands-free Advisor recognition issue.";
+        setHandsFreeStatus(message);
+        log(message);
+      };
+      recognition.onend = () => {
+        if (handsFreeEnabledRef.current) {
+          try { recognition.start(); } catch {}
+        } else {
+          setHandsFreeStatus("Hands-free Advisor is off.");
+        }
+      };
+      handsFreeRecognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      setHandsFreeEnabled(false);
+      handsFreeEnabledRef.current = false;
+      setHandsFreeStatus(err.message || String(err));
+      setError(err.message || String(err));
+      log(`Hands-free Advisor failed: ${err.message || String(err)}`);
+    }
+  }
+
+  function stopHandsFreeAdvisor() {
+    handsFreeEnabledRef.current = false;
+    setHandsFreeEnabled(false);
+    handsFreeCaptureRef.current = false;
+    setHandsFreeCaptureActive(false);
+    handsFreeBufferRef.current = "";
+    try { if (handsFreeTimerRef.current) clearTimeout(handsFreeTimerRef.current); } catch {}
+    try { handsFreeRecognitionRef.current?.stop?.(); } catch {}
+    setHandsFreeStatus("Hands-free Advisor is off. Enable it again when you want no-hands capture.");
+    setStatus("Hands-free Advisor stopped.");
+    log("Hands-free Advisor stopped.");
+    recordTelemetry("hands_free_advisor_stopped", {});
+  }
+
   function applyTranscriptToForms() {
     const changedFields = applyVoiceTextToFields(transcript, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
     if (changedFields.length) {
@@ -3754,7 +3879,7 @@ Correction / added detail: ${newText}`.trim() : newText;
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.9.4</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.9.6</small></div></div>
         {["home", "dashboard", "quickshot", "onboarding", "dialin", "occasions", "certification", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -3762,10 +3887,18 @@ Correction / added detail: ${newText}`.trim() : newText;
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9.4</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9.7</p>
         <h1>Home Barista Development Platform — Premium Home + Dashboard</h1>
         <p>Home prepares the artisan. Dashboard runs the work. Pull shots, dial in, ask Advisor, recover, taste, and report without losing the moment.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
+        <div className={handsFreeEnabled ? "successBox" : "noteBox"}>
+          <strong>No-hands Advisor:</strong> {handsFreeStatus}
+          <div className="buttonRow">
+            <button className={handsFreeEnabled ? "danger" : "primary"} type="button" onClick={handsFreeEnabled ? stopHandsFreeAdvisor : startHandsFreeAdvisor}>{handsFreeEnabled ? "Stop No-Hands Advisor" : "Enable No-Hands Advisor"}</button>
+            <button className="secondary" type="button" onClick={() => setActive("simulator")}>Open Advisor Capture</button>
+          </div>
+          <p className="small">After enabling, say <strong>“Advisor”</strong>. The Advisor responds, records the conversation, repeats the final note, and places dose, yield, time, grind, preference, tasting, or Guest Resonance details into the right fields.</p>
+        </div>
         {error ? <div className="errorBox"><strong>Visible Error:</strong>{"\n"}{error}</div> : null}
         {health ? <div className={health.hasOpenAIKey ? "successBox" : "errorBox"}>Server: {health.ok ? "OK" : "Not OK"} | API Key Present: {String(health.hasOpenAIKey)} | Node: {health.node}</div> : null}
         <div className="navBar">
@@ -3783,8 +3916,8 @@ Correction / added detail: ${newText}`.trim() : newText;
       {active === "dialin" && <DialInJournalPage profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
-      {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
-      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports }} />}
+      {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} profile={profile} occasion={occasion} updateProfile={updateProfile} updateOccasion={updateOccasion} setGuestResonance={setGuestResonance} setTastingNote={setTastingNote} recordTelemetry={recordTelemetry} setStatus={setStatus} setAdvisorText={setAdvisorText} setMatrixMatch={setMatrixMatch} setSynthesis={setSynthesis} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports, handsFreeEnabled, handsFreeCaptureActive, handsFreeStatus, startHandsFreeAdvisor, stopHandsFreeAdvisor }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} telemetryEvents={telemetryEvents} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} recordTelemetry={recordTelemetry} />}
@@ -3937,6 +4070,10 @@ function parseQuickShotNote(text) {
 
 function QuickShotLogPage({ profile, updateProfile, setActive, recordTelemetry }) {
   const [listening, setListening] = useState(false);
+  const [quickVoiceStatus, setQuickVoiceStatus] = useState("Ready to record a shot note.");
+  const [quickAudioUrl, setQuickAudioUrl] = useState("");
+  const quickRecorderRef = useRef(null);
+  const quickChunksRef = useRef([]);
   const attempts = profile.dialInAttempts || [];
   function applyParsed(parsed) {
     if (parsed.dose) updateProfile("quickShotDose", parsed.dose);
@@ -3950,20 +4087,49 @@ function QuickShotLogPage({ profile, updateProfile, setActive, recordTelemetry }
     if (recordTelemetry) recordTelemetry("voice_quick_capture_parsed", { fields: Object.entries(parsed).filter(([,v]) => Boolean(v)).map(([k]) => k), source: "Pull Some Shots" });
   }
   function parseVoiceNote() { applyParsed(parseQuickShotNote(profile.quickShotVoiceNote)); }
-  function startQuickVoice() {
-    const SR = typeof window !== "undefined" ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
-    if (!SR) { alert("This browser does not expose quick speech recognition here. Use the spoken-note box, or use Advisor voice capture."); return; }
-    const rec = new SR();
-    rec.lang = "en-US"; rec.interimResults = false; rec.continuous = false;
-    rec.onstart = () => setListening(true);
-    rec.onerror = () => setListening(false);
-    rec.onend = () => setListening(false);
-    rec.onresult = (event) => {
-      const text = Array.from(event.results || []).map((r) => r[0]?.transcript || "").join(" ").trim();
-      updateProfile("quickShotVoiceNote", text);
-      applyParsed(parseQuickShotNote(text));
-    };
-    rec.start();
+  async function startQuickVoice() {
+    if (listening) { stopQuickVoice(); return; }
+    try {
+      setQuickVoiceStatus("Requesting microphone for Shot Log…");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      quickChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      quickRecorderRef.current = recorder;
+      recorder.ondataavailable = (event) => { if (event.data?.size > 0) quickChunksRef.current.push(event.data); };
+      recorder.onstart = () => { setListening(true); setQuickVoiceStatus("Recording shot note… speak dose, yield, time, grind, what you liked, and whether you would serve it."); };
+      recorder.onstop = async () => {
+        setListening(false);
+        setQuickVoiceStatus("Recording stopped. Transcribing and filling fields…");
+        try {
+          stream.getTracks().forEach((track) => track.stop());
+          const blob = new Blob(quickChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+          if (quickAudioUrl) URL.revokeObjectURL(quickAudioUrl);
+          setQuickAudioUrl(URL.createObjectURL(blob));
+          const form = new FormData();
+          form.append("audio", blob, "quick-shot-note.webm");
+          const response = await fetch("/api/transcribe", { method: "POST", body: form });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Transcription failed");
+          const text = data.text || data.transcript || "";
+          updateProfile("quickShotVoiceNote", text);
+          const parsed = parseQuickShotNote(text);
+          applyParsed(parsed);
+          const fields = Object.entries(parsed).filter(([,v]) => Boolean(v)).map(([k]) => k);
+          setQuickVoiceStatus(fields.length ? `Voice captured and filled: ${fields.join(", ")}.` : "Voice captured. No shot fields detected yet; edit or press Parse Spoken Note into Fields.");
+          if (recordTelemetry) recordTelemetry("voice_shot_log_recorded", { transcriptLength: text.length, fields });
+        } catch (err) {
+          setQuickVoiceStatus(`Voice capture problem: ${err.message || String(err)}`);
+        }
+      };
+      recorder.start();
+    } catch (err) {
+      setListening(false);
+      setQuickVoiceStatus(`Microphone unavailable: ${err.message || String(err)}. Use HTTPS and allow microphone access.`);
+    }
+  }
+  function stopQuickVoice() {
+    try { if (quickRecorderRef.current && quickRecorderRef.current.state !== "inactive") quickRecorderRef.current.stop(); }
+    catch (err) { setQuickVoiceStatus(`Stop problem: ${err.message || String(err)}`); }
   }
   function saveQuickShot() {
     const now = new Date().toLocaleString();
@@ -3994,7 +4160,7 @@ function QuickShotLogPage({ profile, updateProfile, setActive, recordTelemetry }
     <h2>Log what you pulled, then decide if you liked it.</h2>
     <p className="small">This is not a full Occasion. It is the convenient shot notebook: voice or type the shot, capture the recipe, mark whether you liked it, and optionally add flavor-wheel notes.</p>
     <div className="noteBox"><strong>Say it naturally:</strong> “18 grams in, 36 grams out, 27 seconds, grind 8. I liked the sweetness and body. I would serve it.”</div>
-    <div className="buttonRow"><button className={listening ? "danger" : "primary"} type="button" onClick={startQuickVoice}>{listening ? "Listening…" : "🎙️ Speak Shot Log"}</button><button className="secondary" type="button" onClick={parseVoiceNote}>Parse Spoken Note into Fields</button></div>
+    <div className="buttonRow"><button className={listening ? "danger" : "primary"} type="button" onClick={startQuickVoice}>{listening ? "🟢 Stop Recording" : "🎙️ Record Shot Log"}</button><button className="secondary" type="button" onClick={parseVoiceNote}>Parse Spoken Note into Fields</button><button className="secondary" type="button" onClick={() => setActive("simulator")}>Open Advisor Voice Capture</button></div><div className="statusBox"><strong>Voice Capture:</strong> {quickVoiceStatus}</div>{quickAudioUrl ? <audio controls src={quickAudioUrl} /> : null}
     <label className="label">Spoken / typed shot note</label>
     <textarea value={profile.quickShotVoiceNote || ""} onChange={(e) => updateProfile("quickShotVoiceNote", e.target.value)} placeholder="Speak or type: dose, yield, time, grind, whether you liked it, what you liked, what you would change, and whether you would serve it." />
     <div className="grid">
@@ -4062,7 +4228,7 @@ function TelemetryPanel({ summary, events, clearTelemetry, compact = false }) {
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen, telemetryEvents, clearTelemetry }) {
   const setupComplete = !setupMissing?.length;
   const telemetrySummary = buildTelemetrySummary(telemetryEvents || []);
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">The operating hub: continue the current Occasion, pull shots, ask Advisor, recover, taste, and review progress. Home prepares the artisan; Dashboard runs the product experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("quickshot")}>Pull Some Shots</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => setActive("simulator")}>Upload Photo/Video for Advisor</button></div><TelemetryPanel summary={telemetrySummary} events={telemetryEvents || []} clearTelemetry={clearTelemetry} /></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">The operating hub: continue the current Occasion, pull shots, ask Advisor, recover, taste, and review progress. Home prepares the artisan; Dashboard runs the product experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("quickshot")}>Pull Some Shots</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="primary" onClick={() => setActive("simulator")}>🎙️ Speak to Advisor / Record Voice</button><button className="secondary green" onClick={() => setActive("simulator")}>Upload Photo/Video for Advisor</button></div><TelemetryPanel summary={telemetrySummary} events={telemetryEvents || []} clearTelemetry={clearTelemetry} /></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
@@ -4250,7 +4416,7 @@ function OccasionsLibrary({ founderOccasions, openFounderOccasion, selectedOccas
   </section>;
 }
 
-function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport, stepTimings, setStepTimings, occasionStartTime }) {
+function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepIndex, setActive, setTranscript, createReport, stepTimings, setStepTimings, occasionStartTime, profile, occasion, updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry, setStatus, setAdvisorText, setMatrixMatch, setSynthesis }) {
   const steps = occasionItem.steps || [];
   const safeIndex = Math.min(Math.max(Number(currentStepIndex) || 0, 0), Math.max(steps.length - 1, 0));
   const current = steps[safeIndex] || steps[0];
@@ -4351,6 +4517,105 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
 
   const scriptText = steps.map((step, idx) => `${idx + 1}. ${step.title}\nAction: ${step.action || ""}\nAdvisor: ${step.advisor}\nArtisan Script: ${step.script}`).join("\n\n");
   const timingMetrics = buildTimingMetrics(occasionItem, stepTimings, occasionStartTime);
+  const [stepAdvisorEnabled, setStepAdvisorEnabled] = useState(false);
+  const [stepAdvisorListening, setStepAdvisorListening] = useState(false);
+  const [stepAdvisorTranscript, setStepAdvisorTranscript] = useState("");
+  const [stepAdvisorReply, setStepAdvisorReply] = useState("Say “Advisor” while this step is open. I will answer in the context of this exact Occasion step.");
+  const [stepAdvisorFields, setStepAdvisorFields] = useState([]);
+  const [stepVoiceEnabled, setStepVoiceEnabled] = useState(true);
+  const [stepVoicePaused, setStepVoicePaused] = useState(false);
+  const stepRecognitionRef = useRef(null);
+
+  function speakStepAdvisor(text) {
+    setStepAdvisorReply(text);
+    if (setAdvisorText) setAdvisorText(text);
+    if (!stepVoiceEnabled) return;
+    setStepVoicePaused(false);
+    speakFastLocal(text, { rate: 0.96 });
+  }
+
+  function pauseStepAdvisorVoice() {
+    try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.pause(); } catch {}
+    setStepVoicePaused(true);
+  }
+  function resumeStepAdvisorVoice() {
+    try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.resume(); } catch {}
+    setStepVoicePaused(false);
+  }
+  function stopStepAdvisorVoice() {
+    stopFastLocalSpeech();
+    setStepVoicePaused(false);
+  }
+
+  function handleStepAdvisorText(rawText) {
+    const raw = String(rawText || "").trim();
+    if (!raw) return;
+    const hasWake = /\badvisor\b/i.test(raw);
+    let artisanText = raw;
+    if (hasWake) {
+      artisanText = raw.replace(/^.*?\badvisor\b[,.!?:;\s-]*/i, "").trim();
+      const intro = `I'm here. You are in ${occasionItem.name}, Step ${safeIndex + 1} of ${steps.length}: ${current?.title}. What can I help with?`;
+      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: Advisor`);
+      recordTelemetry?.("occasion_step_advisor_wake", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
+      if (!artisanText) {
+        speakStepAdvisor(intro);
+        return;
+      }
+      setStepAdvisorReply(intro);
+    }
+    setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${artisanText}`);
+    if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Occasion Step Advisor (${occasionItem.name}, Step ${safeIndex + 1}): ${artisanText}`);
+    const changed = applyVoiceTextToFields(artisanText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
+    setStepAdvisorFields(changed);
+    const reply = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed });
+    if (setMatrixMatch && /runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled/i.test(artisanText)) {
+      setMatrixMatch({ issue: "Occasion step issue", label: "Contextual step recovery", category: "Occasion-aware Advisor", severity: "live", suggestedFix: reply });
+    }
+    if (setSynthesis) setSynthesis({ detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "prototype" });
+    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, transcript: artisanText });
+    setStatus?.(changed.length ? `Step Advisor captured and placed: ${changed.join(", ")}.` : "Step Advisor captured a contextual note for this Occasion step.");
+    speakStepAdvisor(reply);
+  }
+
+  function startStepAdvisor() {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) throw new Error("This browser does not expose speech recognition. Use Chrome on HTTPS for step-aware no-hands Advisor.");
+      try { stepRecognitionRef.current?.stop?.(); } catch {}
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+      recognition.onstart = () => {
+        setStepAdvisorEnabled(true);
+        setStepAdvisorListening(true);
+        setStatus?.("Occasion-aware Advisor is listening inside this step. Say ‘Advisor’. ");
+        recordTelemetry?.("occasion_step_advisor_enabled", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
+      };
+      recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          if (event.results[i].isFinal) handleStepAdvisorText(event.results[i][0]?.transcript || "");
+        }
+      };
+      recognition.onerror = (event) => setStatus?.(`Occasion-aware Advisor recognition issue: ${event?.error || "unknown"}`);
+      recognition.onend = () => setStepAdvisorListening(false);
+      stepRecognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      alert(err.message || String(err));
+    }
+  }
+
+  function stopStepAdvisor() {
+    try { stepRecognitionRef.current?.stop?.(); } catch {}
+    setStepAdvisorEnabled(false);
+    setStepAdvisorListening(false);
+    setStatus?.("Occasion-aware Advisor stopped for this step.");
+    recordTelemetry?.("occasion_step_advisor_stopped", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
+  }
+
+  useEffect(() => () => { try { stepRecognitionRef.current?.stop?.(); } catch {} }, []);
+
   return <section className="walkthroughPage">
     <section className="card heroMini">
       <p className="eyebrow">{occasionItem.family || "Core Occasion"}</p>
@@ -4368,6 +4633,31 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <p><strong>Suggested tempo:</strong> {current?.suggestedTempo || "60–90 sec"}</p>
       <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
+      <section className="stepAdvisorPanel">
+        <p className="eyebrow">Occasion-aware no-hands Advisor</p>
+        <h3>Say “Advisor” for help with this exact step.</h3>
+        <p className="small">The Advisor uses the active Occasion, this step, your House Formula, shot specs, taste notes, Guest Resonance, and Development Telemetry. It will place spoken details into the visible fields, repeat back what it captured, and let you keep working without leaving the Occasion.</p>
+        <div className="buttonRow">
+          <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Step Advisor" : "Enable Step Advisor"}</button>
+          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Advisor")}>Test Wake Word</button>
+          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("it seems a little runny")}>Test: It seems runny</button>
+          <button className="secondary" type="button" onClick={() => setActive("matrix")}>Something is wrong</button>
+          <button className="secondary" type="button" onClick={() => setStepVoiceEnabled((v) => !v)}>{stepVoiceEnabled ? "Voice On" : "Voice Off / Text Only"}</button>
+          <button className="secondary" type="button" onClick={pauseStepAdvisorVoice}>Pause Voice</button>
+          <button className="secondary" type="button" onClick={resumeStepAdvisorVoice}>{stepVoicePaused ? "Resume Voice" : "Resume"}</button>
+          <button className="secondary" type="button" onClick={stopStepAdvisorVoice}>Stop Voice</button>
+        </div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? "Listening inside this Occasion step." : "Enable this once, then say “Advisor” while you are on this step."}</div>
+        <div className="grid">
+          <Field label="Dose captured" value={profile?.quickShotDose || profile?.houseDose || ""} onChange={(v) => updateProfile?.("quickShotDose", v)} />
+          <Field label="Yield captured" value={profile?.quickShotYield || profile?.houseYield || ""} onChange={(v) => updateProfile?.("quickShotYield", v)} />
+          <Field label="Shot time captured" value={profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || ""} onChange={(v) => updateProfile?.("quickShotTime", v)} />
+          <Field label="Grind captured" value={profile?.quickShotGrind || profile?.grinderSetting || ""} onChange={(v) => updateProfile?.("quickShotGrind", v)} />
+        </div>
+        <label className="label">Step note / taste / recovery / Guest Resonance</label>
+        <textarea value={stepAdvisorTranscript} onChange={(e) => setStepAdvisorTranscript(e.target.value)} placeholder="Voice notes captured inside this Occasion step appear here immediately." />
+        <div className="noteBox"><strong>Advisor repeat-back / guidance:</strong><p>{stepAdvisorReply}</p>{stepAdvisorFields?.length ? <small>Placed into fields: {stepAdvisorFields.join(", ")}</small> : <small>No structured fields placed yet. Notes still feed the Doma Report context.</small>}</div>
+      </section>
       <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
       <div className="buttonRow"><button className="secondary" onClick={readCurrentStep} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Current Step"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{stepAudioUrl === "__local_voice__" ? <div className="noteBox"><strong>Fast Step Read-Aloud:</strong> Speaking through the browser now. Use Stop Reading to interrupt.</div> : (stepAudioUrl ? <div className="noteBox"><strong>Step Read-Aloud Playback</strong><audio ref={stepAudioRef} controls autoPlay src={stepAudioUrl} /></div> : null)}{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
     </section>
@@ -4463,6 +4753,39 @@ function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestR
   return changed;
 }
 
+
+function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepNumber, totalSteps, profile, occasion, changedFields } = {}) {
+  const raw = String(text || "").trim();
+  const lower = raw.toLowerCase();
+  const parsed = parseQuickShotNote(raw);
+  const houseDose = profile?.houseDose || "not set";
+  const houseYield = profile?.houseYield || "not set";
+  const houseTime = profile?.houseShotTime || occasion?.currentShotTime || "not set";
+  const grind = profile?.grinderSetting || parsed.grind || "not captured";
+  const occasionName = occasionItem?.name || occasion?.occasionName || "this Occasion";
+  const stepTitle = currentStep?.title || "this step";
+  const fields = changedFields?.length ? ` I also placed ${changedFields.join(", ")} into the visible form.` : "";
+  let guidance = "";
+
+  if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) {
+    guidance = `That sounds like a choke or no-flow condition, not a fast shot. Because your house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, keep the dose steady, stop the pump, knock out the puck, purge, and try one to two steps coarser. Taste the next pull before changing more than one variable.`;
+  } else if (/runny|watery|thin|fast|gush|too quick|ran quick|ran fast/.test(lower)) {
+    guidance = `That sounds like the shot may be running too fast or tasting thin. I see your current house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, with grind ${grind}. If this cup tastes sharp, sour, watery, or hollow, keep dose steady and move one step finer. If you actually like the brightness, log it as a preference instead of treating it as failure.`;
+  } else if (/bitter|dry|ashy|harsh|over extract|over-extract/.test(lower)) {
+    guidance = `That points toward a possible over-extracted or harsh cup, especially if the finish feels dry. Compare it against your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}. Try tasting first. If the bitterness is unpleasant, consider a slightly shorter yield or one step coarser next time, but change only one variable.`;
+  } else if (/sour|sharp|acid|under extract|under-extract/.test(lower)) {
+    guidance = `That sounds like possible under-extraction or a cup that is brighter than you want. With your house formula at ${houseDose} in, ${houseYield} out, around ${houseTime}, try keeping dose steady and either grinding one step finer or extending the yield slightly only if the taste is not acceptable to you.`;
+  } else if (/what do i say|script|say to|guest|serve|present/.test(lower)) {
+    guidance = `For this step, keep the language simple and confident. You can say: ${currentStep?.script || "I made this to fit this moment. Tell me what you notice first."}`;
+  } else if (/next|what now|what should i do|help/.test(lower)) {
+    guidance = `You are on Step ${stepNumber} of ${totalSteps}: ${stepTitle}. The next best move is: ${currentStep?.action || currentStep?.advisor || "move calmly through the step and capture what you observe."}`;
+  } else {
+    guidance = `I captured your note for ${occasionName}, Step ${stepNumber}: ${stepTitle}. If this was shot data, taste feedback, Guest Resonance, or a recovery issue, I will keep it with this step so it can feed the Doma Report.`;
+  }
+
+  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${guidance}${fields} Try this, taste it, and tell me whether it is acceptable to your taste now.`;
+}
+
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }
 
 function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot, setupMissing, requireSetupThen }) {
@@ -4471,11 +4794,17 @@ function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot,
 }
 
 function Simulator(props) {
-  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports } = props;
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports, handsFreeEnabled, handsFreeCaptureActive, handsFreeStatus, startHandsFreeAdvisor, stopHandsFreeAdvisor } = props;
   const liveSessionReport = buildLiveSessionReport({ profile, occasion, sensoryScores, guestResonance, transcript, advisorText, matrixMatch });
   return <>
     <section className="card">
-      <h2>Advisor Session + Visual Upload</h2>
+      <h2>Advisor Voice Capture + Visual Upload</h2>
+      <div className="successBox"><strong>Voice capture is restored here.</strong><br/>Tap Start Recording, speak naturally, stop recording, and Barista Doma will transcribe the artisan voice and attempt to fill relevant fields.</div>
+      <div className={handsFreeEnabled ? "successBox" : "noteBox"}>
+        <strong>No-hands wake word:</strong> {handsFreeStatus}
+        <p className="small">Use this when your hands are wet or occupied. Say <strong>“Advisor”</strong>, then speak slowly: “18 grams in, 36 grams out, 27 seconds, grind 8. I liked the sweetness and would serve it.” Barista Doma will repeat the final note and place the values into the form.</p>
+        <div className="buttonRow"><button className={handsFreeEnabled ? "danger" : "primary"} type="button" onClick={handsFreeEnabled ? stopHandsFreeAdvisor : startHandsFreeAdvisor}>{handsFreeEnabled ? "Stop No-Hands Advisor" : "Enable No-Hands Advisor"}</button>{handsFreeCaptureActive ? <span className="pill">Advisor is recording the conversation</span> : null}</div>
+      </div>
       <p className="small">Speak what is happening with the cup, machine, room, guest, or occasion — or upload a photo/video of the puck, flow, milk, cup, or machine screen. The Advisor receives the Doma Profile, Machine Passport, Dial-In Profile, Occasion setup, voice, typed issue, and upload notes together.</p>
       <div className="buttonRow">
         <button className={recording ? "danger" : "primary"} onClick={recording ? stopRecording : () => startRecording("replace")}>{recording ? "🟢 Stop Recording" : "🎙️ Start Recording"}</button>

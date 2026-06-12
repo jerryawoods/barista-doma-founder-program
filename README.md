@@ -28,3 +28,14 @@ Focused stabilization patch after v8.9.3.
 ## Suggested commit message
 
 Deploy v8.9.4 certification voice upload fixes
+
+
+## v8.9.7 — Occasion-Aware Advisor Real-Time Guidance
+
+- Adds step-aware Advisor inside the 21-Occasion walkthrough engine.
+- Artisan can enable the Advisor on any Occasion step and say “Advisor.”
+- Advisor replies in the context of the active Occasion and current step.
+- Spoken shot specs, taste notes, Guest Resonance, and recovery comments are immediately placed into visible fields/notes and telemetry.
+- Adds Something is wrong path from the step panel to Recovery Matrix.
+- Adds fast browser voice with pause, resume, stop, and text-only toggle for step Advisor guidance.
+- Preserves v8.9.1 telemetry, 21 Occasions, dual certification pathways, Quick Capture, reports, graphs, upload, and existing Advisor pages.
