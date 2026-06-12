@@ -4522,9 +4522,23 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepAdvisorTranscript, setStepAdvisorTranscript] = useState("");
   const [stepAdvisorReply, setStepAdvisorReply] = useState("Say “Advisor” while this step is open. I will answer in the context of this exact Occasion step.");
   const [stepAdvisorFields, setStepAdvisorFields] = useState([]);
+  const [stepPlacementNotice, setStepPlacementNotice] = useState("No Advisor capture has been routed yet for this step.");
+  const [stepCaptureLedger, setStepCaptureLedger] = useState([]);
   const [stepVoiceEnabled, setStepVoiceEnabled] = useState(true);
   const [stepVoicePaused, setStepVoicePaused] = useState(false);
   const stepRecognitionRef = useRef(null);
+
+  function buildStepCaptureRouting(artisanText, changed = []) {
+    const lower = String(artisanText || "").toLowerCase();
+    const routes = [];
+    const add = (label, detail) => { if (!routes.some((r) => r.label === label)) routes.push({ label, detail }); };
+    if (changed.some((x) => /dose|yield|shot time|grind|preference|serve again|next adjustment/i.test(x))) add("Step Telemetry / Shot Pull fields", "Visible in this step panel and carried into the Doma Report telemetry snapshot.");
+    if (changed.some((x) => /taste|tasting/i.test(x)) || /liked|taste|sweet|bitter|sour|bright|thin|smooth|body|watery|creamy/i.test(lower)) add("Taste Notes", "Visible in this step capture ledger and available for the Tasting Studio / Doma Report narrative.");
+    if (/runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled|problem|wrong/i.test(lower)) add("Recovery / Issue Notes", "Visible here, sent to the Recovery context, and retained for the Doma Report if you create one.");
+    if (changed.some((x) => /guest/i.test(x)) || /guest|served|liked it|loved it|reaction|resonance/i.test(lower)) add("Guest Resonance", "Visible in Guest Resonance context and included in the Doma Report when captured.");
+    if (!routes.length) add("Step Notes", "Visible in this step capture ledger and included as Occasion context for the report.");
+    return routes;
+  }
 
   function speakStepAdvisor(text) {
     setStepAdvisorReply(text);
@@ -4566,14 +4580,27 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${artisanText}`);
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Occasion Step Advisor (${occasionItem.name}, Step ${safeIndex + 1}): ${artisanText}`);
     const changed = applyVoiceTextToFields(artisanText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
+    const routing = buildStepCaptureRouting(artisanText, changed);
+    const routingLabels = routing.map((r) => r.label);
     setStepAdvisorFields(changed);
-    const reply = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed });
+    setStepPlacementNotice(`Written to: ${routingLabels.join(" + ")}. You can verify it in this step panel now; it will be included in the Doma Report when you create the report.`);
+    setStepCaptureLedger((prev) => [{
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      transcript: artisanText,
+      fields: changed,
+      routes: routing
+    }, ...prev].slice(0, 8));
+    const reply = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing });
     if (setMatrixMatch && /runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled/i.test(artisanText)) {
       setMatrixMatch({ issue: "Occasion step issue", label: "Contextual step recovery", category: "Occasion-aware Advisor", severity: "live", suggestedFix: reply });
     }
     if (setSynthesis) setSynthesis({ detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "prototype" });
-    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, transcript: artisanText });
-    setStatus?.(changed.length ? `Step Advisor captured and placed: ${changed.join(", ")}.` : "Step Advisor captured a contextual note for this Occasion step.");
+    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
+    setStatus?.(`Step Advisor captured the note and wrote it to ${routingLabels.join(" + ")}.`);
     speakStepAdvisor(reply);
   }
 
@@ -4656,7 +4683,19 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         </div>
         <label className="label">Step note / taste / recovery / Guest Resonance</label>
         <textarea value={stepAdvisorTranscript} onChange={(e) => setStepAdvisorTranscript(e.target.value)} placeholder="Voice notes captured inside this Occasion step appear here immediately." />
-        <div className="noteBox"><strong>Advisor repeat-back / guidance:</strong><p>{stepAdvisorReply}</p>{stepAdvisorFields?.length ? <small>Placed into fields: {stepAdvisorFields.join(", ")}</small> : <small>No structured fields placed yet. Notes still feed the Doma Report context.</small>}</div>
+        <div className="successBox"><strong>Where this was written:</strong><p>{stepPlacementNotice}</p>{stepAdvisorFields?.length ? <small>Structured fields updated: {stepAdvisorFields.join(", ")}</small> : <small>If this was not structured shot data, it is still visible below as a Step Note and report context.</small>}</div>
+        <div className="noteBox"><strong>Advisor repeat-back / guidance:</strong><p>{stepAdvisorReply}</p></div>
+        <div className="captureLedger">
+          <h4>Visible Capture Ledger for this Step</h4>
+          {stepCaptureLedger.length ? stepCaptureLedger.map((entry) => <div className="captureItem" key={entry.id}>
+            <p><strong>{entry.at}</strong> — {entry.occasion}, Step {entry.step}: {entry.stepTitle}</p>
+            <p><strong>Artisan said:</strong> {entry.transcript}</p>
+            <p><strong>Written to:</strong> {entry.routes.map((r) => r.label).join(" + ")}</p>
+            {entry.fields?.length ? <p><strong>Fields updated:</strong> {entry.fields.join(", ")}</p> : <p><strong>Fields updated:</strong> Step note / contextual report note</p>}
+            <ul>{entry.routes.map((r) => <li key={r.label}><strong>{r.label}:</strong> {r.detail}</li>)}</ul>
+          </div>) : <p className="small">Nothing has been captured for this step yet. Say “Advisor,” then speak your shot specs, taste note, guest reaction, or issue.</p>}
+        </div>
+        <div className="buttonRow"><button className="primary" type="button" onClick={() => { createReport?.(); setActive("reports"); }}>Create / View Session Report</button><button className="secondary" type="button" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" type="button" onClick={() => setActive("matrix")}>Open Recovery Notes</button></div>
       </section>
       <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
       <div className="buttonRow"><button className="secondary" onClick={readCurrentStep} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Current Step"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{stepAudioUrl === "__local_voice__" ? <div className="noteBox"><strong>Fast Step Read-Aloud:</strong> Speaking through the browser now. Use Stop Reading to interrupt.</div> : (stepAudioUrl ? <div className="noteBox"><strong>Step Read-Aloud Playback</strong><audio ref={stepAudioRef} controls autoPlay src={stepAudioUrl} /></div> : null)}{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
@@ -4754,7 +4793,7 @@ function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestR
 }
 
 
-function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepNumber, totalSteps, profile, occasion, changedFields } = {}) {
+function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepNumber, totalSteps, profile, occasion, changedFields, routing } = {}) {
   const raw = String(text || "").trim();
   const lower = raw.toLowerCase();
   const parsed = parseQuickShotNote(raw);
@@ -4764,7 +4803,9 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
   const grind = profile?.grinderSetting || parsed.grind || "not captured";
   const occasionName = occasionItem?.name || occasion?.occasionName || "this Occasion";
   const stepTitle = currentStep?.title || "this step";
-  const fields = changedFields?.length ? ` I also placed ${changedFields.join(", ")} into the visible form.` : "";
+  const routeLabels = Array.isArray(routing) && routing.length ? routing.map((r) => r.label) : [];
+  const writtenTo = routeLabels.length ? ` I wrote this to ${routeLabels.join(" and ")}. You can verify it in the Where this was written panel on this same step, and it will be included in your Doma Report when you create the report.` : " I kept this as a visible Step Note and Doma Report context.";
+  const fields = changedFields?.length ? ` I also updated these visible fields: ${changedFields.join(", ")}.` : "";
   let guidance = "";
 
   if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) {
@@ -4775,6 +4816,8 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
     guidance = `That points toward a possible over-extracted or harsh cup, especially if the finish feels dry. Compare it against your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}. Try tasting first. If the bitterness is unpleasant, consider a slightly shorter yield or one step coarser next time, but change only one variable.`;
   } else if (/sour|sharp|acid|under extract|under-extract/.test(lower)) {
     guidance = `That sounds like possible under-extraction or a cup that is brighter than you want. With your house formula at ${houseDose} in, ${houseYield} out, around ${houseTime}, try keeping dose steady and either grinding one step finer or extending the yield slightly only if the taste is not acceptable to you.`;
+  } else if (/i like|liked|love|loved|good|tastes good|acceptable|would serve/.test(lower)) {
+    guidance = `Good. If the cup is acceptable to your taste, we should not treat it as a failure just because one number is imperfect. I captured your preference so you can connect what you liked with the recipe and repeat it later. If you would serve it, keep this as a positive reference point for the Occasion.`;
   } else if (/what do i say|script|say to|guest|serve|present/.test(lower)) {
     guidance = `For this step, keep the language simple and confident. You can say: ${currentStep?.script || "I made this to fit this moment. Tell me what you notice first."}`;
   } else if (/next|what now|what should i do|help/.test(lower)) {
@@ -4783,7 +4826,7 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
     guidance = `I captured your note for ${occasionName}, Step ${stepNumber}: ${stepTitle}. If this was shot data, taste feedback, Guest Resonance, or a recovery issue, I will keep it with this step so it can feed the Doma Report.`;
   }
 
-  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${guidance}${fields} Try this, taste it, and tell me whether it is acceptable to your taste now.`;
+  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields} ${guidance} If you want to review it now, click Create / View Session Report, or stay here and continue the step. Try this, taste it, and tell me whether it is acceptable to your taste now.`;
 }
 
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }

@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v897-occasion-aware-advisor",
-  "version": "8.9.7",
+  "name": "barista-doma-home-barista-development-platform-v898-step-capture-report-routing",
+  "version": "8.9.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
