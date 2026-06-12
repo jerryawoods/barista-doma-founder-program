@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v893-dual-certification-pathways",
-  "version": "8.9.3",
+  "name": "barista-doma-home-barista-development-platform-v894-dual-certification-pathways",
+  "version": "8.9.4",
   "private": true,
   "scripts": {
     "dev": "next dev",

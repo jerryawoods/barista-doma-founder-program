@@ -1,44 +1,30 @@
-# Barista Doma Home Barista Development Platform v8.9.3
+# Barista Doma Home Barista Development Platform v8.9.4
 
-This patch builds on v8.9.1 telemetry foundation and the v8.9.2 certification work, then corrects the certification model to show two distinct certificate pathways.
+Focused stabilization patch after v8.9.3.
 
-## Preserved from v8.9.1
-- Home as preparation hub
-- Dashboard as operating hub
-- Pull Some Shots / Quick Capture
-- Preference-first taste logging
-- Voice-to-field parsing
-- Mobile navigation cleanup
-- Development Telemetry groups
-- Reports with graphs
-- Advisor/session/report flow
-- Recovery Library
-- Tasting Studio
-- Dial-In Journal
+## Fixes included
 
-## Preserved from v8.9.2
-- Certification navigation
-- Certification Progress page
-- Certification Progress Report card in Doma Reports
-- Occasion Patch Board / earned patches
-- Certificate preview with certificate ID
-- 21 total Occasions preserved
-- 6 Modern Sensory Occasions preserved without using Gen Z language in the app
-- Completion telemetry for reports and completed Occasions
+- Keeps all v8.9.1 Development Telemetry foundation.
+- Keeps the 21 total Occasions: 15 Core plus 6 Modern Sensory Occasions.
+- Keeps dual certification pathways:
+  - Barista Doma Certified Occasion Practitioner
+  - Barista Doma Certified Modern Sensory Occasion Practitioner
+- Adds interaction to the Certification page:
+  - How certification is completed section
+  - Open Occasion buttons
+  - Record Completion Evidence buttons for founder prototype testing
+  - Progress bars, patch boards, and certificate unlock behavior now visibly respond to completion evidence
+- Restores visible Advisor photo/video upload access without setup gate hiding the upload panel.
+- Restores voice-to-field behavior from Advisor transcript:
+  - captured transcript can populate dose, yield, shot time, grind, preference, serve-again, tasting note, and Guest Resonance
+  - adds Apply Voice Note to Form Fields button
+- Speeds up read-aloud by using browser-native speech synthesis for immediate response:
+  - Advisor voice
+  - Step read-aloud
+  - Full Occasion script read-aloud
+  - Recovery read-aloud
+- Preserves /api/speak, /api/transcribe, and /api/respond routes for future server voice/AI paths.
 
-## Added / corrected in v8.9.3
-- Two visible certification tracks instead of one:
-  1. Barista Doma Certified Occasion Practitioner — 15 Core Occasions
-  2. Barista Doma Certified Modern Sensory Occasion Practitioner — 6 Modern Sensory Occasions
-- Separate progress bars for both certification tracks
-- Separate patch boards for Core and Modern Sensory Occasions
-- Separate certificate previews and certificate IDs:
-  - BD-COP for Core Occasion Practitioner
-  - BD-MSO for Modern Sensory Occasion Practitioner
-- Dashboard and report certification summaries now show Core progress, Modern Sensory progress, and total 21-Occasion library progress
+## Suggested commit message
 
-## Build check
-Compiled successfully and generated the static pages. The local environment timed out only during the familiar final trace collection step after the meaningful build completed.
-
-## Commit message
-Deploy v8.9.3 dual certification pathways
+Deploy v8.9.4 certification voice upload fixes

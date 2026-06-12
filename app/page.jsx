@@ -3571,11 +3571,13 @@ export default function Home() {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Transcription failed with HTTP ${response.status}`);
         const newText = data.text || "";
-        setTranscript(appendMode ? `${existingTranscript.trim()}
+        const combinedTranscript = appendMode ? `${existingTranscript.trim()}
 
-Correction / added detail: ${newText}`.trim() : newText);
+Correction / added detail: ${newText}`.trim() : newText;
+        setTranscript(combinedTranscript);
+        const changedFields = applyVoiceTextToFields(newText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
         setCorrectionMode(false);
-        setStatus(appendMode ? "Correction captured. Re-generate Advisor response." : "Transcription complete. Generate Advisor response next."); log(`Transcription returned ${String(newText).length} characters${appendMode ? " as correction/additional detail" : ""}.`);
+        setStatus(changedFields.length ? `Voice captured and filled: ${changedFields.join(", ")}.` : (appendMode ? "Correction captured. Re-generate Advisor response." : "Transcription complete. Generate Advisor response next.")); log(`Transcription returned ${String(newText).length} characters${appendMode ? " as correction/additional detail" : ""}. Fields filled: ${changedFields.join(", ") || "none"}.`);
       };
       recorder.start();
     } catch (err) { setRecording(false); setStatus(`Error: ${err.message}`); setError(err.message); log(`Recording failed: ${err.message}`); }
@@ -3584,13 +3586,25 @@ Correction / added detail: ${newText}`.trim() : newText);
     try { if (recorderRef.current && recorderRef.current.state !== "inactive") { recorderRef.current.stop(); setStatus("Stopping…"); log("Stop requested."); } }
     catch (err) { setError(err.message); log(`Stop failed: ${err.message}`); }
   }
+  function applyTranscriptToForms() {
+    const changedFields = applyVoiceTextToFields(transcript, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
+    if (changedFields.length) {
+      setStatus(`Voice note applied to fields: ${changedFields.join(", ")}.`);
+      log(`Voice-to-field applied manually: ${changedFields.join(", ")}.`);
+    } else {
+      setStatus("No dose, yield, time, grind, taste, or Guest Resonance fields were detected in the current transcript.");
+    }
+  }
+
 
   function stopAdvisorVoice() {
     try {
+      stopFastLocalSpeech();
       if (advisorAudioRef.current) {
         advisorAudioRef.current.pause();
         advisorAudioRef.current.currentTime = 0;
       }
+      setAdvisorAudioUrl("");
       setStatus("Advisor stopped. You can correct or add detail.");
       log("Advisor Voice playback stopped by artisan.");
     } catch (err) { log(`Stop Advisor failed: ${err.message}`); }
@@ -3630,12 +3644,13 @@ Correction / added detail: ${newText}`.trim() : newText);
   }
 
   async function generateAdvisorVoice() {
-    setError(""); setAdvisorBusy(true); setAdvisorAudioUrl(""); setStatus("Generating Advisor Voice…"); log("Sending Advisor response to /api/speak.");
+    setError(""); setAdvisorBusy(true); setAdvisorAudioUrl(""); setStatus("Starting fast Advisor voice…"); log("Using fast browser speech for immediate Advisor voice.");
     try {
-      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: advisorText, voice: advisorVoice }) });
-      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error([data?.error, data?.detail].filter(Boolean).join("\n") || `Advisor Voice failed with HTTP ${response.status}`); }
-      const blob = await response.blob(); setAdvisorAudioUrl(URL.createObjectURL(blob)); setStatus("Advisor Voice ready"); log(`Advisor Voice returned audio: ${blob.size} bytes.`);
-      recordTelemetry("advisor_voice_generated", { voice: advisorVoice, bytes: blob.size });
+      const started = speakFastLocal(advisorText, { rate: 1.02, onEnd: () => setStatus("Advisor voice finished.") });
+      if (!started) throw new Error("This browser did not expose local speech synthesis.");
+      setAdvisorAudioUrl("__local_voice__");
+      setStatus("Advisor voice speaking now.");
+      recordTelemetry("advisor_voice_generated", { voice: advisorVoice, mode: "fast_browser_speech", responseLength: String(advisorText || "").length });
     } catch (err) { setStatus("Advisor Voice failed"); setError(err.message || String(err)); log(`Advisor Voice failed: ${err.message || String(err)}`); }
     finally { setAdvisorBusy(false); }
   }
@@ -3739,7 +3754,7 @@ Correction / added detail: ${newText}`.trim() : newText);
   return (
     <main className="appShell">
       <aside className="sideNav">
-        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.9</small></div></div>
+        <div className="brandMark"><span>BD</span><div><strong>Barista Doma</strong><small>Founder Program v8.9.4</small></div></div>
         {["home", "dashboard", "quickshot", "onboarding", "dialin", "occasions", "certification", "walkthrough", "simulator", "tasting", "matrix", "reports"].map((tab) => (
           <button key={tab} className={active === tab ? "sideLink active" : "sideLink"} onClick={() => setActive(tab)} type="button">{tabIcon(tab)} {tabLabel(tab)}</button>
         ))}
@@ -3747,7 +3762,7 @@ Correction / added detail: ${newText}`.trim() : newText);
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9.4</p>
         <h1>Home Barista Development Platform — Premium Home + Dashboard</h1>
         <p>Home prepares the artisan. Dashboard runs the work. Pull shots, dial in, ask Advisor, recover, taste, and report without losing the moment.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
@@ -3762,14 +3777,14 @@ Correction / added detail: ${newText}`.trim() : newText);
 
       {active === "home" && <HomeLanding setActive={setActive} profile={profile} occasion={occasion} reports={reports} setupMissing={setupMissing} />}
       {active === "dashboard" && <Dashboard checkServer={checkServer} loadClearFastShot={loadClearFastShot} setActive={setActive} profile={profile} occasion={occasion} reports={reports} health={health} setupMissing={setupMissing} requireSetupThen={requireSetupThen} telemetryEvents={telemetryEvents} clearTelemetry={clearTelemetry} />}
-      {active === "certification" && <CertificationPathway reports={reports} telemetryEvents={telemetryEvents} setActive={setActive} recordTelemetry={recordTelemetry} profile={profile} />}
+      {active === "certification" && <CertificationPathway reports={reports} setReports={setReports} telemetryEvents={telemetryEvents} setActive={setActive} recordTelemetry={recordTelemetry} profile={profile} />}
       {active === "quickshot" && <QuickShotLogPage profile={profile} updateProfile={updateProfile} setActive={setActive} recordTelemetry={recordTelemetry} />}
       {active === "onboarding" && <Onboarding profile={profile} updateProfile={updateProfile} updateProfilePatch={updateProfilePatch} setActive={setActive} />}
       {active === "dialin" && <DialInJournalPage profile={profile} updateProfile={updateProfile} setActive={setActive} />}
       {active === "occasion" && <OccasionSetup occasion={occasion} updateOccasion={updateOccasion} setActive={setActive} loadClearFastShot={loadClearFastShot} setupMissing={setupMissing} requireSetupThen={requireSetupThen} />}
       {active === "occasions" && <OccasionsLibrary founderOccasions={founderOccasions} openFounderOccasion={openFounderOccasion} selectedOccasionId={selectedOccasionId} setSelectedOccasionId={setSelectedOccasionId} />}
       {active === "walkthrough" && <OccasionWalkthrough occasionItem={walkthroughFounderOccasion} currentStepIndex={currentStepIndex} setCurrentStepIndex={setCurrentStepIndex} setActive={setActive} setTranscript={setTranscript} createReport={createReport} stepTimings={stepTimings} setStepTimings={setStepTimings} occasionStartTime={occasionStartTime} />}
-      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports }} />}
+      {active === "simulator" && <Simulator {...{ recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports }} />}
       {active === "tasting" && <TastingStudio selectedFlavorNotes={selectedFlavorNotes} toggleFlavor={toggleFlavor} sensoryScores={sensoryScores} updateSensoryScore={updateSensoryScore} tastingNote={tastingNote} setTastingNote={setTastingNote} guestResonance={guestResonance} setGuestResonance={setGuestResonance} setActive={setActive} createReport={createReport} />}
       {active === "reports" && <Reports reports={reports} clearReports={clearReports} setActive={setActive} printReport={printReport} exportReportsCSV={exportReportsCSV} loadSampleReports={loadSampleReports} telemetryEvents={telemetryEvents} />}
       {active === "matrix" && <Matrix setActive={setActive} setTranscript={setTranscript} updateOccasion={updateOccasion} recordTelemetry={recordTelemetry} />}
@@ -3809,8 +3824,35 @@ function CertificationProgressReport({ reports, telemetryEvents, setActive }) {
   return <section className="certMini card"><h3>Certification Progress Report</h3><p className="small">Barista Doma tracks two certificate pathways through Development Telemetry, Doma Reports, taste notes, Guest Resonance, and completed Occasion work.</p><div className="tiles"><Tile title="Core Practitioner" value={`${progress.coreCompleted}/${progress.coreTotal}`} /><Tile title="Core readiness" value={`${progress.corePercent}%`} /><Tile title="Modern Sensory" value={`${progress.modernSensoryCompleted}/${progress.modernSensoryTotal}`} /><Tile title="Total library" value={`${progress.allCompleted}/${progress.allTotal}`} /></div><div className="dualProgress"><div><strong>Certified Occasion Practitioner</strong><div className="certProgress"><span style={{ width: `${progress.corePercent}%` }} /></div></div><div><strong>Modern Sensory Occasion Practitioner</strong><div className="certProgress modern"><span style={{ width: `${progress.modernSensoryPercent}%` }} /></div></div></div><p className="small">Next Core Occasion: <strong>{nextCore ? nextCore.name : "Core certificate ready"}</strong></p><p className="small">Next Modern Sensory Occasion: <strong>{nextModern ? nextModern.name : "Modern Sensory certificate ready"}</strong></p><div className="buttonRow"><button className="secondary" onClick={() => setActive("certification")}>Open Certification Journey</button></div></section>;
 }
 
-function CertificationPathway({ reports, telemetryEvents, setActive, recordTelemetry, profile }) {
+function CertificationPathway({ reports, setReports, telemetryEvents, setActive, recordTelemetry, profile }) {
   const progress = buildCertificationProgress(reports || [], telemetryEvents || []);
+  function recordOccasionCompletion(item) {
+    const report = {
+      id: Date.now() + Math.random(),
+      createdAt: new Date().toLocaleString(),
+      title: item.name,
+      occasionId: item.id,
+      occasionFamily: item.family,
+      certificationEligible: item.family === "Core Occasions",
+      certificationTrack: item.family === "Modern Sensory Occasions" ? "Modern Sensory Occasion Practitioner" : "Certified Occasion Practitioner",
+      drink: item.drink,
+      guest: "Home coffee Occasion",
+      transcript: "Certification completion evidence recorded from Certification Journey.",
+      advisorText: "Completion path captured. Full production version will require all step telemetry, taste capture, Guest Resonance, and report evidence before final unlock.",
+      selectedFlavorNotes: [],
+      tastingNote: "Preference-first taste capture required for final certification evidence.",
+      guestResonance: { score: 4, reaction: "captured", guestQuote: "Completion evidence captured", wouldServeAgain: "yes" },
+      fluency: { score: 80, selectedLevel: profile?.advisorGuidanceLevel || "Building Consistency", observedZone: "Completion Evidence", stepCompletionPercent: 100, feedback: "Prototype completion evidence recorded for certification progress." },
+      confidenceMetrics: { machineConfidence: 4, tasteClarity: 4, stagecraft: 4, recoveryConfidence: 4, guestResonance: 4, occasionTempo: 240 },
+      machineInfo: { machine: profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || "Machine not captured", grinder: profile?.grinder || "Grinder not captured", beans: profile?.beans || "Beans not captured" },
+      dosingInfo: { dose: profile?.houseDose || "Not captured", yield: profile?.houseYield || "Not captured", houseShotTime: profile?.houseShotTime || "Not captured", grinderSetting: profile?.grinderSetting || "Not captured" },
+      telemetrySnapshot: { track: item.family, completion: "recorded" },
+      trendSummary: "Certification progress increased by one Occasion."
+    };
+    if (typeof setReports === "function") setReports((prev) => [report, ...(prev || []).filter((r) => (r.occasionId || slugifyName(r.title || "")) !== item.id)]);
+    if (recordTelemetry) recordTelemetry("occasion_completion_evidence_recorded", { occasion: item.name, occasionId: item.id, track: item.family });
+  }
+
   const artisanKey = String(profile?.name || "ARTISAN").replace(/[^A-Za-z0-9]/g, "").slice(0,6).toUpperCase() || "ARTISAN";
   const coreCertificateId = `BD-COP-${artisanKey}-${new Date().getFullYear()}-${String(progress.coreCompleted).padStart(2,"0")}`;
   const sensoryCertificateId = `BD-MSO-${artisanKey}-${new Date().getFullYear()}-${String(progress.modernSensoryCompleted).padStart(2,"0")}`;
@@ -3823,10 +3865,11 @@ function CertificationPathway({ reports, telemetryEvents, setActive, recordTelem
   return <section className="certPage"><section className="card heroPremium"><p className="eyebrow">Barista Doma Certification Pathways</p><h1>Two Occasion-centered certificates. One 21-Occasion development platform.</h1><p>Barista Doma certification is built around completing real home coffee Occasions, not merely reading lessons. The 15 Core Occasions lead to the Certified Occasion Practitioner certificate. The 6 Modern Sensory Occasions lead to a separate Modern Sensory Occasion Practitioner certificate.</p><div className="tiles"><Tile title="Core Practitioner" value={`${progress.coreCompleted}/${progress.coreTotal}`} /><Tile title="Modern Sensory" value={`${progress.modernSensoryCompleted}/${progress.modernSensoryTotal}`} /><Tile title="Total Occasion Library" value={`${progress.allCompleted}/${progress.allTotal}`} /><Tile title="Patches earned" value={`${progress.coreCompleted + progress.modernSensoryCompleted}`} /></div><div className="dualProgress"><div><strong>Certified Occasion Practitioner</strong><div className="certProgress large"><span style={{ width: `${progress.corePercent}%` }} /></div><small>{progress.corePercent}% complete</small></div><div><strong>Modern Sensory Occasion Practitioner</strong><div className="certProgress large modern"><span style={{ width: `${progress.modernSensoryPercent}%` }} /></div><small>{progress.modernSensoryPercent}% complete</small></div></div><div className="buttonRow"><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("reports")}>View Doma Reports</button><button className="secondary" onClick={() => setActive("dashboard")}>Back to Dashboard</button></div></section>
 
     <CertificationProgressReport reports={reports} telemetryEvents={telemetryEvents || []} setActive={setActive} />
+    <section className="card"><h2>How certification is completed</h2><p className="small">Production rule: an Occasion patch unlocks after the artisan completes every step in the walkthrough, captures taste/preference, records Guest Resonance, and creates a Doma Report. For this founder prototype, use <strong>Record Completion Evidence</strong> on any locked patch so we can test the pathway, progress bars, reports, and certificate unlock behavior end to end.</p></section>
 
-    <section className="card certTrack"><p className="eyebrow">Certificate Track 1</p><h2>Barista Doma Certified Occasion Practitioner</h2><p className="small">Earned by completing the 15 Core Home Barista Occasions with step completion evidence, a Doma Report, preference-first taste capture, Guest Resonance, and Development Telemetry.</p><div className={progress.coreCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.coreCertificateUnlocked ? "Core certificate unlocked." : "Core certificate locked."}</strong><br/>{progress.coreCertificateUnlocked ? "All 15 Core Occasions have completion evidence in local Doma Reports." : `Complete ${missingCore.length} more Core Occasion${missingCore.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid">{coreCertificationOccasions.map((item, idx) => { const earned = progress.completedCore.some((done) => done.id === item.id); return <article className={earned ? "patch earned" : "patch locked"} key={item.id}><div className="patchMedal">{earned ? "★" : idx + 1}</div><h3>{coreCertificationPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small></article>; })}</div></section>
+    <section className="card certTrack"><p className="eyebrow">Certificate Track 1</p><h2>Barista Doma Certified Occasion Practitioner</h2><p className="small">Earned by completing the 15 Core Home Barista Occasions with step completion evidence, a Doma Report, preference-first taste capture, Guest Resonance, and Development Telemetry.</p><div className={progress.coreCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.coreCertificateUnlocked ? "Core certificate unlocked." : "Core certificate locked."}</strong><br/>{progress.coreCertificateUnlocked ? "All 15 Core Occasions have completion evidence in local Doma Reports." : `Complete ${missingCore.length} more Core Occasion${missingCore.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid">{coreCertificationOccasions.map((item, idx) => { const earned = progress.completedCore.some((done) => done.id === item.id); return <article className={earned ? "patch earned" : "patch locked"} key={item.id}><div className="patchMedal">{earned ? "★" : idx + 1}</div><h3>{coreCertificationPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small><div className="buttonRow"><button className="secondary" type="button" onClick={() => { setActive("occasions"); }}>Open Occasion</button>{!earned ? <button className="secondary green" type="button" onClick={() => recordOccasionCompletion(item)}>Record Completion Evidence</button> : null}</div></article>; })}</div></section>
 
-    <section className="card certTrack"><p className="eyebrow">Certificate Track 2</p><h2>Barista Doma Certified Modern Sensory Occasion Practitioner</h2><p className="small">Earned by completing the 6 Modern Sensory Occasions — cold, contemporary, and sensory-forward service experiences. This is not labeled by generation inside the app; it is positioned as modern sensory fluency.</p><div className={progress.modernSensoryCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.modernSensoryCertificateUnlocked ? "Modern Sensory certificate unlocked." : "Modern Sensory certificate locked."}</strong><br/>{progress.modernSensoryCertificateUnlocked ? "All 6 Modern Sensory Occasions have completion evidence in local Doma Reports." : `Complete ${missingModern.length} more Modern Sensory Occasion${missingModern.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid sensory">{modernSensoryCertificationOccasions.map((item, idx) => { const earned = progress.completedModernSensory.some((done) => done.id === item.id); return <article className={earned ? "patch earned sensory" : "patch locked sensory"} key={item.id}><div className="patchMedal">{earned ? "✦" : idx + 1}</div><h3>{modernSensoryPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small></article>; })}</div></section>
+    <section className="card certTrack"><p className="eyebrow">Certificate Track 2</p><h2>Barista Doma Certified Modern Sensory Occasion Practitioner</h2><p className="small">Earned by completing the 6 Modern Sensory Occasions — cold, contemporary, and sensory-forward service experiences. This is not labeled by generation inside the app; it is positioned as modern sensory fluency.</p><div className={progress.modernSensoryCertificateUnlocked ? "successBox" : "noteBox"}><strong>{progress.modernSensoryCertificateUnlocked ? "Modern Sensory certificate unlocked." : "Modern Sensory certificate locked."}</strong><br/>{progress.modernSensoryCertificateUnlocked ? "All 6 Modern Sensory Occasions have completion evidence in local Doma Reports." : `Complete ${missingModern.length} more Modern Sensory Occasion${missingModern.length === 1 ? "" : "s"} to unlock this certificate.`}</div><div className="patchGrid sensory">{modernSensoryCertificationOccasions.map((item, idx) => { const earned = progress.completedModernSensory.some((done) => done.id === item.id); return <article className={earned ? "patch earned sensory" : "patch locked sensory"} key={item.id}><div className="patchMedal">{earned ? "✦" : idx + 1}</div><h3>{modernSensoryPatchNames[idx] || `${item.name} Patch`}</h3><p>{item.name}</p><small>{earned ? "Earned — Doma Report found" : "Locked — complete the Occasion and create a report"}</small><div className="buttonRow"><button className="secondary" type="button" onClick={() => { setActive("occasions"); }}>Open Occasion</button>{!earned ? <button className="secondary green" type="button" onClick={() => recordOccasionCompletion(item)}>Record Completion Evidence</button> : null}</div></article>; })}</div></section>
 
     <section className="card"><h2>21-Occasion Library Progress</h2><p className="small">The complete library includes 15 Core Occasions plus 6 Modern Sensory cold drink / contemporary service Occasions. The app shows both certificate pathways without using generation labels.</p><div className="allOccasionList">{founderOccasions.map((item) => { const done = progress.completedAll.some((x) => x.id === item.id); return <div className={done ? "occasionLine done" : "occasionLine"} key={item.id}><span>{done ? "✓" : "○"}</span><strong>{item.name}</strong><small>{item.family}</small></div>; })}</div></section>
 
@@ -4019,7 +4062,7 @@ function TelemetryPanel({ summary, events, clearTelemetry, compact = false }) {
 function Dashboard({ checkServer, loadClearFastShot, setActive, profile, occasion, reports, health, setupMissing, requireSetupThen, telemetryEvents, clearTelemetry }) {
   const setupComplete = !setupMissing?.length;
   const telemetrySummary = buildTelemetrySummary(telemetryEvents || []);
-  return <section className="card"><h2>Founder Dashboard</h2><p className="small">The operating hub: continue the current Occasion, pull shots, ask Advisor, recover, taste, and review progress. Home prepares the artisan; Dashboard runs the product experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("quickshot")}>Pull Some Shots</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => requireSetupThen("simulator")}>Upload Photo/Video for Advisor</button></div><TelemetryPanel summary={telemetrySummary} events={telemetryEvents || []} clearTelemetry={clearTelemetry} /></section>;
+  return <section className="card"><h2>Founder Dashboard</h2><p className="small">The operating hub: continue the current Occasion, pull shots, ask Advisor, recover, taste, and review progress. Home prepares the artisan; Dashboard runs the product experience.</p><div className="tiles"><Tile title="Server" value={health?.hasOpenAIKey ? "Connected" : "Check needed"} /><Tile title="Machine" value={profile.machine || "Not set"} /><Tile title="House Formula" value={`${profile.houseDose || "?"} → ${profile.houseYield || "?"}`} /><Tile title="Current Occasion" value={occasion.occasionName || "Not set"} /><Tile title="Saved Reports" value={String(reports.length)} /></div>{setupComplete ? <div className="successBox"><strong>Setup Gate:</strong> Ready. Doma Profile, Machine Passport, House Formula, and Occasion setup are present.</div> : <div className="errorBox"><strong>Setup Gate:</strong> Complete these before starting a live session: {setupMissing.join(", ")}</div>}<div className="buttonRow"><button className="primary" onClick={checkServer}>Check Server / API Key</button><button className="secondary" onClick={() => setActive("onboarding")}>Open Doma Profile</button><button className="secondary" onClick={() => setActive("dialin")}>Open Dial-In Journal</button><button className="secondary" onClick={() => setActive("quickshot")}>Pull Some Shots</button><button className="secondary" onClick={() => setActive("occasions")}>Open 21 Occasions</button><button className="secondary" onClick={() => setActive("certification")}>Certification Progress</button><button className="primary" onClick={loadClearFastShot}>Load Sample Advisor Flow</button><button className="secondary" onClick={() => requireSetupThen("simulator")}>Go to Simulator</button><button className="secondary green" onClick={() => setActive("simulator")}>Upload Photo/Video for Advisor</button></div><TelemetryPanel summary={telemetrySummary} events={telemetryEvents || []} clearTelemetry={clearTelemetry} /></section>;
 }
 function Tile({ title, value }) { return <div className="tile"><p>{title}</p><strong>{value}</strong></div>; }
 
@@ -4262,10 +4305,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setStepReadBusy(true);
     setStepAudioUrl("");
     try {
-      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: buildStepReadText(current), voice: "sage" }) });
-      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data?.error || data?.detail || `Step read-aloud failed with HTTP ${response.status}`); }
-      const blob = await response.blob();
-      setStepAudioUrl(URL.createObjectURL(blob));
+      const started = speakFastLocal(buildStepReadText(current), { rate: 1.02 });
+      if (!started) throw new Error("This browser did not expose local speech synthesis.");
+      setStepAudioUrl("__local_voice__");
     } catch (err) {
       alert(err.message || String(err));
     } finally {
@@ -4277,10 +4319,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setStepReadBusy(true);
     setStepAudioUrl("");
     try {
-      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: `Full Barista Doma stagecraft script for ${occasionItem.name}.\n\n${scriptText}`, voice: "sage" }) });
-      if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data?.error || data?.detail || `Script read-aloud failed with HTTP ${response.status}`); }
-      const blob = await response.blob();
-      setStepAudioUrl(URL.createObjectURL(blob));
+      const started = speakFastLocal(`Full Barista Doma stagecraft script for ${occasionItem.name}.\n\n${scriptText}`, { rate: 1.02 });
+      if (!started) throw new Error("This browser did not expose local speech synthesis.");
+      setStepAudioUrl("__local_voice__");
     } catch (err) {
       alert(err.message || String(err));
     } finally {
@@ -4289,10 +4330,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
   function stopStepReading() {
+    stopFastLocalSpeech();
     if (stepAudioRef.current) {
       stepAudioRef.current.pause();
       stepAudioRef.current.currentTime = 0;
     }
+    setStepAudioUrl("");
   }
 
   function completeStep() {
@@ -4326,7 +4369,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <div className="tempoBox"><strong>Tempo Guide:</strong> {timerVisible ? "On" : "Hidden"}<div className="buttonRow"><button className="secondary" onClick={() => setTimerVisible((v) => !v)}>{timerVisible ? "Hide Timer" : "Show Timer"}</button><button className="primary" onClick={startStep}>Start Step</button><button className="primary" onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Complete Occasion" : "Complete Step + Next"}</button></div>{timerVisible ? <div className="timerFace">{formatSeconds(elapsed)}</div> : <p className="small">Timer hidden. Your step time is still being captured for your Doma Report.</p>}{stepTimings[safeIndex]?.actualSeconds ? <p className="small">Captured actual: {formatSeconds(stepTimings[safeIndex].actualSeconds)}</p> : null}</div>
-      <div className="buttonRow"><button className="secondary" onClick={readCurrentStep} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Current Step"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{stepAudioUrl ? <div className="noteBox"><strong>Step Read-Aloud Playback</strong><audio ref={stepAudioRef} controls autoPlay src={stepAudioUrl} /></div> : null}{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
+      <div className="buttonRow"><button className="secondary" onClick={readCurrentStep} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Current Step"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" disabled={safeIndex === 0} onClick={() => goToStep(safeIndex - 1)}>Previous Step</button><button className="secondary" disabled={safeIndex >= steps.length - 1} onClick={() => goToStep(safeIndex + 1)}>Next Step</button><button className="secondary" onClick={() => { setTranscript(current?.script || occasionItem.artisanOpening || ""); setActive("simulator"); }}>Send this step to Advisor</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button></div>{stepAudioUrl === "__local_voice__" ? <div className="noteBox"><strong>Fast Step Read-Aloud:</strong> Speaking through the browser now. Use Stop Reading to interrupt.</div> : (stepAudioUrl ? <div className="noteBox"><strong>Step Read-Aloud Playback</strong><audio ref={stepAudioRef} controls autoPlay src={stepAudioUrl} /></div> : null)}{safeIndex >= steps.length - 1 ? <div className="successBox"><strong>Final step:</strong> Completing this step opens the Tasting Studio so you can capture flavor, Guest Resonance, and Doma Report detail.</div> : <p className="small">Complete Step will save this step time and automatically move you to Step {safeIndex + 2}.</p>}
     </section>
     <section className="card"><h2>Occasion Tempo Snapshot</h2><p><strong>Suggested total tempo:</strong> {occasionItem.suggestedTempo || occasionItem.time}</p><p><strong>Total actual time captured:</strong> {formatSeconds(timingMetrics.totalActualSeconds)}</p><p><strong>Personal best:</strong> Founder Benchmarks placeholder. Future anonymous cohort averages will compare Suggested Tempo, Your Actual Tempo, Personal Best, Founder Cohort Average, and Community Average later.</p><p className="small">Founder Benchmarks are not speed-only leaderboards. Future opt-in leaderboards should reward tempo quality, improvement, stagecraft, Guest Resonance, and calm readiness.</p></section>
     <section className="card"><h2>Full Occasion Stagecraft Script</h2><p className="small">The machine performs the extraction. The artisan performs the Occasion.</p><pre className="scriptFull">{scriptText}</pre><div className="buttonRow"><button className="secondary" onClick={readFullOccasionScript} disabled={stepReadBusy}>{stepReadBusy ? "Preparing audio…" : "Read Full Occasion Script"}</button><button className="secondary" onClick={stopStepReading}>Stop Reading</button><button className="secondary" onClick={() => setActive("occasions")}>Back to 21 Occasions</button><button className="secondary" onClick={() => setActive("tasting")}>Tasting / Flavor Wheel</button><button className="secondary" onClick={() => setActive("matrix")}>What Went Wrong?</button><button className="primary" onClick={createReport}>Create Doma Report</button></div></section>
@@ -4370,6 +4413,56 @@ function buildTimingMetrics(occasionItem, stepTimings, occasionStartTime) {
   const totalActualSeconds = Object.values(stepTimings || {}).reduce((sum, item) => sum + (Number(item.actualSeconds) || 0), 0);
   return { suggestedTotalTempo: occasionItem?.suggestedTempo || occasionItem?.time || "Not set", totalActualSeconds, stepLevel: stepTimings || {}, previousAttempt: null, personalBest: null, improvementNote: "First captured attempt or no prior local attempt yet.", tempoReflection: "The goal is not speed. The goal is calm, repeatable readiness." };
 }
+
+function speakFastLocal(text, { rate = 1.02, pitch = 1, onEnd } = {}) {
+  if (typeof window === "undefined" || !window.speechSynthesis || !text) return false;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(String(text));
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    utterance.lang = "en-US";
+    const voices = window.speechSynthesis.getVoices?.() || [];
+    const preferred = voices.find((v) => /Samantha|Google US English|Microsoft.*Jenny|Alex|Natural/i.test(v.name)) || voices.find((v) => /en-US|English/i.test(v.lang));
+    if (preferred) utterance.voice = preferred;
+    utterance.onend = () => { if (typeof onEnd === "function") onEnd(); };
+    window.speechSynthesis.speak(utterance);
+    return true;
+  } catch { return false; }
+}
+
+function stopFastLocalSpeech() {
+  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch {}
+}
+
+function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry } = {}) {
+  const parsed = parseQuickShotNote(text || "");
+  const lower = String(text || "").toLowerCase();
+  const changed = [];
+  if (parsed.dose && updateProfile) { updateProfile("houseDose", parsed.dose); updateProfile("quickShotDose", parsed.dose); changed.push("dose"); }
+  if (parsed.yield && updateProfile) { updateProfile("houseYield", parsed.yield); updateProfile("quickShotYield", parsed.yield); changed.push("yield"); }
+  if (parsed.time) {
+    if (updateProfile) { updateProfile("houseShotTime", parsed.time); updateProfile("quickShotTime", parsed.time); }
+    if (updateOccasion) updateOccasion("currentShotTime", parsed.time);
+    changed.push("shot time");
+  }
+  if (parsed.grind && updateProfile) { updateProfile("grinderSetting", parsed.grind); updateProfile("quickShotGrind", parsed.grind); changed.push("grind"); }
+  if (parsed.liked && updateProfile) { updateProfile("quickShotLiked", parsed.liked); changed.push("preference"); }
+  if (parsed.serve && updateProfile) { updateProfile("quickShotServeAgain", parsed.serve); changed.push("serve again"); }
+  if (parsed.likedNotes && updateProfile) { updateProfile("quickShotLikedNotes", parsed.likedNotes); changed.push("taste notes"); }
+  if (parsed.change && updateProfile) { updateProfile("quickShotChange", parsed.change); changed.push("next adjustment"); }
+  if ((lower.includes("guest") || lower.includes("served") || lower.includes("liked it") || lower.includes("loved it")) && setGuestResonance) {
+    setGuestResonance((prev) => ({ ...prev, reaction: lower.includes("loved") || lower.includes("delighted") ? "delighted" : (prev.reaction || "curious"), guestQuote: text || prev.guestQuote, wouldServeAgain: parsed.serve || prev.wouldServeAgain || "yes" }));
+    changed.push("Guest Resonance");
+  }
+  if ((lower.includes("sweet") || lower.includes("bitter") || lower.includes("sour") || lower.includes("smooth") || lower.includes("body") || lower.includes("thin") || lower.includes("bright")) && setTastingNote) {
+    setTastingNote(text);
+    changed.push("tasting note");
+  }
+  if (recordTelemetry && changed.length) recordTelemetry("voice_to_field_applied", { fields: changed, transcriptLength: String(text || "").length });
+  return changed;
+}
+
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }
 
 function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot, setupMissing, requireSetupThen }) {
@@ -4378,7 +4471,7 @@ function OccasionSetup({ occasion, updateOccasion, setActive, loadClearFastShot,
 }
 
 function Simulator(props) {
-  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports } = props;
+  const { recording, startRecording, stopRecording, audioUrl, transcript, setTranscript, generateAdvisorResponse, respondBusy, synthesis, matrixMatch, advisorText, setAdvisorText, advisorVoice, setAdvisorVoice, generateAdvisorVoice, advisorBusy, advisorAudioUrl, advisorAudioRef, stopAdvisorVoice, beginCorrection, correctionMode, createReport, applyTranscriptToForms, uploadAsset, setUploadAsset, handleAdvisorUpload, sensoryScores, guestResonance, profile, occasion, reports } = props;
   const liveSessionReport = buildLiveSessionReport({ profile, occasion, sensoryScores, guestResonance, transcript, advisorText, matrixMatch });
   return <>
     <section className="card">
@@ -4392,6 +4485,7 @@ function Simulator(props) {
       {audioUrl ? <><h3>Captured Audio Playback</h3><audio controls src={audioUrl} /></> : null}
       <label className="label">Artisan transcript / comment</label>
       <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder="Speak or type what happened. Corrections are appended here." />
+      <div className="buttonRow"><button className="secondary green" type="button" onClick={applyTranscriptToForms}>Apply Voice Note to Form Fields</button></div>
       <div className="uploadPanel">
         <h3>Upload Photo/Video for Advisor Analysis</h3>
         <p className="small">Restore photo/video context for puck, basket, espresso flow, milk texture, latte art, machine screen, or cup result. The Advisor uses this with the form and voice notes.</p>
@@ -4416,11 +4510,11 @@ function Simulator(props) {
       <select value={advisorVoice} onChange={(e) => setAdvisorVoice(e.target.value)}><option value="alloy">Alloy — balanced and clear</option><option value="verse">Verse — expressive and warm</option><option value="sage">Sage — calm and composed</option><option value="coral">Coral — bright and friendly</option><option value="ash">Ash — steady and grounded</option></select>
       <div className="buttonRow">
         <button className="primary" onClick={generateAdvisorVoice} disabled={advisorBusy || !advisorText}>{advisorBusy ? "Generating…" : "Generate Advisor Voice"}</button>
-        <button className="secondary" onClick={stopAdvisorVoice} disabled={!advisorAudioUrl}>Stop Advisor</button>
+        <button className="secondary" onClick={stopAdvisorVoice} disabled={!advisorAudioUrl && !advisorText}>Stop Advisor</button>
         <button className="secondary green" onClick={beginCorrection} disabled={!advisorText || advisorText === advisorStarterText}>Correct / Add Detail</button>
         <button className="secondary" onClick={createReport} disabled={!advisorText || advisorText === advisorStarterText}>Create Doma Report</button>
       </div>
-      {advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio ref={advisorAudioRef} controls autoPlay src={advisorAudioUrl} /></> : null}
+      {advisorAudioUrl === "__local_voice__" ? <div className="successBox"><strong>Fast Advisor Voice:</strong> Speaking through the browser now. Use Stop Advisor to interrupt.</div> : (advisorAudioUrl ? <><h3>Advisor Audio Playback</h3><audio ref={advisorAudioRef} controls autoPlay src={advisorAudioUrl} /></> : null)}
     </section>
     <section className="card">
       <h2>Live Session Report Preview</h2>
@@ -4443,6 +4537,7 @@ function Reports({ reports, clearReports, setActive, printReport, exportReportsC
 
     <TelemetryPanel summary={buildTelemetrySummary(telemetryEvents || [])} events={telemetryEvents || []} compact />
     <CertificationProgressReport reports={reports} telemetryEvents={telemetryEvents || []} setActive={setActive} />
+    <section className="card"><h2>How certification is completed</h2><p className="small">Production rule: an Occasion patch unlocks after the artisan completes every step in the walkthrough, captures taste/preference, records Guest Resonance, and creates a Doma Report. For this founder prototype, use <strong>Record Completion Evidence</strong> on any locked patch so we can test the pathway, progress bars, reports, and certificate unlock behavior end to end.</p></section>
 
     {!latest ? <div className="successBox"><strong>Sample reports available.</strong><br/>Click “Load Sample Reports” to show synthetic Doma Reports with scores, charts, Dial-In Readiness, Guest Resonance, trend plots, and print/export examples.</div> : null}
 
@@ -4755,10 +4850,9 @@ function Matrix({ setActive, setTranscript, updateOccasion, recordTelemetry }) {
   async function readText(text) {
     setReadBusy(true); setReadAudioUrl("");
     try {
-      const response = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, voice: "sage" }) });
-      if (!response.ok) throw new Error("Read aloud failed.");
-      const blob = await response.blob();
-      setReadAudioUrl(URL.createObjectURL(blob));
+      const started = speakFastLocal(text, { rate: 1.02 });
+      if (!started) throw new Error("This browser did not expose local speech synthesis.");
+      setReadAudioUrl("__local_voice__");
     } catch (err) { alert(err.message || String(err)); }
     finally { setReadBusy(false); }
   }
@@ -4778,8 +4872,8 @@ function Matrix({ setActive, setTranscript, updateOccasion, recordTelemetry }) {
       <div className="buttonRow"><button className="secondary green" disabled={!bestMatch} onClick={() => bestMatch && useIssue(bestMatch.item)}>Use best match in Advisor Session</button><button className="secondary" disabled={!query.trim()} onClick={useTypedIssue}>Use typed description</button><button className="secondary" onClick={() => setQuery("")}>Clear Search</button></div>
       <p className="small"><strong>{filtered.length}</strong> issues shown. Natural-language matching is active; the browse list remains below for discovery.</p></section>
     <div className="recoveryGrid">{filtered.map((item) => <article className="recoveryCard" key={`${item.category}-${item.issue}`}><h3>{item.issue}</h3><p><strong>Likely cause:</strong> {item.likelyCause}</p><p><strong>Advisor:</strong> {item.advisor}</p><div className="recoveryActions"><button className="primary" onClick={() => setSelectedIssue(item)}>Solution / Fix Steps</button></div></article>)}</div>
-    {readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null}
-    {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><p><strong>One next move:</strong> {selectedIssue.oneNextMove}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary" onClick={() => readText(recoveryText(selectedIssue))} disabled={readBusy}>Read quick recovery</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null}</div></div> : null}
+    {readAudioUrl === "__local_voice__" ? <section className="card"><h3>Fast Recovery Read-Aloud</h3><p className="small">Speaking through the browser now.</p></section> : (readAudioUrl ? <section className="card"><h3>Advisor Read-Aloud Playback</h3><audio controls autoPlay src={readAudioUrl} /></section> : null)}
+    {selectedIssue ? <div className="modalBackdrop" role="dialog" aria-modal="true"><div className="recoveryModal"><button className="modalClose" onClick={() => setSelectedIssue(null)}>Close</button><p className="eyebrow">Moment Recovery Engine</p><h2>{selectedIssue.issue}</h2><p><strong>Likely cause:</strong> {selectedIssue.likelyCause}</p><p><strong>Advisor:</strong> {selectedIssue.advisor}</p><p><strong>One next move:</strong> {selectedIssue.oneNextMove}</p><hr /><h2>Solution steps to follow</h2><ol>{selectedIssue.solutionSteps.map((step, idx) => <li key={idx}>{step}</li>)}</ol><div className="buttonRow"><button className="primary" onClick={() => readText(fixText(selectedIssue))} disabled={readBusy}>{readBusy ? "Reading…" : "Read solution"}</button><button className="secondary" onClick={() => readText(recoveryText(selectedIssue))} disabled={readBusy}>Read quick recovery</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Use in Advisor Session</button><button className="secondary green" onClick={() => useIssue(selectedIssue)}>Log this in Doma Report</button></div>{readAudioUrl === "__local_voice__" ? <div className="successBox">Fast read-aloud is speaking now.</div> : (readAudioUrl ? <audio controls autoPlay src={readAudioUrl} /> : null)}</div></div> : null}
   </section>;
 }
 
