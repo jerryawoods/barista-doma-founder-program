@@ -1,18 +1,13 @@
-# Barista Doma Home Barista Development Platform v8.9.9
+# Barista Doma Home Barista Development Platform v8.9.10
 
-Advisor closed-loop restoration.
+Advisor listen-loop stabilization patch.
 
-This package preserves v8.9.8 and restores the prescribed Occasion-step Advisor workflow:
+This version keeps the v8.9.9 closed-loop Advisor workflow and corrects the step-aware Advisor behavior so the Advisor prompt is not repeatedly captured as artisan speech.
 
-1. Advisor is summoned inside the active Occasion step.
-2. Advisor asks what is needed and listens.
-3. Spoken content is written to the visible corresponding place.
-4. The app shows where the content was written.
-5. Advisor repeats back the capture.
-6. Advisor gives contextual guidance.
-7. Guidance is saved into the in-step report review and marked for the Doma Report.
-8. Advisor asks whether anything else is needed.
-9. Artisan can review/check off the capture.
-10. Artisan can move to the next step, repeat the step, ask again, or view the report.
-
-Also includes a more robust browser speech stop/cancel path for Advisor voice.
+## Fixes
+- The step-aware Advisor now pauses recognition while it speaks.
+- After saying “Advisor,” it says the prompt, then resumes listening for the artisan response.
+- It ignores likely Advisor echo/playback such as “I’m here,” “what can I help with,” and repeated wake-word loops.
+- It throttles repeated wake-word detections so it does not keep saying “I’m here.”
+- Stop Step Advisor now also stops voice output and prevents automatic restart.
+- Preserves the v8.9.9 closed-loop capture routing, visible ledger, report inclusion, and next-step/repeat-step workflow.

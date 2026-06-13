@@ -4529,6 +4529,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepVoiceEnabled, setStepVoiceEnabled] = useState(true);
   const [stepVoicePaused, setStepVoicePaused] = useState(false);
   const stepRecognitionRef = useRef(null);
+  const stepAdvisorEnabledRef = useRef(false);
+  const stepAdvisorAwaitingInputRef = useRef(false);
+  const stepAdvisorSuppressUntilRef = useRef(0);
+  const stepAdvisorLastWakeAtRef = useRef(0);
 
   function buildStepCaptureRouting(artisanText, changed = []) {
     const lower = String(artisanText || "").toLowerCase();
@@ -4542,12 +4546,38 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return routes;
   }
 
-  function speakStepAdvisor(text) {
+  function restartStepAdvisorListening(delayMs = 450) {
+    if (!stepAdvisorEnabledRef.current || !stepRecognitionRef.current) return;
+    setTimeout(() => {
+      if (!stepAdvisorEnabledRef.current || !stepRecognitionRef.current) return;
+      try {
+        stepAdvisorSuppressUntilRef.current = Date.now() + 350;
+        stepRecognitionRef.current.start();
+        setStepAdvisorListening(true);
+        setStatus?.("Occasion-aware Advisor is waiting for the artisan response inside this step.");
+      } catch {}
+    }, delayMs);
+  }
+
+  function speakStepAdvisor(text, { resumeListening = true } = {}) {
     setStepAdvisorReply(text);
     if (setAdvisorText) setAdvisorText(text);
-    if (!stepVoiceEnabled) return;
+    try { stepRecognitionRef.current?.stop?.(); } catch {}
+    setStepAdvisorListening(false);
+    stepAdvisorSuppressUntilRef.current = Date.now() + 900;
+    if (!stepVoiceEnabled) {
+      if (resumeListening) restartStepAdvisorListening(600);
+      return;
+    }
     setStepVoicePaused(false);
-    speakFastLocal(text, { rate: 0.96 });
+    const started = speakFastLocal(text, {
+      rate: 0.96,
+      onEnd: () => {
+        stepAdvisorSuppressUntilRef.current = Date.now() + 600;
+        if (resumeListening) restartStepAdvisorListening(650);
+      }
+    });
+    if (!started && resumeListening) restartStepAdvisorListening(600);
   }
 
   function pauseStepAdvisorVoice() {
@@ -4561,24 +4591,54 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   function stopStepAdvisorVoice() {
     stopFastLocalSpeech();
     setStepVoicePaused(false);
+    stepAdvisorSuppressUntilRef.current = Date.now() + 900;
+  }
+
+  function isLikelyAdvisorEcho(text) {
+    const lower = String(text || "").toLowerCase().replace(/[.,!?;:]/g, " ").replace(/\s+/g, " ").trim();
+    if (!lower) return true;
+    const echoPhrases = [
+      "i'm here", "im here", "what can i help with", "you are in", "speak slowly",
+      "i will record", "i wrote this", "where this was written", "do you want to add anything else",
+      "move to next step", "repeat this step", "advisor guidance", "doma report", "i captured"
+    ];
+    const onlyWakeOrEcho = lower.replace(/advisor/g, "").replace(/i'm here/g, "").replace(/im here/g, "").replace(/what can i help with/g, "").trim();
+    if (!onlyWakeOrEcho) return true;
+    return echoPhrases.some((phrase) => lower === phrase || lower.startsWith(`${phrase} `));
   }
 
   function handleStepAdvisorText(rawText) {
     const raw = String(rawText || "").trim();
     if (!raw) return;
+    if (Date.now() < stepAdvisorSuppressUntilRef.current) {
+      setStatus?.("Advisor ignored its own voice and is waiting for the artisan.");
+      return;
+    }
+    if (isLikelyAdvisorEcho(raw)) {
+      setStatus?.("Advisor heard playback/echo and ignored it. It is still waiting for the artisan response.");
+      return;
+    }
     const hasWake = /\badvisor\b/i.test(raw);
     let artisanText = raw;
     if (hasWake) {
+      const now = Date.now();
+      if (now - stepAdvisorLastWakeAtRef.current < 2500) {
+        setStatus?.("Advisor wake word already acknowledged. Waiting for the artisan response.");
+        return;
+      }
+      stepAdvisorLastWakeAtRef.current = now;
       artisanText = raw.replace(/^.*?\badvisor\b[,.!?:;\s-]*/i, "").trim();
       const intro = `I'm here. You are in ${occasionItem.name}, Step ${safeIndex + 1} of ${steps.length}: ${current?.title}. What can I help with?`;
       setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: Advisor`);
       recordTelemetry?.("occasion_step_advisor_wake", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
-      if (!artisanText) {
-        speakStepAdvisor(intro);
+      stepAdvisorAwaitingInputRef.current = true;
+      if (!artisanText || isLikelyAdvisorEcho(artisanText)) {
+        speakStepAdvisor(intro, { resumeListening: true });
         return;
       }
       setStepAdvisorReply(intro);
     }
+    stepAdvisorAwaitingInputRef.current = false;
     setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${artisanText}`);
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Occasion Step Advisor (${occasionItem.name}, Step ${safeIndex + 1}): ${artisanText}`);
     const changed = applyVoiceTextToFields(artisanText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
@@ -4636,6 +4696,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       recognition.interimResults = false;
       recognition.lang = "en-US";
       recognition.onstart = () => {
+        stepAdvisorEnabledRef.current = true;
         setStepAdvisorEnabled(true);
         setStepAdvisorListening(true);
         setStatus?.("Occasion-aware Advisor is listening inside this step. Say ‘Advisor’. ");
@@ -4647,7 +4708,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         }
       };
       recognition.onerror = (event) => setStatus?.(`Occasion-aware Advisor recognition issue: ${event?.error || "unknown"}`);
-      recognition.onend = () => setStepAdvisorListening(false);
+      recognition.onend = () => {
+        setStepAdvisorListening(false);
+        if (stepAdvisorEnabledRef.current && Date.now() >= stepAdvisorSuppressUntilRef.current) {
+          restartStepAdvisorListening(500);
+        }
+      };
       stepRecognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
@@ -4656,7 +4722,11 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
   function stopStepAdvisor() {
+    stepAdvisorEnabledRef.current = false;
+    stepAdvisorAwaitingInputRef.current = false;
+    stepAdvisorSuppressUntilRef.current = Date.now() + 1200;
     try { stepRecognitionRef.current?.stop?.(); } catch {}
+    stopFastLocalSpeech();
     setStepAdvisorEnabled(false);
     setStepAdvisorListening(false);
     setStatus?.("Occasion-aware Advisor stopped for this step.");
