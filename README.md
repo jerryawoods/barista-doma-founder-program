@@ -1,22 +1,18 @@
-# Barista Doma Home Barista Development Platform v8.9.8
+# Barista Doma Home Barista Development Platform v8.9.9
 
-Step Capture + Report Routing refinement.
+Advisor closed-loop restoration.
 
-This package builds on v8.9.7 and clarifies the Occasion-aware Advisor sequence inside the active Occasion step.
+This package preserves v8.9.8 and restores the prescribed Occasion-step Advisor workflow:
 
-## Added in v8.9.8
+1. Advisor is summoned inside the active Occasion step.
+2. Advisor asks what is needed and listens.
+3. Spoken content is written to the visible corresponding place.
+4. The app shows where the content was written.
+5. Advisor repeats back the capture.
+6. Advisor gives contextual guidance.
+7. Guidance is saved into the in-step report review and marked for the Doma Report.
+8. Advisor asks whether anything else is needed.
+9. Artisan can review/check off the capture.
+10. Artisan can move to the next step, repeat the step, ask again, or view the report.
 
-- Advisor now tells the artisan exactly where spoken information was written.
-- New visible **Where this was written** confirmation inside each active step.
-- New **Visible Capture Ledger for this Step** showing the transcript, written destinations, fields updated, and report routing.
-- Spoken shot specs are routed to Step Telemetry / Shot Pull fields.
-- Taste comments are routed to Taste Notes and Doma Report context.
-- Problem language such as runny, watery, thin, bitter, sour, choking, or no flow is routed to Recovery / Issue Notes.
-- Guest reaction language is routed to Guest Resonance.
-- Advisor repeat-back now says whether the capture will be included in the Doma Report and tells the artisan to click Create / View Session Report if they want to review it.
-- Added direct buttons from the step Advisor panel to Create / View Session Report, Tasting Studio, and Recovery Notes.
-- Preserved all v8.9.7 functionality: 21 Occasions, Occasion-aware Advisor, voice controls, dual certification pathways, Development Telemetry, reports/graphs, Recovery Library, Tasting Studio, Quick Capture, and mobile navigation.
-
-## Suggested commit message
-
-Deploy v8.9.8 step capture report routing
+Also includes a more robust browser speech stop/cancel path for Advisor voice.

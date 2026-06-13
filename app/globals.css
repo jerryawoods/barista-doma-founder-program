@@ -306,3 +306,15 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .patch.earned.sensory { background:radial-gradient(circle at 50% 0%, rgba(148,214,255,.28), transparent 55%), #121727; border-color:#94d6ff; }
 .patch.earned.sensory .patchMedal { background:linear-gradient(135deg, #94d6ff, #b995ff); color:#111827; border-color:#def3ff; }
 @media(max-width:780px){ .dualProgress { grid-template-columns:1fr; } }
+
+
+/* v8.9.9 Advisor closed-loop restoration */
+.stepReportReview { margin: 14px 0; padding: 16px; border: 1px solid rgba(88,201,139,.38); border-radius: 18px; background: rgba(15,60,38,.20); }
+.stepReportReview h4 { margin: 0 0 10px; color: #8df0b7; }
+.reviewGrid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin: 12px 0; }
+.reviewGrid > div { border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px; background:rgba(0,0,0,.15); }
+.reviewGrid strong { color:#f0c987; display:block; margin-bottom:5px; }
+.reviewGrid p { margin:0; color:#fff7ec; }
+.checkLine { display:flex; gap:10px; align-items:flex-start; margin:12px 0; padding:12px; border-radius:14px; background:rgba(240,201,135,.12); border:1px solid rgba(240,201,135,.28); color:#fff7ec; font-weight:800; }
+.checkLine input { margin-top:3px; min-width:18px; min-height:18px; }
+@media(max-width:760px){ .reviewGrid { grid-template-columns:1fr; } }

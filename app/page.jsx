@@ -4524,6 +4524,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepAdvisorFields, setStepAdvisorFields] = useState([]);
   const [stepPlacementNotice, setStepPlacementNotice] = useState("No Advisor capture has been routed yet for this step.");
   const [stepCaptureLedger, setStepCaptureLedger] = useState([]);
+  const [stepReview, setStepReview] = useState(null);
+  const [stepReviewConfirmed, setStepReviewConfirmed] = useState(false);
   const [stepVoiceEnabled, setStepVoiceEnabled] = useState(true);
   const [stepVoicePaused, setStepVoicePaused] = useState(false);
   const stepRecognitionRef = useRef(null);
@@ -4592,9 +4594,29 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       stepTitle: current?.title || "Current step",
       transcript: artisanText,
       fields: changed,
-      routes: routing
+      routes: routing,
+      advisorGuidance: "Pending generation — see Advisor Guidance for This Step below."
     }, ...prev].slice(0, 8));
     const reply = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing });
+    const review = {
+      at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      transcript: artisanText,
+      fields: changed,
+      routes: routing,
+      writtenTo: routingLabels.join(" + "),
+      advisorGuidance: reply,
+      reportStatus: "This capture and Advisor guidance are marked for the Doma Report for this Occasion step.",
+      nextPrompt: "Do you want to add anything else, repeat this step, or move to the next step?"
+    };
+    setStepReview(review);
+    setStepReviewConfirmed(false);
+    setStepCaptureLedger((prev) => prev.map((entry, idx) => idx === 0 ? { ...entry, advisorGuidance: reply } : entry));
+    if (setTranscript) setTranscript((prev) => `${prev ? `${prev}
+` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${reply}`);
+    if (setAdvisorText) setAdvisorText(reply);
     if (setMatrixMatch && /runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled/i.test(artisanText)) {
       setMatrixMatch({ issue: "Occasion step issue", label: "Contextual step recovery", category: "Occasion-aware Advisor", severity: "live", suggestedFix: reply });
     }
@@ -4685,6 +4707,26 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         <textarea value={stepAdvisorTranscript} onChange={(e) => setStepAdvisorTranscript(e.target.value)} placeholder="Voice notes captured inside this Occasion step appear here immediately." />
         <div className="successBox"><strong>Where this was written:</strong><p>{stepPlacementNotice}</p>{stepAdvisorFields?.length ? <small>Structured fields updated: {stepAdvisorFields.join(", ")}</small> : <small>If this was not structured shot data, it is still visible below as a Step Note and report context.</small>}</div>
         <div className="noteBox"><strong>Advisor repeat-back / guidance:</strong><p>{stepAdvisorReply}</p></div>
+        <div className="stepReportReview">
+          <h4>In-Step Report Review</h4>
+          {stepReview ? <>
+            <div className="reviewGrid">
+              <div><strong>Artisan said</strong><p>{stepReview.transcript}</p></div>
+              <div><strong>Written to</strong><p>{stepReview.writtenTo || "Step Notes"}</p></div>
+              <div><strong>Report status</strong><p>{stepReview.reportStatus}</p></div>
+              <div><strong>Advisor asks</strong><p>{stepReview.nextPrompt}</p></div>
+            </div>
+            <div className="noteBox"><strong>Advisor Guidance for This Step</strong><p>{stepReview.advisorGuidance}</p></div>
+            <label className="checkLine"><input type="checkbox" checked={stepReviewConfirmed} onChange={(e) => setStepReviewConfirmed(e.target.checked)} /> I reviewed this capture. It is written to the right place and should be included in the Doma Report.</label>
+            <div className="buttonRow">
+              <button className="secondary" type="button" onClick={() => { setStepAdvisorTranscript((prev) => `${prev ? `${prev}
+` : ""}Artisan chose to add more before closing this step.`); setStepReviewConfirmed(false); }}>Add More / Ask Advisor Again</button>
+              <button className="secondary" type="button" onClick={() => { startStep(); setStepReviewConfirmed(false); setStatus?.("Repeating the current Occasion step. Advisor capture remains in the ledger."); }}>Repeat This Step</button>
+              <button className="primary" type="button" disabled={!stepReviewConfirmed} onClick={completeStep}>{safeIndex >= steps.length - 1 ? "Confirm + Complete Occasion" : "Confirm + Move to Next Step"}</button>
+              <button className="secondary" type="button" onClick={() => { createReport?.(); setActive("reports"); }}>View Doma Report</button>
+            </div>
+          </> : <p className="small">After the Advisor captures something, this area will show exactly what was written, where it was written, the guidance saved to the report, and the next step choices.</p>}
+        </div>
         <div className="captureLedger">
           <h4>Visible Capture Ledger for this Step</h4>
           {stepCaptureLedger.length ? stepCaptureLedger.map((entry) => <div className="captureItem" key={entry.id}>
@@ -4692,6 +4734,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
             <p><strong>Artisan said:</strong> {entry.transcript}</p>
             <p><strong>Written to:</strong> {entry.routes.map((r) => r.label).join(" + ")}</p>
             {entry.fields?.length ? <p><strong>Fields updated:</strong> {entry.fields.join(", ")}</p> : <p><strong>Fields updated:</strong> Step note / contextual report note</p>}
+            <p><strong>Advisor guidance saved:</strong> {entry.advisorGuidance}</p>
             <ul>{entry.routes.map((r) => <li key={r.label}><strong>{r.label}:</strong> {r.detail}</li>)}</ul>
           </div>) : <p className="small">Nothing has been captured for this step yet. Say “Advisor,” then speak your shot specs, taste note, guest reaction, or issue.</p>}
         </div>
@@ -4746,7 +4789,10 @@ function buildTimingMetrics(occasionItem, stepTimings, occasionStartTime) {
 function speakFastLocal(text, { rate = 1.02, pitch = 1, onEnd } = {}) {
   if (typeof window === "undefined" || !window.speechSynthesis || !text) return false;
   try {
-    window.speechSynthesis.cancel();
+    const speechId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    window.__baristaDomaSpeechId = speechId;
+    window.__baristaDomaSpeechStopped = false;
+    try { window.speechSynthesis.cancel(); } catch {}
     const utterance = new SpeechSynthesisUtterance(String(text));
     utterance.rate = rate;
     utterance.pitch = pitch;
@@ -4754,14 +4800,29 @@ function speakFastLocal(text, { rate = 1.02, pitch = 1, onEnd } = {}) {
     const voices = window.speechSynthesis.getVoices?.() || [];
     const preferred = voices.find((v) => /Samantha|Google US English|Microsoft.*Jenny|Alex|Natural/i.test(v.name)) || voices.find((v) => /en-US|English/i.test(v.lang));
     if (preferred) utterance.voice = preferred;
-    utterance.onend = () => { if (typeof onEnd === "function") onEnd(); };
+    window.__baristaDomaCurrentUtterance = utterance;
+    utterance.onend = () => {
+      if (window.__baristaDomaSpeechId === speechId) window.__baristaDomaCurrentUtterance = null;
+      if (!window.__baristaDomaSpeechStopped && typeof onEnd === "function") onEnd();
+    };
+    utterance.onerror = () => {
+      if (window.__baristaDomaSpeechId === speechId) window.__baristaDomaCurrentUtterance = null;
+    };
     window.speechSynthesis.speak(utterance);
     return true;
   } catch { return false; }
 }
 
 function stopFastLocalSpeech() {
-  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch {}
+  try {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.__baristaDomaSpeechStopped = true;
+      window.__baristaDomaCurrentUtterance = null;
+      window.speechSynthesis.cancel();
+      setTimeout(() => { try { window.speechSynthesis.cancel(); } catch {} }, 30);
+      setTimeout(() => { try { window.speechSynthesis.cancel(); } catch {} }, 120);
+    }
+  } catch {}
 }
 
 function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry } = {}) {
@@ -4826,7 +4887,7 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
     guidance = `I captured your note for ${occasionName}, Step ${stepNumber}: ${stepTitle}. If this was shot data, taste feedback, Guest Resonance, or a recovery issue, I will keep it with this step so it can feed the Doma Report.`;
   }
 
-  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields} ${guidance} If you want to review it now, click Create / View Session Report, or stay here and continue the step. Try this, taste it, and tell me whether it is acceptable to your taste now.`;
+  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields} ${guidance} I also wrote this guidance into Advisor Guidance for This Step, and it is marked for the Doma Report. Do you want to add anything else before we move on? If it looks right, confirm the In-Step Report Review, then choose Move to Next Step or Repeat This Step.`;
 }
 
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }
