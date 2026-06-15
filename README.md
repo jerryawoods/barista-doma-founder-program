@@ -1,16 +1,25 @@
-# Barista Doma Home Barista Development Platform v8.9.14
+# Barista Doma / Home Barista IQ — v8.9.17 Universal ICY Occasion-Step Restoration
 
-Step Advisor capture-and-quiet stabilization.
+Focused patch after v8.9.16.
 
-Restores the intended Occasion-step Advisor sequence:
+Purpose:
+- Preserve the wake-word wait fix.
+- Make ICY clearly universal across any of the 21 Occasions and any active step.
+- Avoid hard-wired demo behavior.
+- Restore the expectation that the artisan can speak naturally after ICY wakes.
 
-1. Artisan enables Step Advisor inside an Occasion step.
-2. Artisan says “Advisor.”
-3. Advisor asks what is needed and waits.
-4. Artisan speaks shot specs, taste, recovery, or notes.
-5. App immediately writes detected information into visible fields/report context.
-6. Advisor repeats back what was captured and where it was written.
-7. Advisor stops talking and returns to wake-word mode.
-8. Visual review still shows guidance/report routing and Move Next / Repeat Step controls.
+Key behavior:
+1. Open any Occasion.
+2. Move to any step.
+3. Enable ICY / No-Hands Guidance.
+4. Say “Hey ICY” or “Advisor.”
+5. ICY says: “I’m here. What are we working on?”
+6. Nothing is written from the wake word alone.
+7. Speak naturally: shot data, taste feedback, puck behavior, guest reaction, uncertainty, stagecraft, or recovery issue.
+8. ICY uses the active Occasion, active step, machine profile, house formula, and form context.
+9. ICY writes to the visible place, repeats back, and marks the capture/guidance for the Doma Report.
 
-This is a restoration/stabilization pass on top of v8.9.13, preserving mobile stabilization, 21 Occasions, Development Telemetry, dual certifications, reports, upload, and Advisor routes.
+Test across:
+- The Friend Who Needs a Lift — Step 1: “I want this cup to feel warm and encouraging.”
+- The First Cup Diagnostic — puck/shot step: “The puck looks messy and the shot tastes a little thin.”
+- First Sip Flex — cold/modern Occasion: “I want this to feel refreshing, not too sweet.”

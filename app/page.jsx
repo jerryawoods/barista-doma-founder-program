@@ -3378,7 +3378,7 @@ export default function Home() {
   const handsFreeTimerRef = useRef(null);
   const [handsFreeEnabled, setHandsFreeEnabled] = useState(false);
   const [handsFreeCaptureActive, setHandsFreeCaptureActive] = useState(false);
-  const [handsFreeStatus, setHandsFreeStatus] = useState("Hands-free Advisor is off. Enable it, then say ‘Advisor’ when your hands are wet or occupied.");
+  const [handsFreeStatus, setHandsFreeStatus] = useState("ICY is off. Enable it inside any Occasion step, then say ‘Hey ICY’ or ‘Advisor’ when your hands are wet or occupied.");
 
   useEffect(() => {
     try {
@@ -3604,7 +3604,7 @@ Correction / added detail: ${newText}`.trim() : newText;
     if (!finalText) {
       handsFreeCaptureRef.current = false;
       setHandsFreeCaptureActive(false);
-      setHandsFreeStatus("Advisor is listening for the next hands-free note. Say ‘Advisor’ again when you need me.");
+      setHandsFreeStatus("ICY is listening for the next hands-free note. Say ‘Hey ICY’ or ‘Advisor’ again when you need me.");
       return;
     }
     const changedFields = applyVoiceTextToFields(finalText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
@@ -3637,7 +3637,7 @@ Correction / added detail: ${newText}`.trim() : newText;
       return;
     }
     if (!handsFreeCaptureRef.current) {
-      setHandsFreeStatus("Listening for wake word: say ‘Advisor’ when you need hands-free capture.");
+      setHandsFreeStatus("Listening for wake word: say ‘Hey ICY’ or ‘Advisor’ when you need hands-free capture.");
       return;
     }
     const newBuffer = `${handsFreeBufferRef.current} ${text}`.trim();
@@ -3664,7 +3664,7 @@ Correction / added detail: ${newText}`.trim() : newText;
       recognition.onstart = () => {
         setHandsFreeEnabled(true);
         handsFreeEnabledRef.current = true;
-        setHandsFreeStatus("Hands-free Advisor is listening. Say ‘Advisor’ when your hands are wet or occupied.");
+        setHandsFreeStatus("ICY is listening. Say ‘Hey ICY’ or ‘Advisor’ when your hands are wet or occupied.");
         setStatus("Hands-free Advisor enabled.");
         log("Hands-free Advisor listening enabled.");
         recordTelemetry("hands_free_advisor_enabled", { mode: "wake_word" });
@@ -4668,14 +4668,25 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
   function detectIcyWake(text) {
-    const raw = String(text || "");
-    const lower = raw.toLowerCase();
-    // Accept the new product wake word plus the older Advisor wake word.
-    // Mobile speech can hear "ICY" as "icey", "I C", or sometimes "I see".
-    const match = lower.match(/\b(hey\s+)?(icy|icey|i\s*c|advisor)\b/);
-    if (!match) return { hasWake: false, afterWake: raw };
-    const afterWake = raw.slice((match.index || 0) + match[0].length).replace(/^[,.!?:;\s-]+/, "").trim();
-    return { hasWake: true, wakeWord: match[2], afterWake };
+    const raw = String(text || "").trim();
+    const lower = raw.toLowerCase().replace(/[.,!?;:]/g, " ").replace(/\s+/g, " ").trim();
+
+    // Accept ICY plus the older Advisor wake word. Mobile speech may hear ICY as "icey",
+    // "I C", "I see", "ice", or "icy". Wake-only speech must NEVER be treated as a note.
+    const wakePattern = /\b(hey\s+)?(icy|icey|ice|i\s*c|i\s*see|advisor)\b/i;
+    const match = lower.match(wakePattern);
+    if (!match) return { hasWake: false, wakeWord: "", afterWake: raw, wakeOnly: false };
+
+    const wakeWord = match[2] || "icy";
+    const afterOriginal = raw.slice((match.index || 0) + match[0].length).replace(/^[,.!?:;\s-]+/, "").trim();
+    const afterClean = afterOriginal
+      .replace(/\b(hey\s+)?(icy|icey|ice|i\s*c|i\s*see|advisor)\b/ig, "")
+      .replace(/\b(please|okay|ok|hello|hi|there|um|uh|er|or)\b/ig, "")
+      .replace(/[.,!?;:\s-]+/g, " ")
+      .trim();
+
+    const wakeOnly = !afterClean || afterClean.length < 4;
+    return { hasWake: true, wakeWord, afterWake: wakeOnly ? "" : afterOriginal, wakeOnly };
   }
 
   function buildStepAdvisorContext(artisanText) {
@@ -4740,7 +4751,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           transcript: artisanText,
           context: contextPayload,
           mode: "occasion_step_advisor",
-          instructions: "Respond as the Occasion-aware Barista Doma Advisor. Use natural language interpretation, not a narrow keyword script. Route the artisan's note to visible fields/report, give contextual guidance, and ask whether to add more, repeat, view report, or move next."
+          instructions: "Respond as ICY, the Occasion-aware Intelligent Companion inside Home Barista IQ. Use natural language interpretation, not a narrow keyword script. You are active inside the current Occasion and current step. Route the artisan\'s note to visible fields/report, give contextual guidance from the machine/profile/house formula/current step context, and ask whether to add more, repeat, view report, or move next."
         })
       });
       const data = await response.json().catch(() => ({}));
@@ -4757,48 +4768,70 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   async function handleStepAdvisorText(rawText) {
     const raw = String(rawText || "").trim();
     if (!raw) return;
-    if (Date.now() < stepAdvisorSuppressUntilRef.current) {
-      setStatus?.("Advisor ignored its own voice and is waiting for the artisan.");
-      return;
-    }
-    if (isLikelyAdvisorEcho(raw)) {
-      setStatus?.("Advisor heard playback/echo and ignored it. It is still waiting for the artisan response.");
-      return;
-    }
+
+    // First identify wake words before echo filtering. "Hey ICY" alone is a command,
+    // not an artisan note, and must never create guidance or write report content.
     const wake = detectIcyWake(raw);
     const hasWake = wake.hasWake;
     let artisanText = raw;
+
+    if (Date.now() < stepAdvisorSuppressUntilRef.current && !hasWake) {
+      setStatus?.("ICY ignored its own voice and is waiting for the artisan.");
+      return;
+    }
+
+    if (hasWake) {
+      const now = Date.now();
+      const intro = `I'm here. What are we working on?`;
+
+      // If the transcript is only the wake phrase, do ONLY the wake response:
+      // no notes, no report write, no guidance generation.
+      if (wake.wakeOnly || !wake.afterWake || isLikelyAdvisorEcho(wake.afterWake)) {
+        stepAdvisorLastWakeAtRef.current = now;
+        stepAdvisorAwaitingInputRef.current = true;
+        setStepAdvisorReply(intro);
+        setStepPlacementNotice(`ICY is online for ${occasionItem.name}, Step ${safeIndex + 1}: ${current?.title}. Nothing has been written yet. Speak naturally now; captured details will appear here.`);
+        setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()} — waiting for artisan input`);
+        setStatus?.("ICY is online and waiting. Nothing has been written yet.");
+        recordTelemetry?.("occasion_step_advisor_wake", { companion: "ICY", wakeOnly: true, occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
+        speakStepAdvisor(intro, { resumeListening: true });
+        return;
+      }
+
+      if (now - stepAdvisorLastWakeAtRef.current < 900) {
+        setStatus?.("ICY already came online. It is waiting for the artisan response.");
+        return;
+      }
+
+      stepAdvisorLastWakeAtRef.current = now;
+      stepAdvisorAwaitingInputRef.current = true;
+      artisanText = wake.afterWake;
+      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()}`);
+      recordTelemetry?.("occasion_step_advisor_wake", { companion: "ICY", wakeOnly: false, occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
+      setStepAdvisorReply(intro);
+    }
+
     if (!hasWake && !stepAdvisorAwaitingInputRef.current) {
       setStatus?.("ICY heard background speech but is waiting for the wake word ‘Hey ICY’ or ‘Advisor’. Nothing was written.");
       return;
     }
-    if (hasWake) {
-      const now = Date.now();
-      if (now - stepAdvisorLastWakeAtRef.current < 1800) {
-        setStatus?.("ICY already came online. It is waiting for the artisan response.");
-        return;
-      }
-      stepAdvisorLastWakeAtRef.current = now;
-      artisanText = wake.afterWake;
-      const intro = `I'm here. What are we working on?`;
-      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()}`);
-      recordTelemetry?.("occasion_step_advisor_wake", { companion: "ICY", occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
-      stepAdvisorAwaitingInputRef.current = true;
-      if (!artisanText || isLikelyAdvisorEcho(artisanText)) {
-        setStepPlacementNotice(`ICY is online for ${occasionItem.name}, Step ${safeIndex + 1}: ${current?.title}. Speak naturally now; captured details will appear here.`);
-        speakStepAdvisor(intro, { resumeListening: true });
-        return;
-      }
-      setStepAdvisorReply(intro);
+
+    if (isLikelyAdvisorEcho(artisanText)) {
+      setStatus?.("ICY heard playback/echo and ignored it. It is still waiting for the artisan response.");
+      return;
     }
+
+    // At this point we have a real artisan note after ICY has been summoned.
     stepAdvisorAwaitingInputRef.current = false;
     setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${artisanText}`);
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Occasion Step Advisor (${occasionItem.name}, Step ${safeIndex + 1}): ${artisanText}`);
+
     const changed = applyVoiceTextToFields(artisanText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
     const routing = buildStepCaptureRouting(artisanText, changed);
     const routingLabels = routing.map((r) => r.label);
     setStepAdvisorFields(changed);
     setStepPlacementNotice(`Written to: ${routingLabels.join(" + ")}. You can verify it in this step panel now; it will be included in the Doma Report when you create the report.`);
+
     const entryId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setStepCaptureLedger((prev) => [{
       id: entryId,
@@ -4809,16 +4842,18 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       transcript: artisanText,
       fields: changed,
       routes: routing,
-      advisorGuidance: "Advisor is interpreting the full natural-language note with this step, form, House Formula, and Recovery Matrix context…"
+      advisorGuidance: "ICY is interpreting the full natural-language note with this step, form, House Formula, and Recovery Matrix context…"
     }, ...prev].slice(0, 8));
-    setStepAdvisorReply("Advisor is interpreting your full note with the current Occasion step, House Formula, and Recovery Matrix context…");
-    setStatus?.(`Step Advisor captured the note and wrote it to ${routingLabels.join(" + ")}. Generating contextual guidance…`);
-    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
+
+    setStepAdvisorReply("ICY is interpreting your full note with the current Occasion step, House Formula, and Recovery Matrix context…");
+    setStatus?.(`ICY captured the note and wrote it to ${routingLabels.join(" + ")}. Generating contextual guidance…`);
+    recordTelemetry?.("occasion_step_advisor_capture", { companion: "ICY", occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
 
     const needsGuidance = shouldAskAdvisorForGuidance(artisanText);
     const guidance = needsGuidance
       ? await getNaturalStepAdvisorReply(artisanText, changed, routing)
-      : `Capture-only note. The artisan's spoken information was written to ${routingLabels.join(" + ")}. No extra guidance was requested; preserve this as report context and keep the Advisor quiet until the artisan asks again.`;
+      : `Capture-only note. The artisan's spoken information was written to ${routingLabels.join(" + ")}. No extra guidance was requested; preserve this as report context and keep ICY quiet until the artisan asks again.`;
+
     const spokenConfirmation = buildStepSpokenConfirmation(artisanText, changed, routingLabels);
     const review = {
       at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
@@ -4830,18 +4865,19 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       routes: routing,
       writtenTo: routingLabels.join(" + "),
       advisorGuidance: guidance,
-      reportStatus: "This capture and any Advisor guidance are marked for the Doma Report for this Occasion step.",
+      reportStatus: "This capture and any ICY guidance are marked for the Doma Report for this Occasion step.",
       nextPrompt: "Review the captured form/report fields below. When it looks right, choose Add More, Repeat This Step, View Report, or Move to Next Step."
     };
+
     setStepReview(review);
     setStepReviewConfirmed(false);
     setStepCaptureLedger((prev) => prev.map((entry) => entry.id === entryId ? { ...entry, advisorGuidance: guidance } : entry));
-    if (setTranscript) setTranscript((prev) => `${prev ? `${prev}
-` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${guidance}`);
+    if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${guidance}`);
     if (setAdvisorText) setAdvisorText(guidance);
     if (setSynthesis) setSynthesis((prev) => prev || { detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "natural-language restoration" });
+
     setStepAdvisorReply(guidance);
-    setStatus?.(`Step Advisor filled the form/report fields, repeated back the capture, and returned to wake-word mode.`);
+    setStatus?.("ICY filled the form/report fields, repeated back the capture, and returned to wake-word mode.");
     stepAdvisorAwaitingInputRef.current = false;
     speakStepAdvisor(spokenConfirmation, { resumeListening: true, updateDisplay: false });
   }
@@ -4859,7 +4895,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         stepAdvisorEnabledRef.current = true;
         setStepAdvisorEnabled(true);
         setStepAdvisorListening(true);
-        setStatus?.("ICY is online inside this Occasion step. Say ‘Hey ICY’ or ‘Advisor’.");
+        setStatus?.(`ICY is online inside ${occasionItem.name}, Step ${safeIndex + 1}. Say ‘Hey ICY’ or ‘Advisor’.`);
         recordTelemetry?.("occasion_step_advisor_enabled", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
       };
       recognition.onresult = (event) => {
@@ -4916,12 +4952,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <section className="stepAdvisorPanel">
         <p className="eyebrow">ICY — Intelligent Companion for You</p>
-        <h3>Tap once, then say “Hey ICY” or “Advisor.”</h3>
-        <p className="small">ICY comes online inside this exact Occasion step and says, “I’m here. What are we working on?” Then it listens for the artisan, fills visible fields where possible, writes notes into this step, repeats back what it captured, and keeps the Occasion moving.</p>
+        <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
+        <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, machine profile, house formula, and form context to fill visible fields, write notes into this step, repeat back what it captured, and keep the Occasion moving.</p>
         <div className="buttonRow">
           <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop ICY" : "Enable ICY / No-Hands Guidance"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
-          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("it seems a little runny")}>Test: It seems runny</button>
+          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("the puck looks messy and the shot tastes a little thin")}>Test Natural Note</button>
           <button className="secondary" type="button" onClick={() => setActive("matrix")}>Something is wrong</button>
           <button className="secondary" type="button" onClick={() => setStepVoiceEnabled((v) => !v)}>{stepVoiceEnabled ? "Voice On" : "Voice Off / Text Only"}</button>
           <button className="secondary" type="button" onClick={pauseStepAdvisorVoice}>Pause Voice</button>

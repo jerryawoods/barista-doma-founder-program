@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8915-icy-voice-recovery",
-  "version": "8.9.15",
+  "name": "barista-doma-home-barista-development-platform-v8917-universal-icy",
+  "version": "8.9.17",
   "private": true,
   "scripts": {
     "dev": "next dev",
