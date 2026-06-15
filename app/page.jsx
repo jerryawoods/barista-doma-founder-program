@@ -4544,6 +4544,61 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const stepAdvisorPendingDecisionRef = useRef(null);
   const [stepAdvisorPhase, setStepAdvisorPhase] = useState("Wake word mode");
   const [stepAdvisorPendingDecision, setStepAdvisorPendingDecision] = useState(null);
+  const [stepAdvisorManualInput, setStepAdvisorManualInput] = useState("");
+  const [stepSpeechDebug, setStepSpeechDebug] = useState([]);
+  const stepAdvisorRestartCountRef = useRef(0);
+
+  function pushStepSpeechDebug(message) {
+    const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+    setStepSpeechDebug((prev) => [`${stamp} — ${message}`, ...prev].slice(0, 10));
+  }
+
+  function beginFreshStepAdvisementIssue(source = "voice") {
+    // Start a new issue without leaving the Occasion/step. This prevents old guidance such as
+    // "messy puck" from leaking into a new issue like "loaded fast" or "very bitter."
+    stepAdvisorConversationPhaseRef.current = "awaiting_input";
+    stepAdvisorAwaitingInputRef.current = true;
+    stepAdvisorPendingDecisionRef.current = null;
+    setStepAdvisorPendingDecision(null);
+    setStepAdvisorPhase(`Fresh ${source} advisement issue`);
+    setStepReview(null);
+    setStepReviewConfirmed(false);
+    setAdvisementOutcome("");
+    setCommunityLearningNote("");
+    setStepAdvisorFields([]);
+    setStepPlacementNotice("Fresh ICY capture started for this step. No prior issue is being reused.");
+  }
+
+  function submitStepAdvisorManualInput() {
+    const text = String(stepAdvisorManualInput || "").trim();
+    if (!text) {
+      setStatus?.("Type what you said to ICY, then press Send to ICY.");
+      return;
+    }
+    pushStepSpeechDebug(`manual send: ${text}`);
+    setStepAdvisorManualInput("");
+    beginFreshStepAdvisementIssue("typed");
+    handleStepAdvisorText(text);
+  }
+
+  function resetStepAdvisorCapture() {
+    stepAdvisorConversationPhaseRef.current = "wake";
+    stepAdvisorAwaitingInputRef.current = false;
+    stepAdvisorPendingDecisionRef.current = null;
+    setStepAdvisorPendingDecision(null);
+    setStepAdvisorPhase("Wake word mode");
+    setStepAdvisorTranscript("");
+    setStepAdvisorReply("Fresh ICY capture cleared for this step. Say “Hey ICY” or type a new issue.");
+    setStepAdvisorFields([]);
+    setStepPlacementNotice("No ICY capture has been routed yet for this step.");
+    setStepReview(null);
+    setStepReviewConfirmed(false);
+    setAdvisementOutcome("");
+    setCommunityLearningNote("");
+    setLastSpokenAdvisement("");
+    setStepVoiceStatus("Voice ready.");
+    pushStepSpeechDebug("manual reset: cleared current ICY capture for this step");
+  }
 
   function buildStepCaptureRouting(artisanText, changed = []) {
     const lower = String(artisanText || "").toLowerCase();
@@ -5004,7 +5059,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
   function buildConciseSpokenAdvisement({ artisanText, guidance, suggestedAction, machineQuestion, routingLabels }) {
-    const lower = String(`${artisanText || ""} ${guidance || ""}`).toLowerCase();
+    // Classify spoken advisement from the CURRENT artisan phrase only.
+    // Do not use guidance text here; it may contain old or API-expanded context.
+    const lower = String(artisanText || "").toLowerCase();
     const routeLine = routingLabels?.length ? ` I placed it in ${routingLabels.slice(0, 2).join(" and ")} as a draft.` : " I placed it in the step as a draft.";
     if (machineQuestion) {
       return `I captured that.${routeLine} Before I advise, I need the Machine Passport clear so I do not give the wrong machine advice. ${machineQuestion}`;
@@ -5038,28 +5095,29 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
 
   async function getNaturalStepAdvisorReply(artisanText, changed, routing) {
     const routingLabels = routing.map((r) => r.label);
-    const fallback = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing });
-    try {
-      const contextPayload = buildStepAdvisorContext(artisanText);
-      const response = await fetch("/api/respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript: artisanText,
-          context: contextPayload,
-          mode: "occasion_step_advisor",
-          instructions: "Respond as ICY, the Occasion-aware Intelligent Companion inside Home Barista IQ. Follow the advisement workflow: Wake, artisan issue/question, check Machine Passport, ask missing setup questions if needed, write Machine Passport/form context, give machine-appropriate guidance, wait for artisan decision, log chosen next move, closeout. Use natural language interpretation, not a fixed keyword script. Keep the response concise: 90 to 140 words, no repetition, no long report narrative. If the user is on a Ninja, DeLonghi, Jura, Philips, all-in-one, or superautomatic, do not give semi-automatic espresso advice unless the machine supports it. If the question is outside the current step, answer briefly and re-anchor to the active step. Always preserve artisan agency: draft first, ask if they want to add/change before final save, and ask them to confirm the next move."
-        })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error || data?.detail || `Advisor HTTP ${response.status}`);
-      if (data?.matrixMatch && setMatrixMatch) setMatrixMatch(data.matrixMatch);
-      if (data?.synthesis && setSynthesis) setSynthesis(data.synthesis);
-      return normalizeStepAdvisorResponse(data?.advisorText || fallback, artisanText, routingLabels, changed);
-    } catch (err) {
-      setStatus?.(`Natural Advisor route unavailable; using local step guidance. ${err?.message || ""}`.trim());
-      return fallback;
-    }
+    // Stabilization rule: the live Occasion step must answer the CURRENT artisan issue.
+    // To stop stale API context from carrying "messy puck" into a different issue, use the
+    // local Machine Passport + current-step advisement as the authoritative response for now.
+    const localCurrentIssueGuidance = buildOccasionAwareAdvisorReply(artisanText, {
+      occasionItem,
+      currentStep: current,
+      stepNumber: safeIndex + 1,
+      totalSteps: steps.length,
+      profile,
+      occasion,
+      changedFields: changed,
+      routing
+    });
+    const routeLine = `\n\nVisible routing: I wrote this to ${routingLabels.join(" + ")}. You can verify it in the Step Capture Ledger and In-Step Report Review on this same step. It is marked for the Doma Report.`;
+    const finalGuidance = `${trimForDisplay(localCurrentIssueGuidance, 1400)}${localCurrentIssueGuidance.includes("Visible routing:") ? "" : routeLine}`;
+    recordTelemetry?.("occasion_step_advisor_local_current_issue_guidance", {
+      companion: "ICY",
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      transcript: artisanText,
+      routing: routingLabels
+    });
+    return finalGuidance;
   }
 
   async function handleStepAdvisorText(rawText) {
@@ -5247,8 +5305,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     }
 
     if (!hasWake && !stepAdvisorAwaitingInputRef.current) {
-      setStatus?.("ICY heard background speech but is waiting for the wake word ‘Hey ICY’ or ‘Advisor’. Nothing was written.");
-      return;
+      // Do not silently discard a real phrase if the artisan is typing or browser capture
+      // delivers the phrase after wake state got lost. Treat it as a fresh current issue.
+      beginFreshStepAdvisementIssue("direct");
     }
 
     if (isLikelyAdvisorEcho(artisanText)) {
@@ -5342,30 +5401,50 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       try { stepRecognitionRef.current?.stop?.(); } catch {}
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       recognition.lang = "en-US";
+      pushStepSpeechDebug("recognition create/start requested");
       recognition.onstart = () => {
         stepAdvisorEnabledRef.current = true;
         setStepAdvisorEnabled(true);
         setStepAdvisorListening(true);
+        pushStepSpeechDebug(`recognition started; phase=${stepAdvisorConversationPhaseRef.current}`);
         setStatus?.(`ICY is online inside ${occasionItem.name}, Step ${safeIndex + 1}. Say ‘Hey ICY’ or ‘Advisor’.`);
         recordTelemetry?.("occasion_step_advisor_enabled", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
       };
+      recognition.onspeechstart = () => {
+        pushStepSpeechDebug("speech detected");
+        setStatus?.("ICY hears speech…");
+      };
+      recognition.onspeechend = () => {
+        pushStepSpeechDebug("speech ended; waiting for final transcript");
+      };
       recognition.onresult = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          if (event.results[i].isFinal) handleStepAdvisorText(event.results[i][0]?.transcript || "");
+          const phrase = event.results[i][0]?.transcript || "";
+          const finalFlag = Boolean(event.results[i].isFinal);
+          pushStepSpeechDebug(`${finalFlag ? "final" : "interim"} transcript: ${phrase}`);
+          if (finalFlag) handleStepAdvisorText(phrase);
         }
       };
-      recognition.onerror = (event) => setStatus?.(`Occasion-aware Advisor recognition issue: ${event?.error || "unknown"}`);
+      recognition.onerror = (event) => {
+        const err = event?.error || "unknown";
+        pushStepSpeechDebug(`recognition error: ${err}`);
+        setStatus?.(`Occasion-aware Advisor recognition issue: ${err}. Use Type to ICY if voice does not capture.`);
+      };
       recognition.onend = () => {
         setStepAdvisorListening(false);
+        pushStepSpeechDebug(`recognition ended; enabled=${stepAdvisorEnabledRef.current}; phase=${stepAdvisorConversationPhaseRef.current}`);
         if (stepAdvisorEnabledRef.current) {
+          stepAdvisorRestartCountRef.current += 1;
+          pushStepSpeechDebug(`recognition restart #${stepAdvisorRestartCountRef.current}`);
           restartStepAdvisorListening(500);
         }
       };
       stepRecognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
+      pushStepSpeechDebug(`recognition start failed: ${err.message || String(err)}`);
       alert(err.message || String(err));
     }
   }
@@ -5418,6 +5497,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={resumeStepAdvisorVoice}>{stepVoicePaused ? "Resume Voice" : "Resume"}</button>
           <button className="secondary" type="button" onClick={stopStepAdvisorVoice}>Stop Voice</button>
           <button className="secondary" type="button" onClick={replayLastStepAdvisement}>Play ICY Advisement</button>
+          <button className="secondary" type="button" onClick={resetStepAdvisorCapture}>Reset ICY Capture for This Step</button>
         </div>
         <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `ICY is listening inside this Occasion step. Phase: ${stepAdvisorPhase}.` : "Enable ICY once, then say “Hey ICY” or “Advisor” while you are on this step. ICY follows the advisement workflow and can ask for Machine Passport, grind, dose, yield, time, taste, or guest context before giving machine-appropriate guidance."}</div>
         <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
@@ -5427,6 +5507,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <Field label="Shot time captured" value={profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || ""} onChange={(v) => updateProfile?.("quickShotTime", v)} />
           <Field label="Grind captured" value={profile?.quickShotGrind || profile?.grinderSetting || ""} onChange={(v) => updateProfile?.("quickShotGrind", v)} />
         </div>
+        <div className="noteBox"><strong>Type to ICY fallback</strong><p className="small">If the microphone wakes ICY but does not capture the second phrase, type the exact issue here. This uses the same advisement workflow as voice, so we can verify the advisor logic separately from browser speech recognition.</p><textarea value={stepAdvisorManualInput} onChange={(e) => setStepAdvisorManualInput(e.target.value)} placeholder="Example: it was very bitter" /><div className="buttonRow"><button className="primary" type="button" onClick={submitStepAdvisorManualInput}>Send to ICY</button></div></div>
+        <div className="noteBox"><strong>Voice capture diagnostics</strong>{stepSpeechDebug.length ? <ul>{stepSpeechDebug.map((line, idx) => <li key={idx}>{line}</li>)}</ul> : <p className="small">No speech recognition events recorded yet.</p>}</div>
         <label className="label">Step note / taste / recovery / Guest Resonance</label>
         <textarea value={stepAdvisorTranscript} onChange={(e) => setStepAdvisorTranscript(e.target.value)} placeholder="Voice notes captured inside this Occasion step appear here immediately." />
         <div className="successBox"><strong>Where this was written:</strong><p>{stepPlacementNotice}</p>{stepAdvisorFields?.length ? <small>Structured fields updated: {stepAdvisorFields.join(", ")}</small> : <small>If this was not structured shot data, it is still visible below as a Step Note and report context.</small>}</div>

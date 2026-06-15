@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8922-icy-community-learning-loop",
-  "version": "8.9.22",
+  "name": "barista-doma-home-barista-development-platform-v8924-icy-current-issue-isolation",
+  "version": "8.9.24",
   "private": true,
   "scripts": {
     "dev": "next dev",

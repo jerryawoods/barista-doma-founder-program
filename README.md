@@ -1,21 +1,27 @@
-# Barista Doma / Home Barista IQ — v8.9.22 ICY Community Learning Loop
+# Barista Doma / Home Barista IQ — v8.9.24 ICY Current-Issue Isolation
 
-Focused patch after user clarified:
-- ICY should get smarter based on feedback, outcomes, community usage, Machine Passport patterns, and what actually worked.
+Focused corrective patch after user reported:
+- Artisan said a new issue such as “it loaded fast.”
+- ICY still responded with prior/stale “messy puck” context.
 
-Adds:
-- Advisement Outcome / Community Learning area in the In-Step Report Review.
-- ICY closeout now asks the artisan to come back and say what happened after trying the next move.
-- Outcome logging captures:
-  - Occasion
-  - active step
-  - Machine Passport context
-  - house formula
-  - artisan issue
-  - ICY guidance
-  - artisan chosen action
-  - outcome feedback
-  - intended community-learning use
-- Outcome feedback is stored in the visible capture ledger and telemetry as an advisement workflow learning signal.
+Root problem:
+- Current spoken/typed issue and prior guidance state could bleed together.
+- Spoken advisement classifier was using guidance text in addition to the current artisan phrase.
+- API guidance could reintroduce stale/prior issue language.
 
-This is not yet a full backend community database. It is the front-end/domain capture hook so future persistence and aggregation can be connected cleanly.
+Fixes:
+- Spoken advisement classification now uses ONLY the current artisan phrase.
+- Type-to-ICY starts a fresh advisement issue every time.
+- Direct non-wake phrases can be treated as a fresh issue instead of discarded.
+- Added Reset ICY Capture for This Step.
+- Live step guidance now uses local current-issue Machine Passport + step advisement as authoritative response, avoiding stale API context while stabilizing.
+- Prior pending decision/review/outcome state is cleared when a fresh issue begins, without leaving the Occasion step.
+
+Test:
+1. Open any Occasion/step.
+2. Click Reset ICY Capture for This Step.
+3. Type or say: “it was very bitter.”
+4. ICY must respond about bitter/harsh taste, not messy puck.
+5. Reset again.
+6. Type or say: “it loaded fast” / “it ran fast.”
+7. ICY must respond about fast/thin flow, not messy puck.
