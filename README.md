@@ -1,27 +1,32 @@
-# Barista Doma / Home Barista IQ — v8.9.24 ICY Current-Issue Isolation
+# Barista Doma / Home Barista IQ — v8.9.25 ICY Tap-to-Speak Stabilization
 
-Focused corrective patch after user reported:
-- Artisan said a new issue such as “it loaded fast.”
-- ICY still responded with prior/stale “messy puck” context.
+Focused fix after diagnostics showed:
+- recognition started
+- recognition ended
+- recognition error: aborted
+- restart count > 300
+- ICY/Advisor did not respond at all
 
-Root problem:
-- Current spoken/typed issue and prior guidance state could bleed together.
-- Spoken advisement classifier was using guidance text in addition to the current artisan phrase.
-- API guidance could reintroduce stale/prior issue language.
+Root cause:
+- Browser Web Speech recognition was stuck in an abort/restart storm.
+- Wake mode was starting/stopping too aggressively for Chrome.
+- The phrase never reached ICY.
 
-Fixes:
-- Spoken advisement classification now uses ONLY the current artisan phrase.
-- Type-to-ICY starts a fresh advisement issue every time.
-- Direct non-wake phrases can be treated as a fresh issue instead of discarded.
-- Added Reset ICY Capture for This Step.
-- Live step guidance now uses local current-issue Machine Passport + step advisement as authoritative response, avoiding stale API context while stabilizing.
-- Prior pending decision/review/outcome state is cleared when a fresh issue begins, without leaving the Occasion step.
+Fix:
+- Adds stable Tap to Speak to ICY one-shot capture.
+- Tap-to-speak stops the wake recognizer, listens for one phrase, then sends that exact phrase to the same advisement workflow.
+- Wake mode is still available but optional.
+- Wake mode no longer restarts indefinitely; abort errors stop the loop and direct the artisan to Tap to Speak.
+- Adds Tap-to-speak status and diagnostics.
 
-Test:
+Recommended test:
 1. Open any Occasion/step.
 2. Click Reset ICY Capture for This Step.
-3. Type or say: “it was very bitter.”
-4. ICY must respond about bitter/harsh taste, not messy puck.
-5. Reset again.
-6. Type or say: “it loaded fast” / “it ran fast.”
-7. ICY must respond about fast/thin flow, not messy puck.
+3. Click Tap to Speak to ICY.
+4. Say: “it was very bitter.”
+5. ICY should process bitter/harsh taste guidance.
+6. Click Tap to Speak to ICY again.
+7. Say: “it ran fast.”
+8. ICY should process fast/thin flow guidance.
+
+This avoids the browser abort loop while preserving the advisement workflow.

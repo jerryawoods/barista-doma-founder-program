@@ -4546,7 +4546,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepAdvisorPendingDecision, setStepAdvisorPendingDecision] = useState(null);
   const [stepAdvisorManualInput, setStepAdvisorManualInput] = useState("");
   const [stepSpeechDebug, setStepSpeechDebug] = useState([]);
+  const [stepTapToSpeakStatus, setStepTapToSpeakStatus] = useState("Tap-to-speak ready.");
   const stepAdvisorRestartCountRef = useRef(0);
+  const stepTapRecognitionRef = useRef(null);
 
   function pushStepSpeechDebug(message) {
     const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
@@ -4598,6 +4600,66 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setLastSpokenAdvisement("");
     setStepVoiceStatus("Voice ready.");
     pushStepSpeechDebug("manual reset: cleared current ICY capture for this step");
+  }
+
+
+  function startTapToSpeakIcy() {
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) throw new Error("This browser does not expose speech recognition. Use Chrome on HTTPS, or use Type to ICY.");
+      // Stop the continuous wake-word recognizer so it cannot abort-loop against one-shot capture.
+      try { stepRecognitionRef.current?.stop?.(); } catch {}
+      clearStepAdvisorRestartTimer();
+      stepAdvisorEnabledRef.current = false;
+      setStepAdvisorListening(false);
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      let finalPhrase = "";
+      setStepTapToSpeakStatus("Tap-to-speak listening now. Say the full issue in one phrase.");
+      pushStepSpeechDebug("tap-to-speak start requested");
+
+      recognition.onstart = () => {
+        setStepTapToSpeakStatus("Listening. Say the full issue now.");
+        pushStepSpeechDebug("tap-to-speak recognition started");
+      };
+      recognition.onspeechstart = () => {
+        setStepTapToSpeakStatus("Speech detected. Keep talking until the issue is complete.");
+        pushStepSpeechDebug("tap-to-speak speech detected");
+      };
+      recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const phrase = event.results[i][0]?.transcript || "";
+          const finalFlag = Boolean(event.results[i].isFinal);
+          pushStepSpeechDebug(`${finalFlag ? "tap final" : "tap interim"} transcript: ${phrase}`);
+          if (finalFlag) finalPhrase = phrase;
+          else if (!finalPhrase) setStepTapToSpeakStatus(`Heard so far: ${phrase}`);
+        }
+      };
+      recognition.onerror = (event) => {
+        const err = event?.error || "unknown";
+        setStepTapToSpeakStatus(`Tap-to-speak recognition issue: ${err}. Use Type to ICY if needed.`);
+        pushStepSpeechDebug(`tap-to-speak error: ${err}`);
+      };
+      recognition.onend = () => {
+        const phrase = String(finalPhrase || "").trim();
+        pushStepSpeechDebug(`tap-to-speak ended; final="${phrase || "(none)"}"`);
+        if (phrase) {
+          setStepTapToSpeakStatus(`Captured: ${phrase}`);
+          beginFreshStepAdvisementIssue("tap-to-speak");
+          handleStepAdvisorText(phrase);
+        } else {
+          setStepTapToSpeakStatus("No final phrase captured. Try Tap to Speak again or use Type to ICY.");
+        }
+      };
+      stepTapRecognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      setStepTapToSpeakStatus(err.message || String(err));
+      pushStepSpeechDebug(`tap-to-speak start failed: ${err.message || String(err)}`);
+    }
   }
 
   function buildStepCaptureRouting(artisanText, changed = []) {
@@ -5400,7 +5462,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       if (!SpeechRecognition) throw new Error("This browser does not expose speech recognition. Use Chrome on HTTPS for step-aware no-hands Advisor.");
       try { stepRecognitionRef.current?.stop?.(); } catch {}
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = "en-US";
       pushStepSpeechDebug("recognition create/start requested");
@@ -5430,15 +5492,30 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       recognition.onerror = (event) => {
         const err = event?.error || "unknown";
         pushStepSpeechDebug(`recognition error: ${err}`);
-        setStatus?.(`Occasion-aware Advisor recognition issue: ${err}. Use Type to ICY if voice does not capture.`);
+        setStatus?.(`Wake-word recognition issue: ${err}. Use Tap to Speak or Type to ICY if wake mode does not capture.`);
+        if (err === "aborted") {
+          // Aborted errors usually mean Chrome is being start/stopped too quickly. Stop the loop.
+          stepAdvisorEnabledRef.current = false;
+          setStepAdvisorEnabled(false);
+          setStepAdvisorListening(false);
+          setStepTapToSpeakStatus("Wake mode aborted by the browser. Use Tap to Speak to ICY for stable capture.");
+        }
       };
       recognition.onend = () => {
         setStepAdvisorListening(false);
         pushStepSpeechDebug(`recognition ended; enabled=${stepAdvisorEnabledRef.current}; phase=${stepAdvisorConversationPhaseRef.current}`);
         if (stepAdvisorEnabledRef.current) {
+          // Avoid restart storms. Wake mode is optional; Tap to Speak is the stable path.
           stepAdvisorRestartCountRef.current += 1;
-          pushStepSpeechDebug(`recognition restart #${stepAdvisorRestartCountRef.current}`);
-          restartStepAdvisorListening(500);
+          if (stepAdvisorRestartCountRef.current <= 3) {
+            pushStepSpeechDebug(`recognition restart #${stepAdvisorRestartCountRef.current}`);
+            restartStepAdvisorListening(1600);
+          } else {
+            pushStepSpeechDebug("recognition restart limit reached; use Tap to Speak");
+            stepAdvisorEnabledRef.current = false;
+            setStepAdvisorEnabled(false);
+            setStatus?.("Wake mode stopped to prevent browser abort loop. Use Tap to Speak to ICY.");
+          }
         }
       };
       stepRecognitionRef.current = recognition;
@@ -5488,7 +5565,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
         <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, Machine Passport, grinder, machine category, house formula, telemetry, and form context. If the basics are missing, ICY asks a short setup checklist and writes the Machine Passport before advising. If enough context is present, it gives one calm next move, places information in the form as a draft, asks if you want to add or change anything, logs the artisan-confirmed decision, and keeps the Occasion moving.</p>
         <div className="buttonRow">
-          <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop ICY" : "Enable ICY / No-Hands Guidance"}</button>
+          <button className="primary" type="button" onClick={startTapToSpeakIcy}>Tap to Speak to ICY</button>
+          <button className={stepAdvisorEnabled ? "danger" : "secondary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Wake Mode" : "Enable Wake Mode"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("the puck looks messy and the shot tastes a little thin")}>Test Natural Note</button>
           <button className="secondary" type="button" onClick={() => setActive("matrix")}>Something is wrong</button>
@@ -5499,7 +5577,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={replayLastStepAdvisement}>Play ICY Advisement</button>
           <button className="secondary" type="button" onClick={resetStepAdvisorCapture}>Reset ICY Capture for This Step</button>
         </div>
-        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `ICY is listening inside this Occasion step. Phase: ${stepAdvisorPhase}.` : "Enable ICY once, then say “Hey ICY” or “Advisor” while you are on this step. ICY follows the advisement workflow and can ask for Machine Passport, grind, dose, yield, time, taste, or guest context before giving machine-appropriate guidance."}</div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Tap to Speak to ICY for the stable voice path. Wake mode is optional and may be limited by browser speech recognition."}</div>
+        <div className="noteBox"><strong>Tap-to-speak status:</strong> {stepTapToSpeakStatus}<br/><small>Recommended test path: tap <strong>Tap to Speak to ICY</strong>, say the full issue, then let ICY process it.</small></div>
         <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
         <div className="grid">
           <Field label="Dose captured" value={profile?.quickShotDose || profile?.houseDose || ""} onChange={(v) => updateProfile?.("quickShotDose", v)} />
