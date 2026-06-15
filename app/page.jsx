@@ -4526,8 +4526,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepCaptureLedger, setStepCaptureLedger] = useState([]);
   const [stepReview, setStepReview] = useState(null);
   const [stepReviewConfirmed, setStepReviewConfirmed] = useState(false);
+  const [advisementOutcome, setAdvisementOutcome] = useState("");
+  const [communityLearningNote, setCommunityLearningNote] = useState("");
   const [stepVoiceEnabled, setStepVoiceEnabled] = useState(true);
   const [stepVoicePaused, setStepVoicePaused] = useState(false);
+  const [stepVoiceStatus, setStepVoiceStatus] = useState("Voice ready.");
+  const [lastSpokenAdvisement, setLastSpokenAdvisement] = useState("");
   const stepRecognitionRef = useRef(null);
   const stepAdvisorEnabledRef = useRef(false);
   const stepAdvisorAwaitingInputRef = useRef(false);
@@ -4536,6 +4540,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const stepAdvisorRestartTimerRef = useRef(null);
   const stepAdvisorSpeechFallbackRef = useRef(null);
   const stepAdvisorSpeakingRef = useRef(false);
+  const stepAdvisorConversationPhaseRef = useRef("wake");
+  const stepAdvisorPendingDecisionRef = useRef(null);
+  const [stepAdvisorPhase, setStepAdvisorPhase] = useState("Wake word mode");
+  const [stepAdvisorPendingDecision, setStepAdvisorPendingDecision] = useState(null);
 
   function buildStepCaptureRouting(artisanText, changed = []) {
     const lower = String(artisanText || "").toLowerCase();
@@ -4547,6 +4555,93 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     if (changed.some((x) => /guest/i.test(x)) || /guest|served|liked it|loved it|reaction|resonance/i.test(lower)) add("Guest Resonance", "Visible in Guest Resonance context and included in the Doma Report when captured.");
     if (!routes.length) add("Step Notes", "Visible in this step capture ledger and included as Occasion context for the report.");
     return routes;
+  }
+
+  function isArtisanDecisionAcknowledgment(text) {
+    const lower = String(text || "").toLowerCase().trim();
+    return /\b(ok|okay|yes|yeah|yep|correct|right|that is right|sounds good|i will|i'll|i am going to|i'm going to|that's what|that is what|do that|try that|i’ll try|i will try|let's do|lets do|accepted|confirm)\b/.test(lower);
+  }
+
+  function isArtisanNoMore(text) {
+    const lower = String(text || "").toLowerCase().trim();
+    return /^(no|nope|nothing else|that is all|that's all|i'm good|im good|we're good|were good|all good|done|move on|next step)$/i.test(lower) || /\b(no nothing else|nothing else|that'?s all|all good|i'm good|im good|move on|next step)\b/i.test(lower);
+  }
+
+  function summarizeArtisanDecision(text, pending) {
+    const raw = String(text || "").trim();
+    if (!raw) return pending?.suggestedAction || "artisan accepted the recommended next move";
+    if (/i will|i'll|i am going to|i'm going to|try|do that|let's do|lets do/i.test(raw)) return raw;
+    return pending?.suggestedAction || raw;
+  }
+
+  function inferSuggestedActionFromGuidance(guidance, artisanText) {
+    const lower = String(`${guidance || ""} ${artisanText || ""}`).toLowerCase();
+    if (/one step finer|finer/.test(lower)) return "Keep the dose steady and try one small step finer, then taste again.";
+    if (/one step coarser|coarser/.test(lower)) return "Keep the dose steady and try one small step coarser, then taste again.";
+    if (/shorter yield|shorter/.test(lower)) return "Try a slightly shorter yield while keeping the dose steady.";
+    if (/longer yield|extend|more yield/.test(lower)) return "Try a slightly longer yield while keeping the dose steady.";
+    if (/puck|distribution|tamp|headspace|channel/.test(lower)) return "Check distribution, tamp level, and headspace before changing multiple variables.";
+    if (/script|guest|serve|occasion|stagecraft/.test(lower)) return "Use the suggested stagecraft script and keep the first sip focused on the guest.";
+    if (/like|liked|preference|acceptable|would serve/.test(lower)) return "Save this as a preference note and keep the recipe steady for the next comparison.";
+    return "Use the contextual guidance from ICY as the next move, then taste and report back.";
+  }
+
+  function buildDecisionCloseoutText(decisionText, pending) {
+    const chosen = summarizeArtisanDecision(decisionText, pending);
+    const routeLabels = pending?.routingLabels?.length ? pending.routingLabels.join(" + ") : "Step Notes + Advisor Guidance + Doma Report context";
+    return `Got it. I am logging your chosen next move as: ${chosen}. I am attaching it to ${routeLabels}, Advisor Guidance for This Step, and the Doma Report context. Anything else before we close this step?`;
+  }
+
+  function buildFinalCloseoutText(pending) {
+    const routeLabels = pending?.routingLabels?.length ? pending.routingLabels.join(" + ") : "Step Notes + Advisor Guidance + Doma Report context";
+    return `Okay. I logged the observation, ICY guidance, and your chosen next move under ${routeLabels}. You can review it in the In-Step Report Review. After you try the next move, come back and tell me what happened so I can log the outcome and help the Home Barista IQ community get smarter. When you are ready, repeat this step or move to the next step.`;
+  }
+
+  function buildCommunityLearningPayload({ outcomeText = "", pending = {}, review = {} } = {}) {
+    return {
+      occasion: occasionItem?.name,
+      occasionId: occasionItem?.id,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      machineType: profile?.machineType || "",
+      machine: profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || "",
+      grinder: profile?.grinder || profile?.grinderModel || "",
+      houseFormula: `${profile?.houseDose || "?"} in → ${profile?.houseYield || "?"} out · ${profile?.houseShotTime || "?"}`,
+      artisanIssue: pending?.transcript || review?.transcript || "",
+      icyGuidance: pending?.guidance || review?.advisorGuidance || "",
+      artisanDecision: pending?.decisionText || review?.suggestedAction || "",
+      outcome: outcomeText,
+      learningUse: "Aggregate/de-identified advisement workflow pattern for future ICY guidance, recovery recommendations, Machine Passport patterns, taste preference patterns, and community intelligence."
+    };
+  }
+
+  function logAdvisementOutcome(outcomeText) {
+    const outcome = String(outcomeText || advisementOutcome || "").trim();
+    if (!outcome) {
+      setCommunityLearningNote("Add what happened after trying the next move, then log the outcome.");
+      return;
+    }
+    const pending = stepAdvisorPendingDecisionRef.current || stepAdvisorPendingDecision || {};
+    const payload = buildCommunityLearningPayload({ outcomeText: outcome, pending, review: stepReview || {} });
+    setCommunityLearningNote("Outcome logged for this step. This becomes part of the advisement workflow learning pattern for you and the broader Home Barista IQ community.");
+    setStepReview((prev) => prev ? {
+      ...prev,
+      outcome,
+      communityLearningPayload: payload,
+      reportStatus: `${prev.reportStatus || "Marked for report."} Outcome feedback was logged for future ICY/community learning.`
+    } : prev);
+    setStepCaptureLedger((prev) => [{
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      transcript: `Advisement outcome: ${outcome}`,
+      fields: ["Outcome feedback", "Community learning pattern"],
+      routes: [{ label: "Advisement Outcome / Community Learning", detail: "Outcome retained as report context and future intelligence signal." }],
+      advisorGuidance: "Outcome feedback captured for this advisement workflow."
+    }, ...prev].slice(0, 8));
+    recordTelemetry?.("advisement_outcome_logged", payload);
   }
 
   function clearStepAdvisorRestartTimer() {
@@ -4586,52 +4681,79 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     }, wait);
   }
 
-  function speakStepAdvisor(text, { resumeListening = true, updateDisplay = true } = {}) {
+  function speakStepAdvisor(text, { resumeListening = true, updateDisplay = true, forceVoice = false } = {}) {
+    const spokenText = String(text || "").trim();
+    if (!spokenText) return false;
+    setLastSpokenAdvisement(spokenText);
+    setStepVoiceStatus("ICY voice preparing…");
     if (updateDisplay) {
-      setStepAdvisorReply(text);
-      if (setAdvisorText) setAdvisorText(text);
+      setStepAdvisorReply(spokenText);
+      if (setAdvisorText) setAdvisorText(spokenText);
     }
     clearStepAdvisorRestartTimer();
     clearStepAdvisorSpeechFallback();
     try { stepRecognitionRef.current?.stop?.(); } catch {}
     setStepAdvisorListening(false);
     stepAdvisorSuppressUntilRef.current = Date.now() + 900;
-    if (!stepVoiceEnabled) {
+
+    if (!stepVoiceEnabled && !forceVoice) {
       stepAdvisorSpeakingRef.current = false;
+      setStepVoiceStatus("Voice is off. Advisement is available on screen. Tap Play ICY Advisement to hear it.");
       if (resumeListening) restartStepAdvisorListening(450);
-      return;
+      return false;
     }
+
+    try {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        // Chrome sometimes needs voices touched before first spoken response.
+        window.speechSynthesis.getVoices?.();
+      }
+    } catch {}
+
     setStepVoicePaused(false);
     stepAdvisorSpeakingRef.current = true;
-    const wordCount = String(text || "").trim().split(/\s+/).filter(Boolean).length;
-    const fallbackMs = Math.max(1400, Math.min(5200, wordCount * 190 + 450));
+    setStepVoiceStatus("ICY is speaking advisement…");
+    const wordCount = spokenText.split(/\s+/).filter(Boolean).length;
+    const fallbackMs = Math.max(2200, Math.min(8000, wordCount * 230 + 700));
     const reopenListening = (delay = 350) => {
       stepAdvisorSpeakingRef.current = false;
       stepAdvisorSuppressUntilRef.current = Date.now() + 300;
+      setStepVoiceStatus("ICY finished speaking. Listening restored.");
       if (resumeListening && stepAdvisorEnabledRef.current) restartStepAdvisorListening(delay);
     };
-    const started = speakFastLocal(text, {
-      rate: 1.04,
+    const started = speakFastLocal(spokenText, {
+      rate: 0.98,
       onEnd: () => {
         clearStepAdvisorSpeechFallback();
         reopenListening(300);
       }
     });
-    // Mobile Chrome sometimes does not fire speechSynthesis.onend. This fallback is the key restoration:
-    // ICY must speak once, then reopen the listening window for the artisan response.
     if (started && resumeListening) {
       stepAdvisorSpeechFallbackRef.current = setTimeout(() => reopenListening(250), fallbackMs);
+      return true;
     }
+    if (started) return true;
+
+    setStepVoiceStatus("Voice did not start. Tap Play ICY Advisement to hear it, or read the advisement on screen.");
     if (!started) reopenListening(250);
+    return false;
+  }
+
+  function replayLastStepAdvisement() {
+    const text = lastSpokenAdvisement || stepAdvisorReply || "I do not have an advisement to replay yet.";
+    speakStepAdvisor(text, { resumeListening: true, updateDisplay: false, forceVoice: true });
   }
 
   function pauseStepAdvisorVoice() {
     try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.pause(); } catch {}
     setStepVoicePaused(true);
+    setStepVoiceStatus("ICY voice paused.");
   }
   function resumeStepAdvisorVoice() {
     try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.resume(); } catch {}
     setStepVoicePaused(false);
+    setStepVoiceStatus("ICY voice resumed.");
   }
   function stopStepAdvisorVoice() {
     stopFastLocalSpeech();
@@ -4639,6 +4761,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     clearStepAdvisorRestartTimer();
     clearStepAdvisorSpeechFallback();
     setStepVoicePaused(false);
+    setStepVoiceStatus("ICY voice stopped. Advisement workflow state is preserved.");
     stepAdvisorSuppressUntilRef.current = Date.now() + 500;
     if (stepAdvisorEnabledRef.current) restartStepAdvisorListening(500);
   }
@@ -4689,13 +4812,148 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return { hasWake: true, wakeWord, afterWake: wakeOnly ? "" : afterOriginal, wakeOnly };
   }
 
+
+  function detectMachinePassportFromText(text) {
+    const raw = String(text || "");
+    const lower = raw.toLowerCase();
+    const updates = {};
+    if (/ninja|luxe|café|cafe/.test(lower)) {
+      updates.machineType = "All-in-one / automatic";
+      updates.allInOneMachine = raw.match(/ninja[^,.]*/i)?.[0]?.trim() || "Ninja all-in-one / automatic";
+      updates.machine = updates.allInOneMachine;
+      updates.grinder = "Built-in grinder";
+      updates.grinderModel = "Built-in grinder";
+    } else if (/de[\s-]?longhi|delonghi|magnifica|dinamica|eletta|la specialista/.test(lower)) {
+      updates.machineType = /magnifica|dinamica|eletta/.test(lower) ? "Superautomatic" : "All-in-one / automatic";
+      updates.allInOneMachine = raw.match(/(de[\s-]?longhi|delonghi)[^,.]*/i)?.[0]?.trim() || "DeLonghi all-in-one / automatic";
+      updates.machine = updates.allInOneMachine;
+      updates.grinder = "Built-in grinder";
+      updates.grinderModel = "Built-in grinder";
+    } else if (/jura|philips|saeco|gaggia anima|superautomatic|super automatic|super-automatic/.test(lower)) {
+      updates.machineType = "Superautomatic";
+      updates.allInOneMachine = raw.match(/(jura|philips|saeco|gaggia)[^,.]*/i)?.[0]?.trim() || "Superautomatic machine";
+      updates.machine = updates.allInOneMachine;
+      updates.grinder = "Built-in grinder";
+      updates.grinderModel = "Built-in grinder";
+    } else if (/breville|barista express|barista touch|oracle|meraki|built.?in grinder/.test(lower)) {
+      updates.machineType = "Espresso machine with built-in grinder";
+      updates.espressoMachine = raw.match(/(breville|meraki|oracle)[^,.]*/i)?.[0]?.trim() || profile?.espressoMachine || "Espresso machine with built-in grinder";
+      updates.machine = updates.espressoMachine;
+      updates.grinder = "Built-in grinder";
+      updates.grinderModel = "Built-in grinder";
+    } else if (/flair|la pavoni|lever|robot/.test(lower)) {
+      updates.machineType = "Manual / lever espresso";
+      updates.espressoMachine = raw.match(/(flair|la pavoni|robot)[^,.]*/i)?.[0]?.trim() || "Manual / lever espresso machine";
+      updates.machine = updates.espressoMachine;
+    } else if (/rocket|ecm|profitec|lelit|rancilio|gaggia classic|silvia|decent|la marzocco|semi.?automatic|semi automatic/.test(lower)) {
+      updates.machineType = "Espresso machine";
+      updates.espressoMachine = raw.match(/(rocket|ecm|profitec|lelit|rancilio|gaggia classic|silvia|decent|la marzocco)[^,.]*/i)?.[0]?.trim() || "Semi-automatic espresso machine";
+      updates.machine = updates.espressoMachine;
+    }
+    if (/separate grinder|df64|niche|eureka|baratza|fellow|lagom|mazzer|sette|specialita|mignon/.test(lower)) {
+      updates.grinder = raw.match(/(df64|niche|eureka|baratza|fellow|lagom|mazzer|sette|specialita|mignon)[^,.]*/i)?.[0]?.trim() || "Separate grinder";
+      updates.grinderModel = updates.grinder;
+      if (!updates.machineType && /separate grinder/.test(lower)) updates.machineType = profile?.machineType || "Espresso machine";
+    }
+    const doseMatch = raw.match(/(\d+(?:\.\d+)?)\s*(?:g|grams?)\s*(?:in|dose)?/i);
+    const yieldMatch = raw.match(/(?:yield|out|output|to)\s*(\d+(?:\.\d+)?)\s*(?:g|grams?)/i) || raw.match(/(\d+(?:\.\d+)?)\s*(?:g|grams?)\s*out/i);
+    const timeMatch = raw.match(/(\d{1,3})\s*(?:sec|second|seconds)\b/i);
+    const grindMatch = raw.match(/(?:grind|setting)\s*(?:is|at|on)?\s*([a-z0-9.\- ]{1,18})/i);
+    if (doseMatch) updates.houseDose = `${doseMatch[1]}g`;
+    if (yieldMatch) updates.houseYield = `${yieldMatch[1]}g`;
+    if (timeMatch) updates.houseShotTime = `${timeMatch[1]} seconds`;
+    if (grindMatch) updates.grinderSetting = grindMatch[1].trim();
+    return updates;
+  }
+
+  function applyMachinePassportDraftFromText(text) {
+    const updates = detectMachinePassportFromText(text);
+    const labels = [];
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && updateProfile) {
+        updateProfile(key, value);
+        labels.push(key);
+      }
+    });
+    if (labels.length) {
+      recordTelemetry?.("machine_passport_voice_updated", { fields: labels, source: "ICY advisement workflow" });
+    }
+    return labels;
+  }
+
+  function getMachinePassportStatus(textForDraft = "") {
+    const detected = detectMachinePassportFromText(textForDraft);
+    const machineType = detected.machineType || profile?.machineType || "";
+    const machine = detected.machine || profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || "";
+    const grinder = detected.grinder || profile?.grinder || profile?.grinderModel || "";
+    const dose = detected.houseDose || profile?.quickShotDose || profile?.houseDose || "";
+    const yieldOut = detected.houseYield || profile?.quickShotYield || profile?.houseYield || "";
+    const shotTime = detected.houseShotTime || profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || "";
+    const grind = detected.grinderSetting || profile?.quickShotGrind || profile?.grinderSetting || "";
+    const isAllInOne = /all-in-one|automatic|superautomatic|super-automatic|ninja|delonghi|de longhi|jura|philips|saeco/i.test(`${machineType} ${machine}`);
+    const isSemiAuto = /espresso machine|semi|breville|meraki|rocket|ecm|profitec|lelit|rancilio|gaggia|decent/i.test(`${machineType} ${machine}`) && !isAllInOne;
+    const missing = [];
+    if (!machineType) missing.push("machine category");
+    if (!machine) missing.push("machine brand/model");
+    if (!grinder) missing.push("grinder setup");
+    if (!dose) missing.push("house dose");
+    if (!yieldOut) missing.push("house yield");
+    if (!shotTime) missing.push("target or observed shot time");
+    if (!grind && !isAllInOne) missing.push("grind setting");
+    const adviceMode = isAllInOne ? "all-in-one / automatic machine guidance" : (isSemiAuto ? "semi-automatic espresso guidance" : "machine-context guidance");
+    return { machineType, machine, grinder, dose, yieldOut, shotTime, grind, isAllInOne, isSemiAuto, missing, adviceMode };
+  }
+
+  function isTechnicalAdvisementRequest(text) {
+    const lower = String(text || "").toLowerCase();
+    return /shot|espresso|grind|dose|yield|time|puck|flow|thin|watery|fast|slow|bitter|sour|sharp|milk|foam|machine|brew|extraction|channel|spray|no flow|few drops|stalled|settings|preset|strength/.test(lower);
+  }
+
+  function buildMachinePassportQuestion(status) {
+    const missing = status?.missing || [];
+    if (!missing.length) return "";
+    if (missing.includes("machine category") || missing.includes("machine brand/model")) {
+      return "Before I advise, I need to confirm your setup so I do not give espresso-machine advice to an all-in-one or superautomatic machine. What machine type, brand, and model are you using?";
+    }
+    if (missing.includes("grinder setup")) {
+      return "Before I narrow the adjustment, confirm your grinder setup: built-in grinder, separate grinder, pre-ground, or no grinder?";
+    }
+    if (missing.includes("house dose") || missing.includes("house yield") || missing.includes("target or observed shot time")) {
+      return "Give me your basic house formula or observed pull if you have it: dose in, yield out, and shot time.";
+    }
+    if (missing.includes("grind setting")) {
+      return "What grind setting are you on, or did the grind change from the last pull?";
+    }
+    return `I need one or two setup details first: ${missing.slice(0, 3).join(", ")}.`;
+  }
+
+  function getStepBoundaryNote(artisanText) {
+    const lower = String(artisanText || "").toLowerCase();
+    const stepText = `${current?.title || ""} ${current?.action || ""} ${current?.advisor || ""} ${current?.watch || ""} ${current?.script || ""}`.toLowerCase();
+    if (!lower || !stepText) return "";
+    const stepWords = stepText.split(/[^a-z0-9]+/).filter((w) => w.length > 4);
+    const overlap = stepWords.some((w) => lower.includes(w));
+    const clearlyCoffee = /coffee|espresso|shot|grind|dose|yield|milk|foam|taste|guest|serve|cup|puck|machine|occasion|script|flow/.test(lower);
+    if (clearlyCoffee && !overlap) {
+      return `That question is not directly about this step, but I can address it briefly and then get you back on track for Step ${safeIndex + 1}: ${current?.title}.`;
+    }
+    return "";
+  }
+
   function buildStepAdvisorContext(artisanText) {
+    const passport = getMachinePassportStatus(artisanText);
     return {
-      machine: profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || profile?.machineType || "Home espresso machine",
-      grinder: profile?.grinder || profile?.grinderModel || "Home grinder",
-      dose: profile?.quickShotDose || profile?.houseDose || occasionItem?.dose || "18g",
-      yield: profile?.quickShotYield || profile?.houseYield || occasionItem?.yield || "36g",
-      shotTime: profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || occasionItem?.time || "not captured",
+      advisementWorkflow: "Wake → artisan issue/question → ICY checks Machine Passport → if missing, asks setup questions → writes Machine Passport → gives machine-appropriate guidance → artisan confirms next move → ICY logs decision → closeout",
+      machinePassportStatus: passport,
+      machineType: passport.machineType || "not captured",
+      machine: passport.machine || "not captured",
+      grinder: passport.grinder || "not captured",
+      adviceMode: passport.adviceMode,
+      missingMachinePassportFields: passport.missing,
+      dose: passport.dose || occasionItem?.dose || "not captured",
+      yield: passport.yieldOut || occasionItem?.yield || "not captured",
+      shotTime: passport.shotTime || occasionItem?.time || "not captured",
+      grind: passport.grind || "not captured",
       drink: occasion?.drink || occasionItem?.drink || occasionItem?.recommendedPrimaryDrink || "espresso",
       recurrence: occasion?.recurrence || profile?.lastDialInResult || "not captured",
       occasion: occasionItem?.name || occasion?.occasionName || "Current Occasion",
@@ -4714,14 +4972,19 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       currentStepAction: current?.action || current?.advisor || "not captured",
       currentStepScript: current?.script || "not captured",
       currentStepWatch: current?.watch || "not captured",
-      writtenTo: "Step Telemetry, Step Notes, Taste Notes, Recovery Notes, Guest Resonance, and Doma Report according to detected intent",
+      stepBoundaryRule: "Answer the artisan's question if possible. If the question is outside this step, briefly acknowledge that and re-anchor to the current step.",
+      draftCaptureRule: "Place captured information into visible form/report areas as a draft first. Ask if the artisan wants to add or change anything before final save/closeout.",
+      writtenTo: "Step Telemetry, Step Notes, Taste Notes, Recovery Notes, Guest Resonance, Machine Passport, and Doma Report according to detected intent",
       artisanVoice: artisanText
     };
   }
 
   function normalizeStepAdvisorResponse(advisorText, artisanText, routingLabels, changed) {
-    const base = String(advisorText || "").trim();
-    if (!base) return buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing: buildStepCaptureRouting(artisanText, changed) });
+    const fallback = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing: buildStepCaptureRouting(artisanText, changed) });
+    const rawBase = String(advisorText || "").trim() || fallback;
+    // Keep the on-screen guidance useful but not runaway. The report ledger can still keep the important routing,
+    // but the active step should not become unreadable or impossible for voice to summarize.
+    const base = trimForDisplay(rawBase, 1400);
     const routeLine = `\n\nVisible routing: I wrote this to ${routingLabels.join(" + ")}. You can verify it in the Step Capture Ledger and In-Step Report Review on this same step. It is marked for the Doma Report.`;
     return `${base}${base.includes("Visible routing:") ? "" : routeLine}`;
   }
@@ -4734,9 +4997,43 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return `Captured. You said: ${repeat}.${fieldLine}${routeLine}${reportLine}`;
   }
 
+  function trimForDisplay(text, max = 1400) {
+    const clean = String(text || "").replace(/\s+/g, " ").trim();
+    if (clean.length <= max) return clean;
+    return `${clean.slice(0, max).trim()}…`;
+  }
+
+  function buildConciseSpokenAdvisement({ artisanText, guidance, suggestedAction, machineQuestion, routingLabels }) {
+    const lower = String(`${artisanText || ""} ${guidance || ""}`).toLowerCase();
+    const routeLine = routingLabels?.length ? ` I placed it in ${routingLabels.slice(0, 2).join(" and ")} as a draft.` : " I placed it in the step as a draft.";
+    if (machineQuestion) {
+      return `I captured that.${routeLine} Before I advise, I need the Machine Passport clear so I do not give the wrong machine advice. ${machineQuestion}`;
+    }
+    if (/messy puck|puck looks messy|wet puck|soupy puck|puck/.test(lower)) {
+      return `I captured messy puck.${routeLine} A messy puck by itself is not automatically a failed shot. First check the cup and the flow. If it also tastes thin, ran fast, sprayed, or channeled, check distribution, tamp level, headspace, and grind before changing multiple variables. Do you want to add or change anything before I save this?`;
+    }
+    if (/thin|watery|fast|gush|runny/.test(lower)) {
+      return `I captured that the shot seems thin or fast.${routeLine} Keep the dose steady first. If the cup tastes watery, sour, or hollow, make one small adjustment—usually a little finer on grind if your machine allows it—then taste again. Do you want to add or change anything before I save this?`;
+    }
+    if (/few drops|no flow|chok|stalled/.test(lower)) {
+      return `I captured a possible choke or no-flow issue.${routeLine} Stop the pull, purge, and only change one thing next. If dose and puck prep were normal, try slightly coarser. Do you want to add or change anything before I save this?`;
+    }
+    if (/bitter|harsh|dry|ashy/.test(lower)) {
+      return `I captured bitter or harsh taste.${routeLine} First decide if the bitterness is pleasant or dry and lingering. If it is unpleasant, consider one controlled change: slightly shorter yield or a bit coarser. Do you want to add or change anything before I save this?`;
+    }
+    if (/sour|sharp|acid/.test(lower)) {
+      return `I captured sour or sharp taste.${routeLine} If it is unpleasant and thin, you may need a little more extraction. Keep dose steady and consider slightly finer grind or a little more yield if your machine allows it. Do you want to add or change anything before I save this?`;
+    }
+    if (/guest|serve|script|say|occasion|resonance/.test(lower)) {
+      return `I captured the Occasion question.${routeLine} Keep the service language short and focused on the guest. Use the current step script as the anchor, then bring the guest to the first sip. Do you want to add or change anything before I save this?`;
+    }
+    return `I captured that.${routeLine} My next move recommendation is: ${suggestedAction || "use the guidance shown on the screen, then taste and report back"}. Do you want to add or change anything before I save this?`;
+  }
+
   function shouldAskAdvisorForGuidance(artisanText) {
     const lower = String(artisanText || "").toLowerCase();
-    return /what should|what do i|help|advice|problem|wrong|runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled|messy|puck|soupy|wet|fractured|spray|channel|uneven|hollow|not sure|confused|fix|adjust/.test(lower);
+    // Broad natural-language trigger. ICY should not need exact phrases.
+    return /what should|what do i|help|advice|problem|wrong|issue|trouble|check|why|how do|runny|watery|thin|fast|slow|gush|few drops|no flow|bitter|sour|sharp|sweet|chok|stalled|messy|puck|soupy|wet|fractured|spray|channel|uneven|hollow|not sure|confused|fix|adjust|taste|milk|foam|texture|guest|serve|script|occasion|refreshing|cold|iced|tonic|matcha/.test(lower);
   }
 
   async function getNaturalStepAdvisorReply(artisanText, changed, routing) {
@@ -4751,7 +5048,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           transcript: artisanText,
           context: contextPayload,
           mode: "occasion_step_advisor",
-          instructions: "Respond as ICY, the Occasion-aware Intelligent Companion inside Home Barista IQ. Use natural language interpretation, not a narrow keyword script. You are active inside the current Occasion and current step. Route the artisan\'s note to visible fields/report, give contextual guidance from the machine/profile/house formula/current step context, and ask whether to add more, repeat, view report, or move next."
+          instructions: "Respond as ICY, the Occasion-aware Intelligent Companion inside Home Barista IQ. Follow the advisement workflow: Wake, artisan issue/question, check Machine Passport, ask missing setup questions if needed, write Machine Passport/form context, give machine-appropriate guidance, wait for artisan decision, log chosen next move, closeout. Use natural language interpretation, not a fixed keyword script. Keep the response concise: 90 to 140 words, no repetition, no long report narrative. If the user is on a Ninja, DeLonghi, Jura, Philips, all-in-one, or superautomatic, do not give semi-automatic espresso advice unless the machine supports it. If the question is outside the current step, answer briefly and re-anchor to the active step. Always preserve artisan agency: draft first, ask if they want to add/change before final save, and ask them to confirm the next move."
         })
       });
       const data = await response.json().catch(() => ({}));
@@ -4780,15 +5077,151 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       return;
     }
 
+    // Closed-loop phase: ICY already gave guidance and is waiting for the artisan
+    // to accept, modify, or decline the next move. This must be logged before closeout.
+    if (!hasWake && stepAdvisorConversationPhaseRef.current === "awaiting_decision") {
+      if (isLikelyAdvisorEcho(raw)) {
+        setStatus?.("ICY heard playback/echo and ignored it. It is still waiting for the artisan decision.");
+        return;
+      }
+      const pending = stepAdvisorPendingDecisionRef.current || {};
+      if (pending.machineQuestion) {
+        const passportFields = applyMachinePassportDraftFromText(raw);
+        const combinedTranscript = `${pending.transcript || ""}\nMachine Passport clarification: ${raw}`.trim();
+        const combinedFields = [...new Set([...(pending.fields || []), ...(passportFields || []).map((x) => `Machine Passport: ${x}`)])];
+        const routing = pending.routes?.length ? pending.routes : buildStepCaptureRouting(combinedTranscript, combinedFields);
+        const routingLabels = routing.map((r) => r.label);
+        const guidance = await getNaturalStepAdvisorReply(combinedTranscript, combinedFields, routing);
+        const suggestedAction = inferSuggestedActionFromGuidance(guidance, combinedTranscript);
+        const updatedPending = { ...pending, transcript: combinedTranscript, fields: combinedFields, routes: routing, routingLabels, guidance, suggestedAction, machineQuestion: "" };
+        stepAdvisorPendingDecisionRef.current = updatedPending;
+        setStepAdvisorPendingDecision(updatedPending);
+        setStepAdvisorFields(combinedFields);
+        setStepPlacementNotice(`Machine Passport updated from your answer. Draft capture remains in: ${routingLabels.join(" + ")}. Review before final save.`);
+        setStepAdvisorReply(guidance);
+        setStepReview({
+          ...(stepReview || {}),
+          at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+          occasion: occasionItem.name,
+          step: safeIndex + 1,
+          stepTitle: current?.title || "Current step",
+          transcript: combinedTranscript,
+          fields: combinedFields,
+          routes: routing,
+          writtenTo: routingLabels.join(" + "),
+          advisorGuidance: guidance,
+          suggestedAction,
+          reportStatus: "The Machine Passport update, observation, and ICY guidance are marked for the Doma Report.",
+          nextPrompt: "Tell ICY whether this is the next move you want to take, or tell ICY what you want to change."
+        });
+        setStepAdvisorPhase("Waiting for artisan decision");
+        stepAdvisorConversationPhaseRef.current = "awaiting_decision";
+        setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Machine Passport clarification: ${raw}`);
+        recordTelemetry?.("occasion_step_advisor_machine_passport_clarified", { companion: "ICY", occasion: occasionItem.name, step: safeIndex + 1, fields: passportFields });
+        const spokenAdvisement = buildConciseSpokenAdvisement({ artisanText: combinedTranscript, guidance, suggestedAction, machineQuestion: "", routingLabels });
+        const passportSpoken = `Got it. I updated the Machine Passport from your answer. ${spokenAdvisement}`;
+        setLastSpokenAdvisement(passportSpoken);
+        setStepVoiceStatus("ICY advisement ready. Speaking now…");
+        speakStepAdvisor(passportSpoken, { resumeListening: true, updateDisplay: false, forceVoice: true });
+        return;
+      }
+      const decisionText = summarizeArtisanDecision(raw, pending);
+      const closeout = buildDecisionCloseoutText(raw, pending);
+      const decisionReview = {
+        ...(stepReview || {}),
+        at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+        occasion: occasionItem.name,
+        step: safeIndex + 1,
+        stepTitle: current?.title || "Current step",
+        transcript: pending?.transcript || raw,
+        fields: pending?.fields || [],
+        routes: pending?.routes || [],
+        writtenTo: pending?.routingLabels?.join(" + ") || "Step Notes + Advisor Guidance + Doma Report context",
+        advisorGuidance: `${pending?.guidance || ""}\n\nArtisan decision / chosen next move: ${decisionText}`,
+        reportStatus: "The observation, ICY guidance, and artisan chosen next move are marked for the Doma Report.",
+        nextPrompt: "ICY is waiting to know if anything else is needed. Say “no” to close this step, or add another note."
+      };
+      setStepReview(decisionReview);
+      setStepReviewConfirmed(false);
+      setStepAdvisorPendingDecision({ ...pending, decisionText });
+      stepAdvisorPendingDecisionRef.current = { ...pending, decisionText };
+      setStepAdvisorPhase("Waiting for anything else");
+      stepAdvisorConversationPhaseRef.current = "awaiting_more";
+      setStepAdvisorReply(closeout);
+      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan decision: ${raw}\nICY logged chosen next move: ${decisionText}`);
+      setStepCaptureLedger((prev) => [{
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+        occasion: occasionItem.name,
+        step: safeIndex + 1,
+        stepTitle: current?.title || "Current step",
+        transcript: `Artisan decision: ${raw}`,
+        fields: pending?.fields || [],
+        routes: pending?.routes || [{ label: "Advisor Guidance / Chosen Next Move", detail: "Decision logged into report context." }],
+        advisorGuidance: closeout
+      }, ...prev].slice(0, 8));
+      recordTelemetry?.("occasion_step_advisor_decision_logged", { companion: "ICY", occasion: occasionItem.name, step: safeIndex + 1, decision: decisionText });
+      speakStepAdvisor(closeout, { resumeListening: true, updateDisplay: false });
+      return;
+    }
+
+    // Final closeout phase: after ICY asks if anything else is needed, the artisan can say no.
+    if (!hasWake && stepAdvisorConversationPhaseRef.current === "awaiting_more") {
+      if (isLikelyAdvisorEcho(raw)) {
+        setStatus?.("ICY heard playback/echo and ignored it. It is still waiting for the artisan closeout.");
+        return;
+      }
+      const pending = stepAdvisorPendingDecisionRef.current || {};
+      if (isArtisanNoMore(raw)) {
+        const finalText = buildFinalCloseoutText(pending);
+        setStepAdvisorReply(finalText);
+        setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${raw}\nICY closed the step loop.`);
+        setStepPlacementNotice(`Closed loop logged. Review the In-Step Report Review, then choose Repeat This Step or Move to Next Step.`);
+        setStepAdvisorPhase("Wake word mode");
+        stepAdvisorConversationPhaseRef.current = "wake";
+        stepAdvisorAwaitingInputRef.current = false;
+        stepAdvisorPendingDecisionRef.current = null;
+        setStepAdvisorPendingDecision(null);
+        recordTelemetry?.("occasion_step_advisor_closeout", { companion: "ICY", occasion: occasionItem.name, step: safeIndex + 1, status: "closed" });
+        speakStepAdvisor(finalText, { resumeListening: false, updateDisplay: false });
+        return;
+      }
+      // If they did not say no, treat this as an additional note and continue normally.
+      stepAdvisorConversationPhaseRef.current = "awaiting_input";
+      stepAdvisorAwaitingInputRef.current = true;
+      artisanText = raw;
+    }
+
     if (hasWake) {
       const now = Date.now();
       const intro = `I'm here. What are we working on?`;
+
+      if (stepAdvisorConversationPhaseRef.current === "awaiting_decision" && stepAdvisorPendingDecisionRef.current) {
+        const pending = stepAdvisorPendingDecisionRef.current;
+        const resume = `I'm here. We are still in ${occasionItem.name}, Step ${safeIndex + 1}: ${current?.title}. I am waiting for your decision on the next move: ${pending.suggestedAction || "the guidance I just gave"}. Tell me what you want to do, or tell me what you want to change.`;
+        setStepAdvisorReply(resume);
+        setStepAdvisorPhase("Waiting for artisan decision");
+        setStatus?.("ICY resumed the existing advisement workflow. No context was cleared.");
+        speakStepAdvisor(resume, { resumeListening: true });
+        return;
+      }
+
+      if (stepAdvisorConversationPhaseRef.current === "awaiting_more" && stepAdvisorPendingDecisionRef.current) {
+        const resume = `I'm here. I already logged the chosen next move for ${occasionItem.name}, Step ${safeIndex + 1}. Is there anything else, or should I close this step?`;
+        setStepAdvisorReply(resume);
+        setStepAdvisorPhase("Waiting for anything else");
+        setStatus?.("ICY resumed the existing advisement workflow closeout.");
+        speakStepAdvisor(resume, { resumeListening: true });
+        return;
+      }
 
       // If the transcript is only the wake phrase, do ONLY the wake response:
       // no notes, no report write, no guidance generation.
       if (wake.wakeOnly || !wake.afterWake || isLikelyAdvisorEcho(wake.afterWake)) {
         stepAdvisorLastWakeAtRef.current = now;
         stepAdvisorAwaitingInputRef.current = true;
+        stepAdvisorConversationPhaseRef.current = "awaiting_input";
+        setStepAdvisorPhase("Waiting for artisan input");
         setStepAdvisorReply(intro);
         setStepPlacementNotice(`ICY is online for ${occasionItem.name}, Step ${safeIndex + 1}: ${current?.title}. Nothing has been written yet. Speak naturally now; captured details will appear here.`);
         setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()} — waiting for artisan input`);
@@ -4805,6 +5238,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
 
       stepAdvisorLastWakeAtRef.current = now;
       stepAdvisorAwaitingInputRef.current = true;
+      stepAdvisorConversationPhaseRef.current = "awaiting_input";
+      setStepAdvisorPhase("Waiting for artisan input");
       artisanText = wake.afterWake;
       setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()}`);
       recordTelemetry?.("occasion_step_advisor_wake", { companion: "ICY", wakeOnly: false, occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
@@ -4823,14 +5258,21 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
 
     // At this point we have a real artisan note after ICY has been summoned.
     stepAdvisorAwaitingInputRef.current = false;
+    stepAdvisorConversationPhaseRef.current = "processing";
+    setStepAdvisorPhase("Processing artisan note");
     setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Artisan: ${artisanText}`);
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}\n` : ""}Occasion Step Advisor (${occasionItem.name}, Step ${safeIndex + 1}): ${artisanText}`);
 
+    const passportFields = applyMachinePassportDraftFromText(artisanText);
     const changed = applyVoiceTextToFields(artisanText, { updateProfile, updateOccasion, setGuestResonance, setTastingNote, recordTelemetry });
-    const routing = buildStepCaptureRouting(artisanText, changed);
+    const allChanged = [...new Set([...(changed || []), ...(passportFields || []).map((x) => `Machine Passport: ${x}`)])];
+    const routing = buildStepCaptureRouting(artisanText, allChanged);
     const routingLabels = routing.map((r) => r.label);
-    setStepAdvisorFields(changed);
-    setStepPlacementNotice(`Written to: ${routingLabels.join(" + ")}. You can verify it in this step panel now; it will be included in the Doma Report when you create the report.`);
+    const passportStatus = getMachinePassportStatus(artisanText);
+    const machineQuestion = isTechnicalAdvisementRequest(artisanText) ? buildMachinePassportQuestion(passportStatus) : "";
+    const stepBoundaryNote = getStepBoundaryNote(artisanText);
+    setStepAdvisorFields(allChanged);
+    setStepPlacementNotice(`Draft capture placed in: ${routingLabels.join(" + ")}. ${passportFields.length ? "Machine Passport fields were updated from your voice note. " : ""}Review it here before final save; it will be included in the Doma Report after confirmation.`);
 
     const entryId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setStepCaptureLedger((prev) => [{
@@ -4840,33 +5282,37 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       step: safeIndex + 1,
       stepTitle: current?.title || "Current step",
       transcript: artisanText,
-      fields: changed,
+      fields: allChanged,
       routes: routing,
       advisorGuidance: "ICY is interpreting the full natural-language note with this step, form, House Formula, and Recovery Matrix context…"
     }, ...prev].slice(0, 8));
 
     setStepAdvisorReply("ICY is interpreting your full note with the current Occasion step, House Formula, and Recovery Matrix context…");
     setStatus?.(`ICY captured the note and wrote it to ${routingLabels.join(" + ")}. Generating contextual guidance…`);
-    recordTelemetry?.("occasion_step_advisor_capture", { companion: "ICY", occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
+    recordTelemetry?.("occasion_step_advisor_capture", { companion: "ICY", occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: allChanged, routes: routingLabels, transcript: artisanText });
 
     const needsGuidance = shouldAskAdvisorForGuidance(artisanText);
-    const guidance = needsGuidance
-      ? await getNaturalStepAdvisorReply(artisanText, changed, routing)
-      : `Capture-only note. The artisan's spoken information was written to ${routingLabels.join(" + ")}. No extra guidance was requested; preserve this as report context and keep ICY quiet until the artisan asks again.`;
+    const guidance = machineQuestion
+      ? `${stepBoundaryNote ? `${stepBoundaryNote} ` : ""}${machineQuestion} I placed what you already said into the form as a draft, but I will hold the technical recommendation until the Machine Passport is clear.`
+      : (needsGuidance
+        ? await getNaturalStepAdvisorReply(artisanText, allChanged, routing)
+        : `Capture-only note. The artisan's spoken information was written to ${routingLabels.join(" + ")} as a draft. No extra guidance was requested; preserve this as report context and keep ICY quiet until the artisan asks again.`);
+    const suggestedAction = machineQuestion ? "Answer the Machine Passport setup question so ICY can give the right machine-appropriate guidance." : inferSuggestedActionFromGuidance(guidance, artisanText);
 
-    const spokenConfirmation = buildStepSpokenConfirmation(artisanText, changed, routingLabels);
+    const spokenConfirmation = buildStepSpokenConfirmation(artisanText, allChanged, routingLabels);
     const review = {
       at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
       occasion: occasionItem.name,
       step: safeIndex + 1,
       stepTitle: current?.title || "Current step",
       transcript: artisanText,
-      fields: changed,
+      fields: allChanged,
       routes: routing,
       writtenTo: routingLabels.join(" + "),
       advisorGuidance: guidance,
-      reportStatus: "This capture and any ICY guidance are marked for the Doma Report for this Occasion step.",
-      nextPrompt: "Review the captured form/report fields below. When it looks right, choose Add More, Repeat This Step, View Report, or Move to Next Step."
+      suggestedAction,
+      reportStatus: "This capture, ICY guidance, and the artisan's chosen next move are marked for the Doma Report for this Occasion step.",
+      nextPrompt: "Say whether you will take this next move, change it, or add more information."
     };
 
     setStepReview(review);
@@ -4876,10 +5322,17 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     if (setAdvisorText) setAdvisorText(guidance);
     if (setSynthesis) setSynthesis((prev) => prev || { detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "natural-language restoration" });
 
+    const pending = { transcript: artisanText, fields: allChanged, routes: routing, routingLabels, guidance, suggestedAction, machinePassportStatus: passportStatus, machineQuestion, stepBoundaryNote };
+    stepAdvisorPendingDecisionRef.current = pending;
+    setStepAdvisorPendingDecision(pending);
+    stepAdvisorConversationPhaseRef.current = "awaiting_decision";
+    setStepAdvisorPhase("Waiting for artisan decision");
     setStepAdvisorReply(guidance);
-    setStatus?.("ICY filled the form/report fields, repeated back the capture, and returned to wake-word mode.");
-    stepAdvisorAwaitingInputRef.current = false;
-    speakStepAdvisor(spokenConfirmation, { resumeListening: true, updateDisplay: false });
+    setStatus?.("ICY filled the form/report fields and is waiting for the artisan to accept, change, or decline the next move.");
+    const spokenAdvisement = buildConciseSpokenAdvisement({ artisanText, guidance, suggestedAction, machineQuestion, routingLabels });
+    setLastSpokenAdvisement(spokenAdvisement);
+    setStepVoiceStatus("ICY advisement ready. Speaking now…");
+    speakStepAdvisor(spokenAdvisement, { resumeListening: true, updateDisplay: false, forceVoice: true });
   }
 
   function startStepAdvisor() {
@@ -4918,8 +5371,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
   function stopStepAdvisor() {
+    // Stop listening/speaking only. Do NOT clear transcript, draft capture, pending decision,
+    // Machine Passport clarification, or In-Step Report Review. Restart should resume in place.
     stepAdvisorEnabledRef.current = false;
-    stepAdvisorAwaitingInputRef.current = false;
     stepAdvisorSuppressUntilRef.current = Date.now() + 1200;
     try { stepRecognitionRef.current?.stop?.(); } catch {}
     clearStepAdvisorRestartTimer();
@@ -4927,8 +5381,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     stopFastLocalSpeech();
     setStepAdvisorEnabled(false);
     setStepAdvisorListening(false);
-    setStatus?.("ICY stopped for this step.");
-    recordTelemetry?.("occasion_step_advisor_stopped", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
+    setStatus?.(`ICY stopped listening for this step. Current advisement workflow state is preserved: ${stepAdvisorPhase}. Restart ICY to continue from here.`);
+    recordTelemetry?.("occasion_step_advisor_stopped_preserved", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, phase: stepAdvisorConversationPhaseRef.current });
   }
 
   useEffect(() => () => { clearStepAdvisorRestartTimer(); clearStepAdvisorSpeechFallback(); try { stepRecognitionRef.current?.stop?.(); } catch {} stopFastLocalSpeech(); }, []);
@@ -4951,9 +5405,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <section className="stepAdvisorPanel">
-        <p className="eyebrow">ICY — Intelligent Companion for You</p>
+        <p className="eyebrow">ICY — Advisement Workflow Companion</p>
         <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
-        <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, machine profile, house formula, and form context to fill visible fields, write notes into this step, repeat back what it captured, and keep the Occasion moving.</p>
+        <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, Machine Passport, grinder, machine category, house formula, telemetry, and form context. If the basics are missing, ICY asks a short setup checklist and writes the Machine Passport before advising. If enough context is present, it gives one calm next move, places information in the form as a draft, asks if you want to add or change anything, logs the artisan-confirmed decision, and keeps the Occasion moving.</p>
         <div className="buttonRow">
           <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop ICY" : "Enable ICY / No-Hands Guidance"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
@@ -4963,8 +5417,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={pauseStepAdvisorVoice}>Pause Voice</button>
           <button className="secondary" type="button" onClick={resumeStepAdvisorVoice}>{stepVoicePaused ? "Resume Voice" : "Resume"}</button>
           <button className="secondary" type="button" onClick={stopStepAdvisorVoice}>Stop Voice</button>
+          <button className="secondary" type="button" onClick={replayLastStepAdvisement}>Play ICY Advisement</button>
         </div>
-        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? "ICY is listening inside this Occasion step." : "Enable ICY once, then say “Hey ICY” or “Advisor” while you are on this step."}</div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `ICY is listening inside this Occasion step. Phase: ${stepAdvisorPhase}.` : "Enable ICY once, then say “Hey ICY” or “Advisor” while you are on this step. ICY follows the advisement workflow and can ask for Machine Passport, grind, dose, yield, time, taste, or guest context before giving machine-appropriate guidance."}</div>
+        <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
         <div className="grid">
           <Field label="Dose captured" value={profile?.quickShotDose || profile?.houseDose || ""} onChange={(v) => updateProfile?.("quickShotDose", v)} />
           <Field label="Yield captured" value={profile?.quickShotYield || profile?.houseYield || ""} onChange={(v) => updateProfile?.("quickShotYield", v)} />
@@ -4982,9 +5438,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
               <div><strong>Artisan said</strong><p>{stepReview.transcript}</p></div>
               <div><strong>Written to</strong><p>{stepReview.writtenTo || "Step Notes"}</p></div>
               <div><strong>Report status</strong><p>{stepReview.reportStatus}</p></div>
-              <div><strong>Advisor asks</strong><p>{stepReview.nextPrompt}</p></div>
+              <div><strong>Advisor asks</strong><p>{stepReview.nextPrompt}</p></div>{stepReview.suggestedAction ? <div><strong>Suggested / chosen next move</strong><p>{stepReview.suggestedAction}</p></div> : null}
             </div>
             <div className="noteBox"><strong>Advisor Guidance for This Step</strong><p>{stepReview.advisorGuidance}</p></div>
+            <div className="noteBox"><strong>Advisement Outcome / Community Learning</strong><p className="small">After you try the chosen next move, tell ICY what happened. This helps ICY learn from actual outcomes across machine types, recovery patterns, taste preferences, and community usage.</p><textarea value={advisementOutcome} onChange={(e) => setAdvisementOutcome(e.target.value)} placeholder="Example: I tried one step finer. The next pull had better body and less channeling, but still tasted a little sharp." /><div className="buttonRow"><button className="secondary" type="button" onClick={() => logAdvisementOutcome(advisementOutcome)}>Log Outcome for ICY Learning</button></div>{communityLearningNote ? <small>{communityLearningNote}</small> : null}</div>
             <label className="checkLine"><input type="checkbox" checked={stepReviewConfirmed} onChange={(e) => setStepReviewConfirmed(e.target.checked)} /> I reviewed this capture. It is written to the right place and should be included in the Doma Report.</label>
             <div className="buttonRow">
               <button className="secondary" type="button" onClick={() => { setStepAdvisorTranscript((prev) => `${prev ? `${prev}
@@ -5122,42 +5579,149 @@ function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestR
 }
 
 
+function getContextualIcyChecklist(text, { profile, occasion, occasionItem, currentStep } = {}) {
+  const raw = String(text || "").trim();
+  const lower = raw.toLowerCase();
+  const machine = profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || profile?.machineType || "";
+  const grinder = profile?.grinder || profile?.grinderModel || "";
+  const dose = profile?.quickShotDose || profile?.houseDose || "";
+  const yieldOut = profile?.quickShotYield || profile?.houseYield || "";
+  const shotTime = profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || "";
+  const grind = profile?.quickShotGrind || profile?.grinderSetting || "";
+  const beans = profile?.beans || profile?.beanName || profile?.coffeeBeans || "";
+  const missing = [];
+  if (!machine) missing.push("machine");
+  if (!grinder) missing.push("grinder");
+  if (!dose) missing.push("dose");
+  if (!yieldOut) missing.push("yield");
+  if (!shotTime) missing.push("shot time");
+  if (!grind) missing.push("grind setting");
+  if (!beans) missing.push("beans");
+
+  let category = "observation";
+  if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) category = "choke/no-flow";
+  else if (/runny|watery|thin|fast|gush|too quick|ran quick|ran fast|weak/.test(lower)) category = "fast/thin";
+  else if (/messy puck|wet puck|soupy puck|fractured puck|puck|channel|spray|spurt|uneven/.test(lower)) category = "puck/flow";
+  else if (/bitter|dry|ashy|harsh|over extract|over-extract/.test(lower)) category = "bitter/harsh";
+  else if (/sour|sharp|acid|under extract|under-extract/.test(lower)) category = "sour/sharp";
+  else if (/milk|foam|texture|steaming|latte|cappuccino|flat white/.test(lower)) category = "milk/texture";
+  else if (/guest|serve|present|script|say to|room|occasion|feeling|resonance/.test(lower)) category = "stagecraft/guest";
+  else if (/cold|iced|tonic|sparkling|matcha|foam|refreshing|sweet/.test(lower)) category = "cold/sensory";
+  else if (/i like|liked|love|loved|good|tastes good|acceptable|would serve/.test(lower)) category = "preference-positive";
+
+  const common = [];
+  if (!dose || !yieldOut || !shotTime) common.push("Give me the shot numbers if you have them: dose in, yield out, and shot time.");
+  if (!grind) common.push("Tell me the current grind setting or whether you changed it from the last pull.");
+  if (!beans) common.push("Confirm the bean/roast if it matters for this cup.");
+
+  let checklist = [];
+  if (category === "fast/thin") checklist = [
+    "Was the flow fast from the start, or did it speed up after blonding?",
+    "What are the dose, yield, and time for this pull?",
+    "Did the cup taste sour, hollow, watery, or just brighter than expected?",
+    "Did anything change from the last good pull: grind, dose, beans, distribution, or tamp?"
+  ];
+  else if (category === "choke/no-flow") checklist = [
+    "Did the pump run with only a few drops, or was there no flow at all?",
+    "What dose is in the basket, and is it higher than your normal house formula?",
+    "Did the grind move finer before this pull?",
+    "Was the puck level and evenly distributed before tamping?"
+  ];
+  else if (category === "puck/flow") checklist = [
+    "Is the cup itself acceptable, or is the puck only visually messy?",
+    "Did you see channeling, spraying, or uneven flow during the shot?",
+    "What basket, dose, and puck screen/headspace are you using?",
+    "Did the issue repeat, or was this only one pull?"
+  ];
+  else if (category === "bitter/harsh") checklist = [
+    "Is the bitterness pleasant chocolate/cocoa, or dry and lingering?",
+    "What was the yield and shot time compared with your house formula?",
+    "Did the cup feel heavy and dry at the finish?",
+    "Would you serve it as-is, or does it need softening?"
+  ];
+  else if (category === "sour/sharp") checklist = [
+    "Is the acidity pleasant and bright, or sharp and unpleasant?",
+    "What was the yield and time compared with your house formula?",
+    "Did the body feel thin or underdeveloped?",
+    "Would a slightly finer grind or slightly longer yield fit your taste goal?"
+  ];
+  else if (category === "milk/texture") checklist = [
+    "Are you missing sweetness, shine, microfoam, temperature, or pourability?",
+    "What drink are you building: cappuccino, latte, flat white, or another milk drink?",
+    "Did the milk stretch too long, not enough, or get too hot?",
+    "Does the texture match the Occasion you are trying to serve?"
+  ];
+  else if (category === "stagecraft/guest") checklist = [
+    "Who is the cup for, and what should they feel when they receive it?",
+    "Do you want the script to sound warm, impressive, quiet, playful, or brief?",
+    "Is the guest waiting, watching, or already seated?",
+    "Should the cup be served with explanation, or should the first sip speak first?"
+  ];
+  else if (category === "cold/sensory") checklist = [
+    "Should this drink feel refreshing, sweet, creamy, sparkling, or bold?",
+    "What is the sweetness level you want: low, balanced, or dessert-like?",
+    "Is espresso the center of the drink, or an accent inside the build?",
+    "What should the guest notice first: aroma, color, chill, foam, citrus, or finish?"
+  ];
+  else if (category === "preference-positive") checklist = [
+    "What exactly did you like: sweetness, body, acidity, finish, texture, or the way it landed?",
+    "Do you want to save this as a reference recipe or house preference?",
+    "Would you serve it again in this Occasion?",
+    "Should we keep the numbers steady next time and only refine presentation?"
+  ];
+  else checklist = [
+    "Tell me whether this is shot data, taste feedback, puck behavior, guest reaction, or stagecraft.",
+    "What are the dose, yield, time, and grind if this involves extraction?",
+    "Do you like the cup, or are we trying to adjust it?",
+    "What should the Occasion feel like when it lands?"
+  ];
+
+  return { category, missing, checklist, common };
+}
+
 function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepNumber, totalSteps, profile, occasion, changedFields, routing } = {}) {
   const raw = String(text || "").trim();
   const lower = raw.toLowerCase();
   const parsed = parseQuickShotNote(raw);
-  const houseDose = profile?.houseDose || "not set";
-  const houseYield = profile?.houseYield || "not set";
-  const houseTime = profile?.houseShotTime || occasion?.currentShotTime || "not set";
-  const grind = profile?.grinderSetting || parsed.grind || "not captured";
+  const houseDose = profile?.houseDose || profile?.quickShotDose || "not set";
+  const houseYield = profile?.houseYield || profile?.quickShotYield || "not set";
+  const houseTime = profile?.houseShotTime || occasion?.currentShotTime || profile?.quickShotTime || "not set";
+  const grind = profile?.grinderSetting || profile?.quickShotGrind || parsed.grind || "not captured";
+  const machine = profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || profile?.machineType || "your machine";
+  const grinder = profile?.grinder || profile?.grinderModel || "your grinder";
   const occasionName = occasionItem?.name || occasion?.occasionName || "this Occasion";
   const stepTitle = currentStep?.title || "this step";
   const routeLabels = Array.isArray(routing) && routing.length ? routing.map((r) => r.label) : [];
-  const writtenTo = routeLabels.length ? ` I wrote this to ${routeLabels.join(" and ")}. You can verify it in the Where this was written panel on this same step, and it will be included in your Doma Report when you create the report.` : " I kept this as a visible Step Note and Doma Report context.";
+  const writtenTo = routeLabels.length ? `I wrote this to ${routeLabels.join(" and ")}. You can verify it in the Where this was written panel on this same step, and it will be included in your Doma Report when you create the report.` : "I kept this as a visible Step Note and Doma Report context.";
   const fields = changedFields?.length ? ` I also updated these visible fields: ${changedFields.join(", ")}.` : "";
+  const ctx = getContextualIcyChecklist(raw, { profile, occasion, occasionItem, currentStep });
+  const missingLine = ctx.missing.length ? ` I still need ${ctx.missing.slice(0, 4).join(", ")} to make this more precise.` : " I have enough basic setup context to give you a first next move.";
+  const checklistLine = ctx.checklist.slice(0, 3).map((q, i) => `${i + 1}) ${q}`).join(" ");
   let guidance = "";
 
-  if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) {
-    guidance = `That sounds like a choke or no-flow condition, not a fast shot. Because your house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, keep the dose steady, stop the pump, knock out the puck, purge, and try one to two steps coarser. Taste the next pull before changing more than one variable.`;
-  } else if (/messy puck|wet puck|soupy puck|fractured puck|puck is messy|messy|soupy/.test(lower)) {
-    guidance = `I captured this as a puck-behavior note, not automatically as a failed shot. A messy or wet puck can be normal depending on the machine, basket, pressure release, and headspace. First read the cup: if the flow and taste are acceptable, log it as an observation. If it repeats with watery taste or fast flow compared with your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}, check dose/headspace and puck prep before changing multiple variables.`;
-  } else if (/runny|watery|thin|fast|gush|too quick|ran quick|ran fast/.test(lower)) {
-    guidance = `That sounds like the shot may be running too fast or tasting thin. I see your current house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, with grind ${grind}. If this cup tastes sharp, sour, watery, or hollow, keep dose steady and move one step finer. If you actually like the brightness, log it as a preference instead of treating it as failure.`;
-  } else if (/bitter|dry|ashy|harsh|over extract|over-extract/.test(lower)) {
-    guidance = `That points toward a possible over-extracted or harsh cup, especially if the finish feels dry. Compare it against your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}. Try tasting first. If the bitterness is unpleasant, consider a slightly shorter yield or one step coarser next time, but change only one variable.`;
-  } else if (/sour|sharp|acid|under extract|under-extract/.test(lower)) {
-    guidance = `That sounds like possible under-extraction or a cup that is brighter than you want. With your house formula at ${houseDose} in, ${houseYield} out, around ${houseTime}, try keeping dose steady and either grinding one step finer or extending the yield slightly only if the taste is not acceptable to you.`;
-  } else if (/i like|liked|love|loved|good|tastes good|acceptable|would serve/.test(lower)) {
-    guidance = `Good. If the cup is acceptable to your taste, we should not treat it as a failure just because one number is imperfect. I captured your preference so you can connect what you liked with the recipe and repeat it later. If you would serve it, keep this as a positive reference point for the Occasion.`;
-  } else if (/what do i say|script|say to|guest|serve|present/.test(lower)) {
-    guidance = `For this step, keep the language simple and confident. You can say: ${currentStep?.script || "I made this to fit this moment. Tell me what you notice first."}`;
-  } else if (/next|what now|what should i do|help/.test(lower)) {
-    guidance = `You are on Step ${stepNumber} of ${totalSteps}: ${stepTitle}. The next best move is: ${currentStep?.action || currentStep?.advisor || "move calmly through the step and capture what you observe."}`;
+  if (ctx.category === "choke/no-flow") {
+    guidance = `This sounds like a choke or no-flow condition, not a fast shot. With ${machine} and ${grinder}, compare against your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}. First stop the pump, knock out the puck, purge, and try one to two steps coarser only if the dose and prep were normal.`;
+  } else if (ctx.category === "fast/thin") {
+    guidance = `This sounds like fast flow or a thin cup. Compare it to your house formula: ${houseDose} in, ${houseYield} out, around ${houseTime}, grind ${grind}. If the taste is watery, sour, or hollow, keep the dose steady and move one small step finer. If you actually like the brightness, save it as a preference instead of treating it as failure.`;
+  } else if (ctx.category === "puck/flow") {
+    guidance = `I am treating this as puck and flow behavior, not automatically a failed cup. First read the cup. If it tastes good and the flow was acceptable, log the puck observation and keep going. If it repeats with thin taste, spraying, or channeling, check distribution, tamp level, headspace, and grind before changing multiple variables.`;
+  } else if (ctx.category === "bitter/harsh") {
+    guidance = `This points toward harshness or over-extraction only if the finish is dry and unpleasant. Compare yield and time against ${houseDose} in, ${houseYield} out, around ${houseTime}. Taste first; then consider one variable: slightly shorter yield or one step coarser.`;
+  } else if (ctx.category === "sour/sharp") {
+    guidance = `This may be under-extraction or simply brighter acidity than expected. If the cup is sharp and thin, keep dose steady and consider one step finer or slightly more yield. If you like the brightness, capture it as a taste preference for this bean.`;
+  } else if (ctx.category === "milk/texture") {
+    guidance = `This is a milk texture and service-fit question. Tell me whether the issue is sweetness, temperature, foam thickness, shine, or pourability. Then we can adjust stretch time, roll, temperature, or drink build without changing the espresso unnecessarily.`;
+  } else if (ctx.category === "stagecraft/guest") {
+    guidance = `This is an Occasion/stagecraft moment. Stay focused on the person receiving the cup. Use a short script: ${currentStep?.script || "I made this for this moment. Tell me what you notice first."}`;
+  } else if (ctx.category === "cold/sensory") {
+    guidance = `This is a sensory-build decision. Decide the first impression: refreshing, creamy, sparkling, sweet, or bold. Then adjust sweetness, dilution, ice, foam, or citrus around that intended guest experience.`;
+  } else if (ctx.category === "preference-positive") {
+    guidance = `Good. If you like the cup, we do not need to treat imperfect numbers as failure. Save what you liked and connect it to the recipe so you can repeat it later.`;
   } else {
-    guidance = `I captured your note for ${occasionName}, Step ${stepNumber}: ${stepTitle}. If this was shot data, taste feedback, Guest Resonance, or a recovery issue, I will keep it with this step so it can feed the Doma Report.`;
+    guidance = `I captured this as a contextual note for the current Occasion step. I am not going to guess beyond the data. Answer one or two checklist items and I can narrow the next move.`;
   }
 
-  return `I'm here. You are in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields} ${guidance} I also wrote this guidance into Advisor Guidance for This Step, and it is marked for the Doma Report. Do you want to add anything else before we move on? If it looks right, confirm the In-Step Report Review, then choose Move to Next Step or Repeat This Step.`;
+  return `I'm here with you in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields}${missingLine} Based on what you said, I am reading this as ${ctx.category}. ${guidance} Quick checklist: ${checklistLine} If you answer those, I can refine the next move. This guidance is marked for the Doma Report, and you can Add More, Repeat This Step, View Report, or Move to Next Step.`;
 }
 
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }

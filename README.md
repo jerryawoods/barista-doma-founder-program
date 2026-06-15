@@ -1,25 +1,21 @@
-# Barista Doma / Home Barista IQ — v8.9.17 Universal ICY Occasion-Step Restoration
+# Barista Doma / Home Barista IQ — v8.9.22 ICY Community Learning Loop
 
-Focused patch after v8.9.16.
+Focused patch after user clarified:
+- ICY should get smarter based on feedback, outcomes, community usage, Machine Passport patterns, and what actually worked.
 
-Purpose:
-- Preserve the wake-word wait fix.
-- Make ICY clearly universal across any of the 21 Occasions and any active step.
-- Avoid hard-wired demo behavior.
-- Restore the expectation that the artisan can speak naturally after ICY wakes.
+Adds:
+- Advisement Outcome / Community Learning area in the In-Step Report Review.
+- ICY closeout now asks the artisan to come back and say what happened after trying the next move.
+- Outcome logging captures:
+  - Occasion
+  - active step
+  - Machine Passport context
+  - house formula
+  - artisan issue
+  - ICY guidance
+  - artisan chosen action
+  - outcome feedback
+  - intended community-learning use
+- Outcome feedback is stored in the visible capture ledger and telemetry as an advisement workflow learning signal.
 
-Key behavior:
-1. Open any Occasion.
-2. Move to any step.
-3. Enable ICY / No-Hands Guidance.
-4. Say “Hey ICY” or “Advisor.”
-5. ICY says: “I’m here. What are we working on?”
-6. Nothing is written from the wake word alone.
-7. Speak naturally: shot data, taste feedback, puck behavior, guest reaction, uncertainty, stagecraft, or recovery issue.
-8. ICY uses the active Occasion, active step, machine profile, house formula, and form context.
-9. ICY writes to the visible place, repeats back, and marks the capture/guidance for the Doma Report.
-
-Test across:
-- The Friend Who Needs a Lift — Step 1: “I want this cup to feel warm and encouraging.”
-- The First Cup Diagnostic — puck/shot step: “The puck looks messy and the shot tastes a little thin.”
-- First Sip Flex — cold/modern Occasion: “I want this to feel refreshing, not too sweet.”
+This is not yet a full backend community database. It is the front-end/domain capture hook so future persistence and aggregation can be connected cleanly.
