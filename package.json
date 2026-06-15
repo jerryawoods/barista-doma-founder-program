@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8911-advisor-response-capture-fix",
-  "version": "8.9.11",
+  "name": "barista-doma-home-barista-development-platform-v8915-icy-voice-recovery",
+  "version": "8.9.15",
   "private": true,
   "scripts": {
     "dev": "next dev",

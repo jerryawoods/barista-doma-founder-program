@@ -1,28 +1,16 @@
-# Barista Doma Home Barista Development Platform v8.9.12
+# Barista Doma Home Barista Development Platform v8.9.14
 
-## Natural Language Advisor Intelligence Restoration
+Step Advisor capture-and-quiet stabilization.
 
-This package restores the premium Occasion-aware Advisor behavior inside the active Occasion step.
+Restores the intended Occasion-step Advisor sequence:
 
-### Restored / corrected
-- Keeps all v8.9.11 voice response capture fixes.
-- Preserves 21 total Occasions: 15 Core + 6 Modern Sensory Occasions.
-- Preserves dual certification pathways and Development Telemetry.
-- Keeps the Advisor inside the current Occasion step.
-- After the wake word, the Advisor listens for the artisan response.
-- The artisan can speak naturally instead of being limited to a few hard-coded phrases.
-- Spoken information is routed visibly into Step Telemetry, Step Notes, Taste Notes, Recovery Notes, Guest Resonance, and Doma Report context.
-- The Advisor now attempts the premium natural-language Advisor route using /api/respond with current Occasion, current step, House Formula, puck prep, taste, machine/grinder, and Recovery Matrix context.
-- If the AI route is unavailable, the app falls back to local step guidance rather than breaking the flow.
-- The In-Step Report Review and Step Capture Ledger show where information was written and what guidance was saved.
+1. Artisan enables Step Advisor inside an Occasion step.
+2. Artisan says “Advisor.”
+3. Advisor asks what is needed and waits.
+4. Artisan speaks shot specs, taste, recovery, or notes.
+5. App immediately writes detected information into visible fields/report context.
+6. Advisor repeats back what was captured and where it was written.
+7. Advisor stops talking and returns to wake-word mode.
+8. Visual review still shows guidance/report routing and Move Next / Repeat Step controls.
 
-### Test flow
-1. Dashboard → Occasions → choose an Occasion → Open Occasion → enter a step.
-2. Enable Step Advisor.
-3. Say: Advisor.
-4. After it asks what it can help with, say a natural note such as: "The puck looks uneven and the shot feels a little hollow, but the taste is not bad."
-5. Confirm the visible capture ledger updates.
-6. Confirm Advisor guidance is more contextual than a narrow keyword response.
-
-Suggested commit message:
-Deploy v8.9.12 natural language advisor restoration
+This is a restoration/stabilization pass on top of v8.9.13, preserving mobile stabilization, 21 Occasions, Development Telemetry, dual certifications, reports, upload, and Advisor routes.

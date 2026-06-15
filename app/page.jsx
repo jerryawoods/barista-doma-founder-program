@@ -3622,17 +3622,17 @@ Correction / added detail: ${newText}`.trim() : newText;
   function handleHandsFreeText(rawText) {
     const text = String(rawText || "").trim();
     if (!text) return;
-    const wakeMatch = /\badvisor\b/i.test(text);
+    const wakeMatch = /\b(advisor|icy|icey|i\s*c)\b/i.test(text);
     if (wakeMatch && !handsFreeCaptureRef.current) {
-      const afterWake = text.replace(/^.*?\badvisor\b[,.!?:;\s-]*/i, "").trim();
+      const afterWake = text.replace(/^.*?\b(advisor|icy|icey|i\s*c)\b[,.!?:;\s-]*/i, "").trim();
       setActive("simulator");
       handsFreeCaptureRef.current = true;
       setHandsFreeCaptureActive(true);
       handsFreeBufferRef.current = "";
-      setHandsFreeStatus("Advisor heard the wake word. Speak slowly; I will record, repeat back, and place details into the right fields.");
-      setStatus("Hands-free Advisor is active. Speak slowly.");
+      setHandsFreeStatus("ICY heard the wake word. Speak naturally; I will record, repeat back, and place details into the right fields.");
+      setStatus("ICY is active. Speak naturally.");
       recordTelemetry("hands_free_advisor_wake_word", { source: "speech_recognition" });
-      speakFastLocal("I'm here. Speak slowly and I will record our conversation. I will repeat it back and place the information into the right form fields.", { rate: 0.9 });
+      speakFastLocal("I'm here. What are we working on?", { rate: 1.02 });
       if (afterWake) setTimeout(() => handleHandsFreeText(afterWake), 900);
       return;
     }
@@ -3887,7 +3887,7 @@ Correction / added detail: ${newText}`.trim() : newText;
       </aside>
       <div className="page">
       <section className="card hero">
-        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9.7</p>
+        <p className="eyebrow">Barista Doma Founder Program Prototype v8.9.15</p>
         <h1>Home Barista Development Platform — Premium Home + Dashboard</h1>
         <p>Home prepares the artisan. Dashboard runs the work. Pull shots, dial in, ask Advisor, recover, taste, and report without losing the moment.</p>
         <div className="statusBox"><strong>Status:</strong> {status}</div>
@@ -4534,6 +4534,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const stepAdvisorSuppressUntilRef = useRef(0);
   const stepAdvisorLastWakeAtRef = useRef(0);
   const stepAdvisorRestartTimerRef = useRef(null);
+  const stepAdvisorSpeechFallbackRef = useRef(null);
   const stepAdvisorSpeakingRef = useRef(false);
 
   function buildStepCaptureRouting(artisanText, changed = []) {
@@ -4551,6 +4552,11 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   function clearStepAdvisorRestartTimer() {
     try { if (stepAdvisorRestartTimerRef.current) clearTimeout(stepAdvisorRestartTimerRef.current); } catch {}
     stepAdvisorRestartTimerRef.current = null;
+  }
+
+  function clearStepAdvisorSpeechFallback() {
+    try { if (stepAdvisorSpeechFallbackRef.current) clearTimeout(stepAdvisorSpeechFallbackRef.current); } catch {}
+    stepAdvisorSpeechFallbackRef.current = null;
   }
 
   function restartStepAdvisorListening(delayMs = 450) {
@@ -4580,37 +4586,43 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     }, wait);
   }
 
-  function speakStepAdvisor(text, { resumeListening = true } = {}) {
-    setStepAdvisorReply(text);
-    if (setAdvisorText) setAdvisorText(text);
+  function speakStepAdvisor(text, { resumeListening = true, updateDisplay = true } = {}) {
+    if (updateDisplay) {
+      setStepAdvisorReply(text);
+      if (setAdvisorText) setAdvisorText(text);
+    }
     clearStepAdvisorRestartTimer();
+    clearStepAdvisorSpeechFallback();
     try { stepRecognitionRef.current?.stop?.(); } catch {}
     setStepAdvisorListening(false);
-    stepAdvisorSuppressUntilRef.current = Date.now() + 1000;
+    stepAdvisorSuppressUntilRef.current = Date.now() + 900;
     if (!stepVoiceEnabled) {
       stepAdvisorSpeakingRef.current = false;
-      if (resumeListening) restartStepAdvisorListening(650);
+      if (resumeListening) restartStepAdvisorListening(450);
       return;
     }
     setStepVoicePaused(false);
     stepAdvisorSpeakingRef.current = true;
     const wordCount = String(text || "").trim().split(/\s+/).filter(Boolean).length;
-    const fallbackMs = Math.max(1900, Math.min(9000, wordCount * 260 + 900));
+    const fallbackMs = Math.max(1400, Math.min(5200, wordCount * 190 + 450));
+    const reopenListening = (delay = 350) => {
+      stepAdvisorSpeakingRef.current = false;
+      stepAdvisorSuppressUntilRef.current = Date.now() + 300;
+      if (resumeListening && stepAdvisorEnabledRef.current) restartStepAdvisorListening(delay);
+    };
     const started = speakFastLocal(text, {
-      rate: 0.96,
+      rate: 1.04,
       onEnd: () => {
-        stepAdvisorSpeakingRef.current = false;
-        stepAdvisorSuppressUntilRef.current = Date.now() + 500;
-        if (resumeListening) restartStepAdvisorListening(550);
+        clearStepAdvisorSpeechFallback();
+        reopenListening(300);
       }
     });
-    // Some mobile browsers do not always fire speechSynthesis.onend.
-    // This fallback reopens listening after the Advisor's prompt should be complete.
-    if (started && resumeListening) restartStepAdvisorListening(fallbackMs);
-    if (!started) {
-      stepAdvisorSpeakingRef.current = false;
-      if (resumeListening) restartStepAdvisorListening(650);
+    // Mobile Chrome sometimes does not fire speechSynthesis.onend. This fallback is the key restoration:
+    // ICY must speak once, then reopen the listening window for the artisan response.
+    if (started && resumeListening) {
+      stepAdvisorSpeechFallbackRef.current = setTimeout(() => reopenListening(250), fallbackMs);
     }
+    if (!started) reopenListening(250);
   }
 
   function pauseStepAdvisorVoice() {
@@ -4625,22 +4637,45 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     stopFastLocalSpeech();
     stepAdvisorSpeakingRef.current = false;
     clearStepAdvisorRestartTimer();
+    clearStepAdvisorSpeechFallback();
     setStepVoicePaused(false);
-    stepAdvisorSuppressUntilRef.current = Date.now() + 900;
-    if (stepAdvisorEnabledRef.current) restartStepAdvisorListening(900);
+    stepAdvisorSuppressUntilRef.current = Date.now() + 500;
+    if (stepAdvisorEnabledRef.current) restartStepAdvisorListening(500);
   }
 
   function isLikelyAdvisorEcho(text) {
     const lower = String(text || "").toLowerCase().replace(/[.,!?;:]/g, " ").replace(/\s+/g, " ").trim();
     if (!lower) return true;
     const echoPhrases = [
-      "i'm here", "im here", "what can i help with", "you are in", "speak slowly",
+      "i'm here", "im here", "what are we working on", "what can i help with", "you are in", "speak slowly",
       "i will record", "i wrote this", "where this was written", "do you want to add anything else",
-      "move to next step", "repeat this step", "advisor guidance", "doma report", "i captured"
+      "move to next step", "repeat this step", "advisor guidance", "doma report", "i captured",
+      "captured", "i placed", "i saved", "marked for the doma report"
     ];
-    const onlyWakeOrEcho = lower.replace(/advisor/g, "").replace(/i'm here/g, "").replace(/im here/g, "").replace(/what can i help with/g, "").trim();
+    const onlyWakeOrEcho = lower
+      .replace(/advisor/g, "")
+      .replace(/icy/g, "")
+      .replace(/icey/g, "")
+      .replace(/hey icy/g, "")
+      .replace(/hey advisor/g, "")
+      .replace(/i'm here/g, "")
+      .replace(/im here/g, "")
+      .replace(/what are we working on/g, "")
+      .replace(/what can i help with/g, "")
+      .trim();
     if (!onlyWakeOrEcho) return true;
     return echoPhrases.some((phrase) => lower === phrase || lower.startsWith(`${phrase} `));
+  }
+
+  function detectIcyWake(text) {
+    const raw = String(text || "");
+    const lower = raw.toLowerCase();
+    // Accept the new product wake word plus the older Advisor wake word.
+    // Mobile speech can hear "ICY" as "icey", "I C", or sometimes "I see".
+    const match = lower.match(/\b(hey\s+)?(icy|icey|i\s*c|advisor)\b/);
+    if (!match) return { hasWake: false, afterWake: raw };
+    const afterWake = raw.slice((match.index || 0) + match[0].length).replace(/^[,.!?:;\s-]+/, "").trim();
+    return { hasWake: true, wakeWord: match[2], afterWake };
   }
 
   function buildStepAdvisorContext(artisanText) {
@@ -4677,8 +4712,20 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     const base = String(advisorText || "").trim();
     if (!base) return buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing: buildStepCaptureRouting(artisanText, changed) });
     const routeLine = `\n\nVisible routing: I wrote this to ${routingLabels.join(" + ")}. You can verify it in the Step Capture Ledger and In-Step Report Review on this same step. It is marked for the Doma Report.`;
-    const closeLine = `\n\nNext: Do you want to add anything else, repeat this step, view the report, or confirm and move to the next step?`;
-    return `${base}${base.includes("Visible routing:") ? "" : routeLine}${base.includes("confirm and move") ? "" : closeLine}`;
+    return `${base}${base.includes("Visible routing:") ? "" : routeLine}`;
+  }
+
+  function buildStepSpokenConfirmation(artisanText, changed, routingLabels) {
+    const fieldLine = changed?.length ? ` I filled ${changed.join(", ")}.` : " I saved it as a step note.";
+    const routeLine = routingLabels?.length ? ` I wrote it to ${routingLabels.join(" and ")}.` : " I wrote it to Step Notes.";
+    const reportLine = " It is marked for the Doma Report.";
+    const repeat = String(artisanText || "").trim();
+    return `Captured. You said: ${repeat}.${fieldLine}${routeLine}${reportLine}`;
+  }
+
+  function shouldAskAdvisorForGuidance(artisanText) {
+    const lower = String(artisanText || "").toLowerCase();
+    return /what should|what do i|help|advice|problem|wrong|runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled|messy|puck|soupy|wet|fractured|spray|channel|uneven|hollow|not sure|confused|fix|adjust/.test(lower);
   }
 
   async function getNaturalStepAdvisorReply(artisanText, changed, routing) {
@@ -4718,21 +4765,27 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       setStatus?.("Advisor heard playback/echo and ignored it. It is still waiting for the artisan response.");
       return;
     }
-    const hasWake = /\badvisor\b/i.test(raw);
+    const wake = detectIcyWake(raw);
+    const hasWake = wake.hasWake;
     let artisanText = raw;
+    if (!hasWake && !stepAdvisorAwaitingInputRef.current) {
+      setStatus?.("ICY heard background speech but is waiting for the wake word ‘Hey ICY’ or ‘Advisor’. Nothing was written.");
+      return;
+    }
     if (hasWake) {
       const now = Date.now();
-      if (now - stepAdvisorLastWakeAtRef.current < 2500) {
-        setStatus?.("Advisor wake word already acknowledged. Waiting for the artisan response.");
+      if (now - stepAdvisorLastWakeAtRef.current < 1800) {
+        setStatus?.("ICY already came online. It is waiting for the artisan response.");
         return;
       }
       stepAdvisorLastWakeAtRef.current = now;
-      artisanText = raw.replace(/^.*?\badvisor\b[,.!?:;\s-]*/i, "").trim();
-      const intro = `I'm here. You are in ${occasionItem.name}, Step ${safeIndex + 1} of ${steps.length}: ${current?.title}. What can I help with?`;
-      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: Advisor`);
-      recordTelemetry?.("occasion_step_advisor_wake", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
+      artisanText = wake.afterWake;
+      const intro = `I'm here. What are we working on?`;
+      setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Wake word: ${String(wake.wakeWord || "ICY").toUpperCase()}`);
+      recordTelemetry?.("occasion_step_advisor_wake", { companion: "ICY", occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title });
       stepAdvisorAwaitingInputRef.current = true;
       if (!artisanText || isLikelyAdvisorEcho(artisanText)) {
+        setStepPlacementNotice(`ICY is online for ${occasionItem.name}, Step ${safeIndex + 1}: ${current?.title}. Speak naturally now; captured details will appear here.`);
         speakStepAdvisor(intro, { resumeListening: true });
         return;
       }
@@ -4762,7 +4815,11 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setStatus?.(`Step Advisor captured the note and wrote it to ${routingLabels.join(" + ")}. Generating contextual guidance…`);
     recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
 
-    const reply = await getNaturalStepAdvisorReply(artisanText, changed, routing);
+    const needsGuidance = shouldAskAdvisorForGuidance(artisanText);
+    const guidance = needsGuidance
+      ? await getNaturalStepAdvisorReply(artisanText, changed, routing)
+      : `Capture-only note. The artisan's spoken information was written to ${routingLabels.join(" + ")}. No extra guidance was requested; preserve this as report context and keep the Advisor quiet until the artisan asks again.`;
+    const spokenConfirmation = buildStepSpokenConfirmation(artisanText, changed, routingLabels);
     const review = {
       at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
       occasion: occasionItem.name,
@@ -4772,19 +4829,21 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       fields: changed,
       routes: routing,
       writtenTo: routingLabels.join(" + "),
-      advisorGuidance: reply,
-      reportStatus: "This capture and Advisor guidance are marked for the Doma Report for this Occasion step.",
-      nextPrompt: "Do you want to add anything else, repeat this step, view the report, or move to the next step?"
+      advisorGuidance: guidance,
+      reportStatus: "This capture and any Advisor guidance are marked for the Doma Report for this Occasion step.",
+      nextPrompt: "Review the captured form/report fields below. When it looks right, choose Add More, Repeat This Step, View Report, or Move to Next Step."
     };
     setStepReview(review);
     setStepReviewConfirmed(false);
-    setStepCaptureLedger((prev) => prev.map((entry) => entry.id === entryId ? { ...entry, advisorGuidance: reply } : entry));
+    setStepCaptureLedger((prev) => prev.map((entry) => entry.id === entryId ? { ...entry, advisorGuidance: guidance } : entry));
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}
-` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${reply}`);
-    if (setAdvisorText) setAdvisorText(reply);
+` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${guidance}`);
+    if (setAdvisorText) setAdvisorText(guidance);
     if (setSynthesis) setSynthesis((prev) => prev || { detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "natural-language restoration" });
-    setStatus?.(`Step Advisor wrote the capture to ${routingLabels.join(" + ")} and saved guidance for the Doma Report.`);
-    speakStepAdvisor(reply);
+    setStepAdvisorReply(guidance);
+    setStatus?.(`Step Advisor filled the form/report fields, repeated back the capture, and returned to wake-word mode.`);
+    stepAdvisorAwaitingInputRef.current = false;
+    speakStepAdvisor(spokenConfirmation, { resumeListening: true, updateDisplay: false });
   }
 
   function startStepAdvisor() {
@@ -4800,7 +4859,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         stepAdvisorEnabledRef.current = true;
         setStepAdvisorEnabled(true);
         setStepAdvisorListening(true);
-        setStatus?.("Occasion-aware Advisor is listening inside this step. Say ‘Advisor’. ");
+        setStatus?.("ICY is online inside this Occasion step. Say ‘Hey ICY’ or ‘Advisor’.");
         recordTelemetry?.("occasion_step_advisor_enabled", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
       };
       recognition.onresult = (event) => {
@@ -4832,11 +4891,11 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     stopFastLocalSpeech();
     setStepAdvisorEnabled(false);
     setStepAdvisorListening(false);
-    setStatus?.("Occasion-aware Advisor stopped for this step.");
+    setStatus?.("ICY stopped for this step.");
     recordTelemetry?.("occasion_step_advisor_stopped", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
   }
 
-  useEffect(() => () => { clearStepAdvisorRestartTimer(); try { stepRecognitionRef.current?.stop?.(); } catch {} stopFastLocalSpeech(); }, []);
+  useEffect(() => () => { clearStepAdvisorRestartTimer(); clearStepAdvisorSpeechFallback(); try { stepRecognitionRef.current?.stop?.(); } catch {} stopFastLocalSpeech(); }, []);
 
   return <section className="walkthroughPage">
     <section className="card heroMini">
@@ -4856,12 +4915,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       <p><strong>Action:</strong> {current?.action || current?.advisor}</p><p><strong>Why this matters:</strong> {current?.why || "This step supports the Occasion."}</p><p><strong>What to watch:</strong> {current?.watch || "Move calmly and preserve the moment."}</p><p><strong>Advisor guidance:</strong> {current?.advisor}</p>
       <div className="scriptPreview"><strong>Artisan Stagecraft Script</strong><p>{current?.script}</p></div>
       <section className="stepAdvisorPanel">
-        <p className="eyebrow">Occasion-aware no-hands Advisor</p>
-        <h3>Say “Advisor” for help with this exact step.</h3>
-        <p className="small">The Advisor uses the active Occasion, this step, your House Formula, shot specs, taste notes, Guest Resonance, and Development Telemetry. It will place spoken details into the visible fields, repeat back what it captured, and let you keep working without leaving the Occasion.</p>
+        <p className="eyebrow">ICY — Intelligent Companion for You</p>
+        <h3>Tap once, then say “Hey ICY” or “Advisor.”</h3>
+        <p className="small">ICY comes online inside this exact Occasion step and says, “I’m here. What are we working on?” Then it listens for the artisan, fills visible fields where possible, writes notes into this step, repeats back what it captured, and keeps the Occasion moving.</p>
         <div className="buttonRow">
-          <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Step Advisor" : "Enable Step Advisor"}</button>
-          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Advisor")}>Test Wake Word</button>
+          <button className={stepAdvisorEnabled ? "danger" : "primary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop ICY" : "Enable ICY / No-Hands Guidance"}</button>
+          <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("it seems a little runny")}>Test: It seems runny</button>
           <button className="secondary" type="button" onClick={() => setActive("matrix")}>Something is wrong</button>
           <button className="secondary" type="button" onClick={() => setStepVoiceEnabled((v) => !v)}>{stepVoiceEnabled ? "Voice On" : "Voice Off / Text Only"}</button>
@@ -4869,7 +4928,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={resumeStepAdvisorVoice}>{stepVoicePaused ? "Resume Voice" : "Resume"}</button>
           <button className="secondary" type="button" onClick={stopStepAdvisorVoice}>Stop Voice</button>
         </div>
-        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? "Listening inside this Occasion step." : "Enable this once, then say “Advisor” while you are on this step."}</div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? "ICY is listening inside this Occasion step." : "Enable ICY once, then say “Hey ICY” or “Advisor” while you are on this step."}</div>
         <div className="grid">
           <Field label="Dose captured" value={profile?.quickShotDose || profile?.houseDose || ""} onChange={(v) => updateProfile?.("quickShotDose", v)} />
           <Field label="Yield captured" value={profile?.quickShotYield || profile?.houseYield || ""} onChange={(v) => updateProfile?.("quickShotYield", v)} />
@@ -4909,7 +4968,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
             {entry.fields?.length ? <p><strong>Fields updated:</strong> {entry.fields.join(", ")}</p> : <p><strong>Fields updated:</strong> Step note / contextual report note</p>}
             <p><strong>Advisor guidance saved:</strong> {entry.advisorGuidance}</p>
             <ul>{entry.routes.map((r) => <li key={r.label}><strong>{r.label}:</strong> {r.detail}</li>)}</ul>
-          </div>) : <p className="small">Nothing has been captured for this step yet. Say “Advisor,” then speak your shot specs, taste note, guest reaction, or issue.</p>}
+          </div>) : <p className="small">Nothing has been captured for this step yet. Say “Hey ICY” or “Advisor,” then speak your shot specs, taste note, guest reaction, or issue.</p>}
         </div>
         <div className="buttonRow"><button className="primary" type="button" onClick={() => { createReport?.(); setActive("reports"); }}>Create / View Session Report</button><button className="secondary" type="button" onClick={() => setActive("tasting")}>Open Tasting Studio</button><button className="secondary" type="button" onClick={() => setActive("matrix")}>Open Recovery Notes</button></div>
       </section>

@@ -1,5 +1,11 @@
 import "./globals.css";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata = {
   title: "Barista Doma Advisor Interaction v5",
   description: "Premium Advisor interaction diagnostic for The Home Barista Occasion Simulator"

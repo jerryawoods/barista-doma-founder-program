@@ -318,3 +318,146 @@ button:disabled { opacity:.45; cursor:not-allowed; }
 .checkLine { display:flex; gap:10px; align-items:flex-start; margin:12px 0; padding:12px; border-radius:14px; background:rgba(240,201,135,.12); border:1px solid rgba(240,201,135,.28); color:#fff7ec; font-weight:800; }
 .checkLine input { margin-top:3px; min-width:18px; min-height:18px; }
 @media(max-width:760px){ .reviewGrid { grid-template-columns:1fr; } }
+
+
+/* v8.9.13 Mobile viewport stabilization
+   Restores true phone-first sizing so the app does not render as a wide desktop canvas.
+   Keep this block at the end so it overrides earlier wide desktop rules. */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.appShell, .page, main, section, article, .card, .hero, .heroPremium, .walkthroughHero, .stageStep,
+.report, .telemetryPanel, .certificatePreview, .recoveryModal, .scriptFull, .log, .synthesisBox,
+.noteBox, .successBox, .statusBox, .errorBox {
+  min-width: 0;
+  max-width: 100%;
+}
+img, svg, canvas, video, audio {
+  max-width: 100%;
+  height: auto;
+}
+pre, code, .scriptFull, .log, .report pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.specs p, .occasionTop, .buttonRow, .recoveryActions, .brandMark, .matrixHeader {
+  min-width: 0;
+}
+.specs p {
+  flex-wrap: wrap;
+}
+.specs span {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .appShell {
+    display: block;
+    width: 100%;
+    max-width: 100vw;
+  }
+  .sideNav {
+    display: none !important;
+  }
+  .page {
+    width: 100%;
+    max-width: 100vw;
+    margin: 0;
+    padding: 14px 12px calc(104px + env(safe-area-inset-bottom));
+  }
+  .card, .report, .telemetryPanel, .certificatePreview {
+    padding: 16px;
+    border-radius: 18px;
+    margin: 12px 0;
+  }
+  h1 { font-size: clamp(26px, 8vw, 34px); }
+  h2 { font-size: clamp(22px, 6.5vw, 30px); }
+  h3 { font-size: clamp(18px, 5.2vw, 22px); }
+  p, li, label, textarea, input, select { font-size: 16px; }
+  .navBar {
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding: 4px 0 8px;
+    scrollbar-width: thin;
+  }
+  .tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+  .buttonRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  button, .primary, .secondary, .danger, .sideLink {
+    width: 100%;
+    max-width: 100%;
+    margin: 6px 0;
+    min-height: 48px;
+  }
+  .homeActionGrid, .occasionGrid, .twoColumn, .tastingGrid, .performanceDashboard,
+  .performanceDashboard.compact, .telemetryTiles, .patchGrid, .allOccasionList,
+  .dualProgress, .reviewGrid, .recoveryGrid, .recoveryControls, .matrixControls,
+  .expandedMatrix, .tiles, .grid {
+    grid-template-columns: 1fr !important;
+  }
+  .occasionCard {
+    min-height: auto;
+  }
+  .stageStep h2 {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+  .stepProgress {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .stepDot {
+    flex: 0 0 auto;
+  }
+  .barRow {
+    grid-template-columns: 72px 1fr 28px;
+  }
+  .mobileBottomNav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .mobileNavButton {
+    min-width: 0;
+    width: auto;
+    margin: 0;
+  }
+  .mobileNavButton small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .modalBackdrop {
+    padding: 10px;
+  }
+  .recoveryModal {
+    width: 100%;
+    max-height: 90vh;
+    padding: 18px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .page { padding-left: 10px; padding-right: 10px; }
+  .card, .report, .telemetryPanel, .certificatePreview { padding: 14px; }
+  .mobileNavButton small { font-size: 10px; }
+  .mobileNavButton span { font-size: 17px; }
+}
