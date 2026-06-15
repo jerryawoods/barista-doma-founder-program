@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8910-advisor-listen-loop-fix",
-  "version": "8.9.10",
+  "name": "barista-doma-home-barista-development-platform-v8911-advisor-response-capture-fix",
+  "version": "8.9.11",
   "private": true,
   "scripts": {
     "dev": "next dev",

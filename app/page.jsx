@@ -4533,6 +4533,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const stepAdvisorAwaitingInputRef = useRef(false);
   const stepAdvisorSuppressUntilRef = useRef(0);
   const stepAdvisorLastWakeAtRef = useRef(0);
+  const stepAdvisorRestartTimerRef = useRef(null);
+  const stepAdvisorSpeakingRef = useRef(false);
 
   function buildStepCaptureRouting(artisanText, changed = []) {
     const lower = String(artisanText || "").toLowerCase();
@@ -4540,44 +4542,75 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     const add = (label, detail) => { if (!routes.some((r) => r.label === label)) routes.push({ label, detail }); };
     if (changed.some((x) => /dose|yield|shot time|grind|preference|serve again|next adjustment/i.test(x))) add("Step Telemetry / Shot Pull fields", "Visible in this step panel and carried into the Doma Report telemetry snapshot.");
     if (changed.some((x) => /taste|tasting/i.test(x)) || /liked|taste|sweet|bitter|sour|bright|thin|smooth|body|watery|creamy/i.test(lower)) add("Taste Notes", "Visible in this step capture ledger and available for the Tasting Studio / Doma Report narrative.");
-    if (/runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled|problem|wrong/i.test(lower)) add("Recovery / Issue Notes", "Visible here, sent to the Recovery context, and retained for the Doma Report if you create one.");
+    if (/runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled|problem|wrong|messy|puck|soupy|wet puck|fractured/i.test(lower)) add("Recovery / Issue Notes", "Visible here, sent to the Recovery context, and retained for the Doma Report if you create one.");
     if (changed.some((x) => /guest/i.test(x)) || /guest|served|liked it|loved it|reaction|resonance/i.test(lower)) add("Guest Resonance", "Visible in Guest Resonance context and included in the Doma Report when captured.");
     if (!routes.length) add("Step Notes", "Visible in this step capture ledger and included as Occasion context for the report.");
     return routes;
   }
 
+  function clearStepAdvisorRestartTimer() {
+    try { if (stepAdvisorRestartTimerRef.current) clearTimeout(stepAdvisorRestartTimerRef.current); } catch {}
+    stepAdvisorRestartTimerRef.current = null;
+  }
+
   function restartStepAdvisorListening(delayMs = 450) {
     if (!stepAdvisorEnabledRef.current || !stepRecognitionRef.current) return;
-    setTimeout(() => {
+    clearStepAdvisorRestartTimer();
+    const suppressWait = Math.max(0, (stepAdvisorSuppressUntilRef.current || 0) - Date.now() + 200);
+    const wait = Math.max(delayMs, suppressWait, 250);
+    stepAdvisorRestartTimerRef.current = setTimeout(() => {
       if (!stepAdvisorEnabledRef.current || !stepRecognitionRef.current) return;
+      if (stepAdvisorSpeakingRef.current) {
+        restartStepAdvisorListening(450);
+        return;
+      }
       try {
-        stepAdvisorSuppressUntilRef.current = Date.now() + 350;
+        stepAdvisorSuppressUntilRef.current = Date.now() + 250;
         stepRecognitionRef.current.start();
         setStepAdvisorListening(true);
-        setStatus?.("Occasion-aware Advisor is waiting for the artisan response inside this step.");
-      } catch {}
-    }, delayMs);
+        setStatus?.(stepAdvisorAwaitingInputRef.current
+          ? "Advisor is quiet now and waiting for the artisan response inside this step."
+          : "Occasion-aware Advisor is listening inside this step. Say ‘Advisor’ when you need help.");
+      } catch (err) {
+        // Chrome can throw if recognition is already starting. Try once more shortly.
+        if (stepAdvisorEnabledRef.current) {
+          stepAdvisorRestartTimerRef.current = setTimeout(() => restartStepAdvisorListening(300), 350);
+        }
+      }
+    }, wait);
   }
 
   function speakStepAdvisor(text, { resumeListening = true } = {}) {
     setStepAdvisorReply(text);
     if (setAdvisorText) setAdvisorText(text);
+    clearStepAdvisorRestartTimer();
     try { stepRecognitionRef.current?.stop?.(); } catch {}
     setStepAdvisorListening(false);
-    stepAdvisorSuppressUntilRef.current = Date.now() + 900;
+    stepAdvisorSuppressUntilRef.current = Date.now() + 1000;
     if (!stepVoiceEnabled) {
-      if (resumeListening) restartStepAdvisorListening(600);
+      stepAdvisorSpeakingRef.current = false;
+      if (resumeListening) restartStepAdvisorListening(650);
       return;
     }
     setStepVoicePaused(false);
+    stepAdvisorSpeakingRef.current = true;
+    const wordCount = String(text || "").trim().split(/\s+/).filter(Boolean).length;
+    const fallbackMs = Math.max(1900, Math.min(9000, wordCount * 260 + 900));
     const started = speakFastLocal(text, {
       rate: 0.96,
       onEnd: () => {
-        stepAdvisorSuppressUntilRef.current = Date.now() + 600;
-        if (resumeListening) restartStepAdvisorListening(650);
+        stepAdvisorSpeakingRef.current = false;
+        stepAdvisorSuppressUntilRef.current = Date.now() + 500;
+        if (resumeListening) restartStepAdvisorListening(550);
       }
     });
-    if (!started && resumeListening) restartStepAdvisorListening(600);
+    // Some mobile browsers do not always fire speechSynthesis.onend.
+    // This fallback reopens listening after the Advisor's prompt should be complete.
+    if (started && resumeListening) restartStepAdvisorListening(fallbackMs);
+    if (!started) {
+      stepAdvisorSpeakingRef.current = false;
+      if (resumeListening) restartStepAdvisorListening(650);
+    }
   }
 
   function pauseStepAdvisorVoice() {
@@ -4590,8 +4623,11 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
   function stopStepAdvisorVoice() {
     stopFastLocalSpeech();
+    stepAdvisorSpeakingRef.current = false;
+    clearStepAdvisorRestartTimer();
     setStepVoicePaused(false);
     stepAdvisorSuppressUntilRef.current = Date.now() + 900;
+    if (stepAdvisorEnabledRef.current) restartStepAdvisorListening(900);
   }
 
   function isLikelyAdvisorEcho(text) {
@@ -4607,7 +4643,71 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return echoPhrases.some((phrase) => lower === phrase || lower.startsWith(`${phrase} `));
   }
 
-  function handleStepAdvisorText(rawText) {
+  function buildStepAdvisorContext(artisanText) {
+    return {
+      machine: profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || profile?.machineType || "Home espresso machine",
+      grinder: profile?.grinder || profile?.grinderModel || "Home grinder",
+      dose: profile?.quickShotDose || profile?.houseDose || occasionItem?.dose || "18g",
+      yield: profile?.quickShotYield || profile?.houseYield || occasionItem?.yield || "36g",
+      shotTime: profile?.quickShotTime || occasion?.currentShotTime || profile?.houseShotTime || occasionItem?.time || "not captured",
+      drink: occasion?.drink || occasionItem?.drink || occasionItem?.recommendedPrimaryDrink || "espresso",
+      recurrence: occasion?.recurrence || profile?.lastDialInResult || "not captured",
+      occasion: occasionItem?.name || occasion?.occasionName || "Current Occasion",
+      guest: occasion?.guest || "home guest / household",
+      timePressure: occasion?.timePressure || "not captured",
+      desiredFeeling: occasion?.desiredFeeling || occasionItem?.desiredFeeling || occasionItem?.purpose || "calm, repeatable readiness",
+      advisorGuidanceLevel: profile?.advisorGuidanceLevel || profile?.experienceLevel || "Building Consistency",
+      confirmedRecipe: profile?.confirmedRecipe || "Not yet confirmed",
+      tamper: profile?.tamper || "not captured",
+      distributionTool: profile?.distributionTool || "not captured",
+      wdtTool: profile?.wdtTool || "not captured",
+      puckScreen: profile?.puckScreen || "not captured",
+      puckPrepWorkflow: profile?.puckPrepWorkflow || current?.advisor || "not captured",
+      dialInAttempts: profile?.dialInAttempts || [],
+      currentOccasionStep: `Step ${safeIndex + 1} of ${steps.length}: ${current?.title || "current step"}`,
+      currentStepAction: current?.action || current?.advisor || "not captured",
+      currentStepScript: current?.script || "not captured",
+      currentStepWatch: current?.watch || "not captured",
+      writtenTo: "Step Telemetry, Step Notes, Taste Notes, Recovery Notes, Guest Resonance, and Doma Report according to detected intent",
+      artisanVoice: artisanText
+    };
+  }
+
+  function normalizeStepAdvisorResponse(advisorText, artisanText, routingLabels, changed) {
+    const base = String(advisorText || "").trim();
+    if (!base) return buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing: buildStepCaptureRouting(artisanText, changed) });
+    const routeLine = `\n\nVisible routing: I wrote this to ${routingLabels.join(" + ")}. You can verify it in the Step Capture Ledger and In-Step Report Review on this same step. It is marked for the Doma Report.`;
+    const closeLine = `\n\nNext: Do you want to add anything else, repeat this step, view the report, or confirm and move to the next step?`;
+    return `${base}${base.includes("Visible routing:") ? "" : routeLine}${base.includes("confirm and move") ? "" : closeLine}`;
+  }
+
+  async function getNaturalStepAdvisorReply(artisanText, changed, routing) {
+    const routingLabels = routing.map((r) => r.label);
+    const fallback = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing });
+    try {
+      const contextPayload = buildStepAdvisorContext(artisanText);
+      const response = await fetch("/api/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transcript: artisanText,
+          context: contextPayload,
+          mode: "occasion_step_advisor",
+          instructions: "Respond as the Occasion-aware Barista Doma Advisor. Use natural language interpretation, not a narrow keyword script. Route the artisan's note to visible fields/report, give contextual guidance, and ask whether to add more, repeat, view report, or move next."
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || data?.detail || `Advisor HTTP ${response.status}`);
+      if (data?.matrixMatch && setMatrixMatch) setMatrixMatch(data.matrixMatch);
+      if (data?.synthesis && setSynthesis) setSynthesis(data.synthesis);
+      return normalizeStepAdvisorResponse(data?.advisorText || fallback, artisanText, routingLabels, changed);
+    } catch (err) {
+      setStatus?.(`Natural Advisor route unavailable; using local step guidance. ${err?.message || ""}`.trim());
+      return fallback;
+    }
+  }
+
+  async function handleStepAdvisorText(rawText) {
     const raw = String(rawText || "").trim();
     if (!raw) return;
     if (Date.now() < stepAdvisorSuppressUntilRef.current) {
@@ -4646,8 +4746,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     const routingLabels = routing.map((r) => r.label);
     setStepAdvisorFields(changed);
     setStepPlacementNotice(`Written to: ${routingLabels.join(" + ")}. You can verify it in this step panel now; it will be included in the Doma Report when you create the report.`);
+    const entryId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setStepCaptureLedger((prev) => [{
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      id: entryId,
       at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
       occasion: occasionItem.name,
       step: safeIndex + 1,
@@ -4655,9 +4756,13 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       transcript: artisanText,
       fields: changed,
       routes: routing,
-      advisorGuidance: "Pending generation — see Advisor Guidance for This Step below."
+      advisorGuidance: "Advisor is interpreting the full natural-language note with this step, form, House Formula, and Recovery Matrix context…"
     }, ...prev].slice(0, 8));
-    const reply = buildOccasionAwareAdvisorReply(artisanText, { occasionItem, currentStep: current, stepNumber: safeIndex + 1, totalSteps: steps.length, profile, occasion, changedFields: changed, routing });
+    setStepAdvisorReply("Advisor is interpreting your full note with the current Occasion step, House Formula, and Recovery Matrix context…");
+    setStatus?.(`Step Advisor captured the note and wrote it to ${routingLabels.join(" + ")}. Generating contextual guidance…`);
+    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
+
+    const reply = await getNaturalStepAdvisorReply(artisanText, changed, routing);
     const review = {
       at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
       occasion: occasionItem.name,
@@ -4669,20 +4774,16 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       writtenTo: routingLabels.join(" + "),
       advisorGuidance: reply,
       reportStatus: "This capture and Advisor guidance are marked for the Doma Report for this Occasion step.",
-      nextPrompt: "Do you want to add anything else, repeat this step, or move to the next step?"
+      nextPrompt: "Do you want to add anything else, repeat this step, view the report, or move to the next step?"
     };
     setStepReview(review);
     setStepReviewConfirmed(false);
-    setStepCaptureLedger((prev) => prev.map((entry, idx) => idx === 0 ? { ...entry, advisorGuidance: reply } : entry));
+    setStepCaptureLedger((prev) => prev.map((entry) => entry.id === entryId ? { ...entry, advisorGuidance: reply } : entry));
     if (setTranscript) setTranscript((prev) => `${prev ? `${prev}
 ` : ""}Report routing (${occasionItem.name}, Step ${safeIndex + 1}): Written to ${routingLabels.join(" + ")}. Guidance saved: ${reply}`);
     if (setAdvisorText) setAdvisorText(reply);
-    if (setMatrixMatch && /runny|watery|thin|fast|gush|few drops|no flow|bitter|sour|sharp|chok|stalled/i.test(artisanText)) {
-      setMatrixMatch({ issue: "Occasion step issue", label: "Contextual step recovery", category: "Occasion-aware Advisor", severity: "live", suggestedFix: reply });
-    }
-    if (setSynthesis) setSynthesis({ detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "prototype" });
-    recordTelemetry?.("occasion_step_advisor_capture", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1, stepTitle: current?.title, fields: changed, routes: routingLabels, transcript: artisanText });
-    setStatus?.(`Step Advisor captured the note and wrote it to ${routingLabels.join(" + ")}.`);
+    if (setSynthesis) setSynthesis((prev) => prev || { detectedArtisanIntent: "occasion_step_advisor", contextUsed: "active occasion, current step, house formula, spoken note", confidence: "natural-language restoration" });
+    setStatus?.(`Step Advisor wrote the capture to ${routingLabels.join(" + ")} and saved guidance for the Doma Report.`);
     speakStepAdvisor(reply);
   }
 
@@ -4710,7 +4811,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       recognition.onerror = (event) => setStatus?.(`Occasion-aware Advisor recognition issue: ${event?.error || "unknown"}`);
       recognition.onend = () => {
         setStepAdvisorListening(false);
-        if (stepAdvisorEnabledRef.current && Date.now() >= stepAdvisorSuppressUntilRef.current) {
+        if (stepAdvisorEnabledRef.current) {
           restartStepAdvisorListening(500);
         }
       };
@@ -4726,6 +4827,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     stepAdvisorAwaitingInputRef.current = false;
     stepAdvisorSuppressUntilRef.current = Date.now() + 1200;
     try { stepRecognitionRef.current?.stop?.(); } catch {}
+    clearStepAdvisorRestartTimer();
+    stepAdvisorSpeakingRef.current = false;
     stopFastLocalSpeech();
     setStepAdvisorEnabled(false);
     setStepAdvisorListening(false);
@@ -4733,7 +4836,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     recordTelemetry?.("occasion_step_advisor_stopped", { occasion: occasionItem.name, occasionId: occasionItem.id, step: safeIndex + 1 });
   }
 
-  useEffect(() => () => { try { stepRecognitionRef.current?.stop?.(); } catch {} }, []);
+  useEffect(() => () => { clearStepAdvisorRestartTimer(); try { stepRecognitionRef.current?.stop?.(); } catch {} stopFastLocalSpeech(); }, []);
 
   return <section className="walkthroughPage">
     <section className="card heroMini">
@@ -4941,6 +5044,8 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
 
   if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) {
     guidance = `That sounds like a choke or no-flow condition, not a fast shot. Because your house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, keep the dose steady, stop the pump, knock out the puck, purge, and try one to two steps coarser. Taste the next pull before changing more than one variable.`;
+  } else if (/messy puck|wet puck|soupy puck|fractured puck|puck is messy|messy|soupy/.test(lower)) {
+    guidance = `I captured this as a puck-behavior note, not automatically as a failed shot. A messy or wet puck can be normal depending on the machine, basket, pressure release, and headspace. First read the cup: if the flow and taste are acceptable, log it as an observation. If it repeats with watery taste or fast flow compared with your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}, check dose/headspace and puck prep before changing multiple variables.`;
   } else if (/runny|watery|thin|fast|gush|too quick|ran quick|ran fast/.test(lower)) {
     guidance = `That sounds like the shot may be running too fast or tasting thin. I see your current house formula is ${houseDose} in, ${houseYield} out, around ${houseTime}, with grind ${grind}. If this cup tastes sharp, sour, watery, or hollow, keep dose steady and move one step finer. If you actually like the brightness, log it as a preference instead of treating it as failure.`;
   } else if (/bitter|dry|ashy|harsh|over extract|over-extract/.test(lower)) {
