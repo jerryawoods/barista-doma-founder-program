@@ -1,7 +1,7 @@
 # Barista Doma / Home Barista IQ — v8.9.29 Global Troubleshooting Continuation
 
 Focused patch after v8.9.28 did not catch:
-“I already tried that and it did not work.”
+“I already tried that and it did not really work.”
 
 Root cause:
 - v8.9.28 only caught continuation while the app was exactly in awaiting_decision state.
