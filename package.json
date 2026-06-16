@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8925-icy-tap-to-speak-stabilization",
-  "version": "8.9.25",
+  "name": "barista-doma-home-barista-development-platform-v8926-icy-recorded-audio-transcription",
+  "version": "8.9.26",
   "private": true,
   "scripts": {
     "dev": "next dev",

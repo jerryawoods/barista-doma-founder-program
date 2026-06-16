@@ -4547,8 +4547,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepAdvisorManualInput, setStepAdvisorManualInput] = useState("");
   const [stepSpeechDebug, setStepSpeechDebug] = useState([]);
   const [stepTapToSpeakStatus, setStepTapToSpeakStatus] = useState("Tap-to-speak ready.");
+  const [stepAudioRecordStatus, setStepAudioRecordStatus] = useState("Recorded audio path ready.");
+  const [stepAudioRecording, setStepAudioRecording] = useState(false);
   const stepAdvisorRestartCountRef = useRef(0);
   const stepTapRecognitionRef = useRef(null);
+  const stepMediaRecorderRef = useRef(null);
+  const stepAudioChunksRef = useRef([]);
 
   function pushStepSpeechDebug(message) {
     const stamp = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
@@ -4602,6 +4606,99 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     pushStepSpeechDebug("manual reset: cleared current ICY capture for this step");
   }
 
+
+
+  async function startRecordedAudioToIcy() {
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) throw new Error("This browser does not support microphone recording. Use Type to ICY.");
+      // Stop browser speech recognition paths; this uses recorded audio + /api/transcribe instead.
+      try { stepRecognitionRef.current?.stop?.(); } catch {}
+      try { stepTapRecognitionRef.current?.stop?.(); } catch {}
+      clearStepAdvisorRestartTimer();
+      stepAdvisorEnabledRef.current = false;
+      setStepAdvisorEnabled(false);
+      setStepAdvisorListening(false);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const preferredType = MediaRecorder.isTypeSupported?.("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const recorder = new MediaRecorder(stream, { mimeType: preferredType });
+      stepAudioChunksRef.current = [];
+      stepMediaRecorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) stepAudioChunksRef.current.push(event.data);
+      };
+      recorder.onstart = () => {
+        setStepAudioRecording(true);
+        setStepAudioRecordStatus("Recording. Say the full issue now, then tap Stop + Send to ICY.");
+        pushStepSpeechDebug("recorded-audio start");
+      };
+      recorder.onerror = (event) => {
+        const err = event?.error?.message || "recording error";
+        setStepAudioRecordStatus(`Recording error: ${err}`);
+        pushStepSpeechDebug(`recorded-audio error: ${err}`);
+      };
+      recorder.onstop = () => {
+        try { stream.getTracks().forEach((track) => track.stop()); } catch {}
+        setStepAudioRecording(false);
+      };
+      recorder.start();
+    } catch (err) {
+      setStepAudioRecording(false);
+      setStepAudioRecordStatus(err.message || String(err));
+      pushStepSpeechDebug(`recorded-audio start failed: ${err.message || String(err)}`);
+    }
+  }
+
+  async function stopRecordedAudioAndSendToIcy() {
+    try {
+      const recorder = stepMediaRecorderRef.current;
+      if (!recorder || recorder.state === "inactive") {
+        setStepAudioRecordStatus("No active recording found. Tap Record Audio to ICY first.");
+        return;
+      }
+      setStepAudioRecordStatus("Stopping recording and preparing transcription…");
+      const stopped = new Promise((resolve) => {
+        const previous = recorder.onstop;
+        recorder.onstop = (event) => {
+          try { previous?.(event); } catch {}
+          resolve();
+        };
+      });
+      recorder.stop();
+      await stopped;
+      const chunks = stepAudioChunksRef.current || [];
+      if (!chunks.length) {
+        setStepAudioRecordStatus("Recording stopped, but no audio chunks were captured.");
+        return;
+      }
+      const blob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
+      if (!blob.size) {
+        setStepAudioRecordStatus("Recording was empty. Try again and speak closer to the microphone.");
+        return;
+      }
+      setStepAudioRecordStatus(`Transcribing recorded audio (${Math.round(blob.size / 1024)} KB)…`);
+      pushStepSpeechDebug(`recorded-audio upload: ${blob.size} bytes`);
+      const form = new FormData();
+      form.append("audio", blob, "icy-step-audio.webm");
+      const response = await fetch("/api/transcribe", { method: "POST", body: form });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.detail || data?.error || `Transcription failed with HTTP ${response.status}`);
+      const transcriptText = String(data?.text || "").trim();
+      if (!transcriptText) {
+        setStepAudioRecordStatus("Transcription returned no text. Try again or use Type to ICY.");
+        pushStepSpeechDebug("recorded-audio transcript empty");
+        return;
+      }
+      setStepAudioRecordStatus(`Transcribed: ${transcriptText}`);
+      pushStepSpeechDebug(`recorded-audio transcript: ${transcriptText}`);
+      beginFreshStepAdvisementIssue("recorded-audio");
+      handleStepAdvisorText(transcriptText);
+    } catch (err) {
+      setStepAudioRecording(false);
+      setStepAudioRecordStatus(`Recorded audio path failed: ${err.message || String(err)}. Use Type to ICY if needed.`);
+      pushStepSpeechDebug(`recorded-audio failed: ${err.message || String(err)}`);
+    }
+  }
 
   function startTapToSpeakIcy() {
     try {
@@ -5565,7 +5662,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
         <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, Machine Passport, grinder, machine category, house formula, telemetry, and form context. If the basics are missing, ICY asks a short setup checklist and writes the Machine Passport before advising. If enough context is present, it gives one calm next move, places information in the form as a draft, asks if you want to add or change anything, logs the artisan-confirmed decision, and keeps the Occasion moving.</p>
         <div className="buttonRow">
-          <button className="primary" type="button" onClick={startTapToSpeakIcy}>Tap to Speak to ICY</button>
+          <button className="primary" type="button" onClick={stepAudioRecording ? stopRecordedAudioAndSendToIcy : startRecordedAudioToIcy}>{stepAudioRecording ? "Stop + Send to ICY" : "Record Audio to ICY"}</button>
+          <button className="secondary" type="button" onClick={startTapToSpeakIcy}>Tap to Speak to ICY</button>
           <button className={stepAdvisorEnabled ? "danger" : "secondary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Wake Mode" : "Enable Wake Mode"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("the puck looks messy and the shot tastes a little thin")}>Test Natural Note</button>
@@ -5577,8 +5675,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={replayLastStepAdvisement}>Play ICY Advisement</button>
           <button className="secondary" type="button" onClick={resetStepAdvisorCapture}>Reset ICY Capture for This Step</button>
         </div>
-        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Tap to Speak to ICY for the stable voice path. Wake mode is optional and may be limited by browser speech recognition."}</div>
-        <div className="noteBox"><strong>Tap-to-speak status:</strong> {stepTapToSpeakStatus}<br/><small>Recommended test path: tap <strong>Tap to Speak to ICY</strong>, say the full issue, then let ICY process it.</small></div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Record Audio to ICY as the most reliable voice path. Wake mode and Tap-to-Speak depend on browser speech recognition."}</div>
+        <div className="noteBox"><strong>Recorded-audio status:</strong> {stepAudioRecordStatus}<br/><small>Recommended path: tap <strong>Record Audio to ICY</strong>, speak the full issue, then tap <strong>Stop + Send to ICY</strong>. This sends audio to /api/transcribe instead of relying on browser speech recognition.</small></div>
+        <div className="noteBox"><strong>Tap-to-speak status:</strong> {stepTapToSpeakStatus}<br/><small>Fallback path: tap <strong>Tap to Speak to ICY</strong>, say the full issue, then let ICY process it.</small></div>
         <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
         <div className="grid">
           <Field label="Dose captured" value={profile?.quickShotDose || profile?.houseDose || ""} onChange={(v) => updateProfile?.("quickShotDose", v)} />
