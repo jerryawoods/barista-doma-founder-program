@@ -4549,6 +4549,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [stepTapToSpeakStatus, setStepTapToSpeakStatus] = useState("Tap-to-speak ready.");
   const [stepAudioRecordStatus, setStepAudioRecordStatus] = useState("Recorded audio path ready.");
   const [stepAudioRecording, setStepAudioRecording] = useState(false);
+  const [pendingAudioTranscript, setPendingAudioTranscript] = useState("");
+  const [editableAudioTranscript, setEditableAudioTranscript] = useState("");
+  const [transcriptGateStatus, setTranscriptGateStatus] = useState("No transcript waiting for confirmation.");
   const stepAdvisorRestartCountRef = useRef(0);
   const stepTapRecognitionRef = useRef(null);
   const stepMediaRecorderRef = useRef(null);
@@ -4602,6 +4605,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     setAdvisementOutcome("");
     setCommunityLearningNote("");
     setLastSpokenAdvisement("");
+    setPendingAudioTranscript("");
+    setEditableAudioTranscript("");
+    setTranscriptGateStatus("No transcript waiting for confirmation.");
     setStepVoiceStatus("Voice ready.");
     pushStepSpeechDebug("manual reset: cleared current ICY capture for this step");
   }
@@ -4629,7 +4635,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       };
       recorder.onstart = () => {
         setStepAudioRecording(true);
-        setStepAudioRecordStatus("Recording. Say the full issue now, then tap Stop + Send to ICY.");
+        setStepAudioRecordStatus("Recording. Say the full issue now, then tap Stop + Transcribe.");
         pushStepSpeechDebug("recorded-audio start");
       };
       recorder.onerror = (event) => {
@@ -4689,15 +4695,48 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         pushStepSpeechDebug("recorded-audio transcript empty");
         return;
       }
-      setStepAudioRecordStatus(`Transcribed: ${transcriptText}`);
-      pushStepSpeechDebug(`recorded-audio transcript: ${transcriptText}`);
-      beginFreshStepAdvisementIssue("recorded-audio");
-      handleStepAdvisorText(transcriptText);
+      setStepAudioRecordStatus(`Transcribed and waiting for confirmation: ${transcriptText}`);
+      setPendingAudioTranscript(transcriptText);
+      setEditableAudioTranscript(transcriptText);
+      setTranscriptGateStatus("Transcript ready. Confirm, edit, re-record, or cancel before ICY advises.");
+      pushStepSpeechDebug(`recorded-audio transcript waiting for confirmation: ${transcriptText}`);
     } catch (err) {
       setStepAudioRecording(false);
       setStepAudioRecordStatus(`Recorded audio path failed: ${err.message || String(err)}. Use Type to ICY if needed.`);
       pushStepSpeechDebug(`recorded-audio failed: ${err.message || String(err)}`);
     }
+  }
+
+
+  function useConfirmedAudioTranscript(textOverride = "") {
+    const text = String(textOverride || editableAudioTranscript || pendingAudioTranscript || "").trim();
+    if (!text) {
+      setTranscriptGateStatus("No transcript to send. Record again or type directly to ICY.");
+      return;
+    }
+    setTranscriptGateStatus(`Confirmed transcript sent to ICY: ${text}`);
+    setStepAudioRecordStatus(`Using confirmed transcript: ${text}`);
+    pushStepSpeechDebug(`confirmed recorded transcript: ${text}`);
+    setPendingAudioTranscript("");
+    setEditableAudioTranscript("");
+    beginFreshStepAdvisementIssue("confirmed-recorded-audio");
+    handleStepAdvisorText(text);
+  }
+
+  function cancelAudioTranscriptGate() {
+    setPendingAudioTranscript("");
+    setEditableAudioTranscript("");
+    setTranscriptGateStatus("Transcript canceled. Record again, type to ICY, or continue the step.");
+    setStepAudioRecordStatus("Recorded transcript canceled before sending to ICY.");
+    pushStepSpeechDebug("recorded-audio transcript canceled");
+  }
+
+  function rerecordAudioTranscript() {
+    setPendingAudioTranscript("");
+    setEditableAudioTranscript("");
+    setTranscriptGateStatus("Ready to re-record. Tap Record Audio to ICY.");
+    setStepAudioRecordStatus("Ready to re-record.");
+    pushStepSpeechDebug("recorded-audio transcript cleared for re-record");
   }
 
   function startTapToSpeakIcy() {
@@ -5662,7 +5701,7 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
         <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, Machine Passport, grinder, machine category, house formula, telemetry, and form context. If the basics are missing, ICY asks a short setup checklist and writes the Machine Passport before advising. If enough context is present, it gives one calm next move, places information in the form as a draft, asks if you want to add or change anything, logs the artisan-confirmed decision, and keeps the Occasion moving.</p>
         <div className="buttonRow">
-          <button className="primary" type="button" onClick={stepAudioRecording ? stopRecordedAudioAndSendToIcy : startRecordedAudioToIcy}>{stepAudioRecording ? "Stop + Send to ICY" : "Record Audio to ICY"}</button>
+          <button className="primary" type="button" onClick={stepAudioRecording ? stopRecordedAudioAndSendToIcy : startRecordedAudioToIcy}>{stepAudioRecording ? "Stop + Transcribe" : "Record Audio to ICY"}</button>
           <button className="secondary" type="button" onClick={startTapToSpeakIcy}>Tap to Speak to ICY</button>
           <button className={stepAdvisorEnabled ? "danger" : "secondary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Wake Mode" : "Enable Wake Mode"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
@@ -5676,7 +5715,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={resetStepAdvisorCapture}>Reset ICY Capture for This Step</button>
         </div>
         <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Record Audio to ICY as the most reliable voice path. Wake mode and Tap-to-Speak depend on browser speech recognition."}</div>
-        <div className="noteBox"><strong>Recorded-audio status:</strong> {stepAudioRecordStatus}<br/><small>Recommended path: tap <strong>Record Audio to ICY</strong>, speak the full issue, then tap <strong>Stop + Send to ICY</strong>. This sends audio to /api/transcribe instead of relying on browser speech recognition.</small></div>
+        <div className="noteBox"><strong>Recorded-audio status:</strong> {stepAudioRecordStatus}<br/><small>Recommended path: tap <strong>Record Audio to ICY</strong>, speak the full issue, then tap <strong>Stop + Transcribe</strong>. This sends audio to /api/transcribe instead of relying on browser speech recognition.</small></div>
+        {pendingAudioTranscript ? <div className="successBox"><strong>Confirm transcript before ICY advises</strong><p className="small">{transcriptGateStatus}</p><label className="label">Transcript ICY heard</label><textarea value={editableAudioTranscript} onChange={(e) => setEditableAudioTranscript(e.target.value)} placeholder="Edit the transcript before sending it to ICY." /><div className="buttonRow"><button className="primary" type="button" onClick={() => useConfirmedAudioTranscript()}>Use This Transcript</button><button className="secondary" type="button" onClick={rerecordAudioTranscript}>Re-record</button><button className="secondary" type="button" onClick={cancelAudioTranscriptGate}>Cancel</button></div></div> : null}
         <div className="noteBox"><strong>Tap-to-speak status:</strong> {stepTapToSpeakStatus}<br/><small>Fallback path: tap <strong>Tap to Speak to ICY</strong>, say the full issue, then let ICY process it.</small></div>
         <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
         <div className="grid">

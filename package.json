@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8926-icy-recorded-audio-transcription",
-  "version": "8.9.26",
+  "name": "barista-doma-home-barista-development-platform-v8927-icy-transcript-confirmation-gate",
+  "version": "8.9.27",
   "private": true,
   "scripts": {
     "dev": "next dev",

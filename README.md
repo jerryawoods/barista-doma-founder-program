@@ -1,23 +1,30 @@
-# Barista Doma / Home Barista IQ — v8.9.26 ICY Recorded Audio Transcription Path
+# Barista Doma / Home Barista IQ — v8.9.27 ICY Transcript Confirmation Gate
 
-Focused fix after Web Speech recognition failed completely:
-- Tap-to-speak started and stopped with no final transcript.
-- Wake mode had already shown abort/restart storm.
-- Browser recognition is unreliable on the user device.
+Purpose:
+- Stop ICY from running ahead after recorded-audio transcription.
+- Let the artisan verify what ICY heard before advisement begins.
 
-Fix:
-- Adds Record Audio to ICY / Stop + Send to ICY.
-- Uses MediaRecorder to capture actual audio.
-- Sends the audio blob to existing /api/transcribe.
-- Sends returned transcript into the same current-issue advisement workflow.
-- Stops wake/tap recognizers while recording so they cannot interfere.
-- Keeps Tap to Speak and Type to ICY as fallback paths.
+New recorded-audio flow:
+1. Record Audio to ICY.
+2. Stop + Transcribe.
+3. App shows the transcript ICY heard.
+4. Artisan can:
+   - Use This Transcript
+   - Edit the transcript first
+   - Re-record
+   - Cancel
+5. Only after confirmation does the transcript enter the advisement workflow.
+
+Why:
+- v8.9.26 proved recorded audio can move in the right direction, but ICY could advise/write too quickly.
+- This patch adds transaction control so ICY does not act on an unconfirmed or misheard transcript.
 
 Recommended test:
 1. Open any Occasion/step.
-2. Click Reset ICY Capture for This Step.
-3. Click Record Audio to ICY.
+2. Reset ICY Capture for This Step.
+3. Record Audio to ICY.
 4. Say: “it was very bitter.”
-5. Click Stop + Send to ICY.
-6. Confirm the Recorded-audio status shows a transcript.
-7. Confirm ICY gives bitter/harsh taste guidance.
+5. Stop + Transcribe.
+6. Confirm the transcript shown is correct.
+7. Click Use This Transcript.
+8. ICY should process bitter/harsh guidance.
