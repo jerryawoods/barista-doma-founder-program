@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8929-global-troubleshooting-continuation",
-  "version": "8.9.29",
+  "name": "barista-doma-home-barista-development-platform-v8930-icy-no-hands-session-engine",
+  "version": "8.9.30",
   "private": true,
   "scripts": {
     "dev": "next dev",

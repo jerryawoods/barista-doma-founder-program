@@ -4552,6 +4552,15 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   const [pendingAudioTranscript, setPendingAudioTranscript] = useState("");
   const [editableAudioTranscript, setEditableAudioTranscript] = useState("");
   const [transcriptGateStatus, setTranscriptGateStatus] = useState("No transcript waiting for confirmation.");
+  const [icySessionActive, setIcySessionActive] = useState(false);
+  const [icySessionStatus, setIcySessionStatus] = useState("ICY session is off.");
+  const [icySessionPhase, setIcySessionPhase] = useState("idle");
+  const [icySessionLastTranscript, setIcySessionLastTranscript] = useState("");
+  const icySessionActiveRef = useRef(false);
+  const icySessionRecorderRef = useRef(null);
+  const icySessionStreamRef = useRef(null);
+  const icySessionChunksRef = useRef([]);
+  const icySessionListenTimerRef = useRef(null);
   const stepAdvisorRestartCountRef = useRef(0);
   const stepTapRecognitionRef = useRef(null);
   const stepMediaRecorderRef = useRef(null);
@@ -4613,6 +4622,137 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
   }
 
 
+
+
+  function clearIcySessionTimer() {
+    try { if (icySessionListenTimerRef.current) clearTimeout(icySessionListenTimerRef.current); } catch {}
+    icySessionListenTimerRef.current = null;
+  }
+
+  async function transcribeAudioBlobForIcy(blob, source = "session") {
+    if (!blob || !blob.size) throw new Error("No audio was captured.");
+    const form = new FormData();
+    form.append("audio", blob, `icy-${source}-audio.webm`);
+    const response = await fetch("/api/transcribe", { method: "POST", body: form });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.detail || data?.error || `Transcription failed with HTTP ${response.status}`);
+    return String(data?.text || "").trim();
+  }
+
+  async function startIcyNoHandsSession() {
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) throw new Error("This browser does not support microphone recording. Use Type to ICY.");
+      try { stepRecognitionRef.current?.stop?.(); } catch {}
+      try { stepTapRecognitionRef.current?.stop?.(); } catch {}
+      clearStepAdvisorRestartTimer();
+      clearIcySessionTimer();
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      icySessionStreamRef.current = stream;
+      icySessionActiveRef.current = true;
+      setIcySessionActive(true);
+      setIcySessionPhase("ready");
+      setIcySessionStatus("ICY session started. I’ll stay with you on this step. Speak when the listening window opens.");
+      setStepAdvisorPhase("ICY no-hands session active");
+      stepAdvisorConversationPhaseRef.current = "awaiting_input";
+      stepAdvisorAwaitingInputRef.current = true;
+      pushStepSpeechDebug("no-hands session started");
+      speakStepAdvisor("I’m here. I’ll stay with you on this step. Tell me what happens.", { resumeListening: false, updateDisplay: false, forceVoice: true });
+      icySessionListenTimerRef.current = setTimeout(() => startIcySessionListeningWindow(), 1800);
+    } catch (err) {
+      icySessionActiveRef.current = false;
+      setIcySessionActive(false);
+      setIcySessionPhase("error");
+      setIcySessionStatus(`Could not start ICY session: ${err.message || String(err)}`);
+      pushStepSpeechDebug(`no-hands session start failed: ${err.message || String(err)}`);
+    }
+  }
+
+  function stopIcyNoHandsSession() {
+    icySessionActiveRef.current = false;
+    setIcySessionActive(false);
+    setIcySessionPhase("closed");
+    clearIcySessionTimer();
+    try { icySessionRecorderRef.current?.stop?.(); } catch {}
+    try { icySessionStreamRef.current?.getTracks?.().forEach((track) => track.stop()); } catch {}
+    icySessionRecorderRef.current = null;
+    icySessionStreamRef.current = null;
+    setIcySessionStatus("ICY session stopped. Advisement state remains on the step.");
+    pushStepSpeechDebug("no-hands session stopped");
+  }
+
+  function startIcySessionListeningWindow() {
+    if (!icySessionActiveRef.current) return;
+    try {
+      const stream = icySessionStreamRef.current;
+      if (!stream) throw new Error("No active microphone stream. Restart ICY session.");
+      const preferredType = MediaRecorder.isTypeSupported?.("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const recorder = new MediaRecorder(stream, { mimeType: preferredType });
+      icySessionChunksRef.current = [];
+      icySessionRecorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) icySessionChunksRef.current.push(event.data);
+      };
+      recorder.onstart = () => {
+        setIcySessionPhase("listening");
+        setIcySessionStatus("Listening now. Speak naturally. ICY will process the phrase automatically.");
+        pushStepSpeechDebug("no-hands listening window started");
+      };
+      recorder.onerror = (event) => {
+        const err = event?.error?.message || "recording error";
+        setIcySessionStatus(`No-hands recording error: ${err}`);
+        pushStepSpeechDebug(`no-hands recording error: ${err}`);
+      };
+      recorder.onstop = async () => {
+        if (!icySessionActiveRef.current) return;
+        const chunks = icySessionChunksRef.current || [];
+        const blob = chunks.length ? new Blob(chunks, { type: chunks[0]?.type || "audio/webm" }) : null;
+        if (!blob || !blob.size) {
+          setIcySessionStatus("No speech captured. Listening again.");
+          pushStepSpeechDebug("no-hands captured empty audio");
+          icySessionListenTimerRef.current = setTimeout(() => startIcySessionListeningWindow(), 900);
+          return;
+        }
+        try {
+          setIcySessionPhase("transcribing");
+          setIcySessionStatus(`Transcribing no-hands audio (${Math.round(blob.size / 1024)} KB)…`);
+          const transcriptText = await transcribeAudioBlobForIcy(blob, "session");
+          if (!transcriptText) {
+            setIcySessionStatus("No transcript returned. Listening again.");
+            pushStepSpeechDebug("no-hands transcript empty");
+            icySessionListenTimerRef.current = setTimeout(() => startIcySessionListeningWindow(), 900);
+            return;
+          }
+          setIcySessionLastTranscript(transcriptText);
+          setIcySessionStatus(`Heard: ${transcriptText}`);
+          pushStepSpeechDebug(`no-hands transcript: ${transcriptText}`);
+          setIcySessionPhase("thinking");
+          // In session mode, do not require transcript confirmation. The goal is hands-free flow.
+          stepAdvisorAwaitingInputRef.current = true;
+          await handleStepAdvisorText(transcriptText);
+          if (icySessionActiveRef.current) {
+            setIcySessionPhase("waiting");
+            setIcySessionStatus("ICY responded. Listening will reopen for your next phrase.");
+            icySessionListenTimerRef.current = setTimeout(() => startIcySessionListeningWindow(), 2800);
+          }
+        } catch (err) {
+          setIcySessionPhase("error");
+          setIcySessionStatus(`No-hands transcription/advisement failed: ${err.message || String(err)}. Listening again shortly.`);
+          pushStepSpeechDebug(`no-hands failed: ${err.message || String(err)}`);
+          if (icySessionActiveRef.current) icySessionListenTimerRef.current = setTimeout(() => startIcySessionListeningWindow(), 1800);
+        }
+      };
+      recorder.start();
+      // This is a practical listening window for prototype use. The artisan can speak a phrase without touching the phone.
+      icySessionListenTimerRef.current = setTimeout(() => {
+        try { if (recorder.state !== "inactive") recorder.stop(); } catch {}
+      }, 6500);
+    } catch (err) {
+      setIcySessionPhase("error");
+      setIcySessionStatus(`Could not open listening window: ${err.message || String(err)}`);
+      pushStepSpeechDebug(`no-hands listening start failed: ${err.message || String(err)}`);
+    }
+  }
 
   async function startRecordedAudioToIcy() {
     try {
@@ -5006,6 +5146,10 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
       stepAdvisorSpeakingRef.current = false;
       stepAdvisorSuppressUntilRef.current = Date.now() + 300;
       setStepVoiceStatus("ICY finished speaking. Listening restored.");
+      if (icySessionActiveRef.current) {
+        // The no-hands session engine controls the next recorded-audio listening window.
+        return;
+      }
       if (resumeListening && stepAdvisorEnabledRef.current) restartStepAdvisorListening(delay);
     };
     const started = speakFastLocal(spokenText, {
@@ -5859,7 +6003,8 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         <h3>Tap once in any Occasion step, then say “Hey ICY” or “Advisor.” ICY will answer first and wait.</h3>
         <p className="small">ICY comes online inside the active Occasion and the active step. It says, “I’m here. What are we working on?” That wake phrase does not write anything. After ICY answers, speak naturally: shot data, taste, puck behavior, guest reaction, stagecraft, uncertainty, or a recovery issue. ICY uses the current Occasion, current step, Machine Passport, grinder, machine category, house formula, telemetry, and form context. If the basics are missing, ICY asks a short setup checklist and writes the Machine Passport before advising. If enough context is present, it gives one calm next move, places information in the form as a draft, asks if you want to add or change anything, logs the artisan-confirmed decision, and keeps the Occasion moving.</p>
         <div className="buttonRow">
-          <button className="primary" type="button" onClick={stepAudioRecording ? stopRecordedAudioAndSendToIcy : startRecordedAudioToIcy}>{stepAudioRecording ? "Stop + Transcribe" : "Record Audio to ICY"}</button>
+          <button className={icySessionActive ? "danger" : "primary"} type="button" onClick={icySessionActive ? stopIcyNoHandsSession : startIcyNoHandsSession}>{icySessionActive ? "Stop ICY No-Hands Session" : "Start ICY No-Hands Session"}</button>
+          <button className="secondary" type="button" onClick={stepAudioRecording ? stopRecordedAudioAndSendToIcy : startRecordedAudioToIcy}>{stepAudioRecording ? "Stop + Transcribe" : "Record Audio to ICY"}</button>
           <button className="secondary" type="button" onClick={startTapToSpeakIcy}>Tap to Speak to ICY</button>
           <button className={stepAdvisorEnabled ? "danger" : "secondary"} type="button" onClick={stepAdvisorEnabled ? stopStepAdvisor : startStepAdvisor}>{stepAdvisorEnabled ? "Stop Wake Mode" : "Enable Wake Mode"}</button>
           <button className="secondary" type="button" onClick={() => handleStepAdvisorText("Hey ICY")}>Test ICY Wake Word</button>
@@ -5872,8 +6017,9 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
           <button className="secondary" type="button" onClick={replayLastStepAdvisement}>Play ICY Advisement</button>
           <button className="secondary" type="button" onClick={resetStepAdvisorCapture}>Reset ICY Capture for This Step</button>
         </div>
-        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Record Audio to ICY as the most reliable voice path. Wake mode and Tap-to-Speak depend on browser speech recognition."}</div>
-        <div className="noteBox"><strong>Recorded-audio status:</strong> {stepAudioRecordStatus}<br/><small>Recommended path: tap <strong>Record Audio to ICY</strong>, speak the full issue, then tap <strong>Stop + Transcribe</strong>. This sends audio to /api/transcribe instead of relying on browser speech recognition.</small></div>
+        <div className={icySessionActive ? "successBox" : "noteBox"}><strong>ICY No-Hands Session:</strong> {icySessionStatus}<br/><small>Primary product path: start once, speak naturally, ICY transcribes, advises, speaks, and reopens listening for your next phrase. Phase: {icySessionPhase}. Last heard: {icySessionLastTranscript || "nothing yet"}.</small></div>
+        <div className={stepAdvisorListening ? "successBox" : "noteBox"}><strong>Status:</strong> {stepAdvisorListening ? `Wake mode is listening. Phase: ${stepAdvisorPhase}.` : "Use Start ICY No-Hands Session as the primary path. Record Audio / Type to ICY remain as fallback controls."}</div>
+        <div className="noteBox"><strong>Recorded-audio status:</strong> {stepAudioRecordStatus}<br/><small>Fallback path: tap <strong>Record Audio to ICY</strong>, speak the full issue, then tap <strong>Stop + Transcribe</strong>. This sends audio to /api/transcribe instead of relying on browser speech recognition.</small></div>
         {pendingAudioTranscript ? <div className="successBox"><strong>Confirm transcript before ICY advises</strong><p className="small">{transcriptGateStatus}</p><label className="label">Transcript ICY heard</label><textarea value={editableAudioTranscript} onChange={(e) => setEditableAudioTranscript(e.target.value)} placeholder="Edit the transcript before sending it to ICY." /><div className="buttonRow"><button className="primary" type="button" onClick={() => useConfirmedAudioTranscript()}>Use This Transcript</button><button className="secondary" type="button" onClick={rerecordAudioTranscript}>Re-record</button><button className="secondary" type="button" onClick={cancelAudioTranscriptGate}>Cancel</button></div></div> : null}
         <div className="noteBox"><strong>Tap-to-speak status:</strong> {stepTapToSpeakStatus}<br/><small>Fallback path: tap <strong>Tap to Speak to ICY</strong>, say the full issue, then let ICY process it.</small></div>
         <div className="noteBox"><strong>Voice status:</strong> {stepVoiceStatus}<br/><small>If ICY captures text but you do not hear guidance, tap <strong>Play ICY Advisement</strong>. The workflow state is preserved.</small></div>{stepAdvisorPendingDecision ? <div className="noteBox"><strong>Pending artisan decision:</strong><p>{stepAdvisorPendingDecision.suggestedAction || "ICY is waiting for the artisan to accept, change, or decline the suggested next move."}</p><small>Say “yes, that is what I will do,” “no, I will leave it,” or add more detail.</small></div> : null}
