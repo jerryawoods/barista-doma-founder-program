@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8927-icy-transcript-confirmation-gate",
-  "version": "8.9.27",
+  "name": "barista-doma-home-barista-development-platform-v8929-global-troubleshooting-continuation",
+  "version": "8.9.29",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,30 +1,21 @@
-# Barista Doma / Home Barista IQ — v8.9.27 ICY Transcript Confirmation Gate
+# Barista Doma / Home Barista IQ — v8.9.29 Global Troubleshooting Continuation
 
-Purpose:
-- Stop ICY from running ahead after recorded-audio transcription.
-- Let the artisan verify what ICY heard before advisement begins.
+Focused patch after v8.9.28 did not catch:
+“I already tried that and it did not work.”
 
-New recorded-audio flow:
-1. Record Audio to ICY.
-2. Stop + Transcribe.
-3. App shows the transcript ICY heard.
-4. Artisan can:
-   - Use This Transcript
-   - Edit the transcript first
-   - Re-record
-   - Cancel
-5. Only after confirmation does the transcript enter the advisement workflow.
+Root cause:
+- v8.9.28 only caught continuation while the app was exactly in awaiting_decision state.
+- In real use, the follow-up may land in awaiting_more, direct transcript, typed path, or another phase.
 
-Why:
-- v8.9.26 proved recorded audio can move in the right direction, but ICY could advise/write too quickly.
-- This patch adds transaction control so ICY does not act on an unconfirmed or misheard transcript.
+Fix:
+- Adds global troubleshooting-continuation detection early in the ICY handler.
+- If artisan says “I already tried that,” “it did not work,” “nothing changed,” “still bitter,” etc., ICY continues troubleshooting regardless of current phase.
+- Pulls best available context from pending decision, step review, or current advisor reply.
+- Keeps advisement open and writes continuation into report/ledger.
+- Build verified.
 
-Recommended test:
-1. Open any Occasion/step.
-2. Reset ICY Capture for This Step.
-3. Record Audio to ICY.
-4. Say: “it was very bitter.”
-5. Stop + Transcribe.
-6. Confirm the transcript shown is correct.
-7. Click Use This Transcript.
-8. ICY should process bitter/harsh guidance.
+Test:
+1. Start with: “it was very bitter.”
+2. Let ICY suggest.
+3. Then say/type: “I already tried that and it did not work.”
+4. ICY should continue troubleshooting and ask a follow-up checklist regardless of phase.

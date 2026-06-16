@@ -4839,6 +4839,39 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return "Use the contextual guidance from ICY as the next move, then taste and report back.";
   }
 
+  function isTroubleshootingContinuation(text) {
+    const lower = String(text || "").toLowerCase();
+    return /already tried|i tried|we tried|tried that|did that|still|same problem|didn'?t work|did not work|nothing changed|no change|still bitter|still sour|still thin|still fast|still weak|not better|made it worse|same result/.test(lower);
+  }
+
+  function buildTroubleshootingContinuationGuidance(responseText, pending = {}) {
+    const original = String(pending?.transcript || "").toLowerCase();
+    const response = String(responseText || "").toLowerCase();
+    const combined = `${original} ${response} ${pending?.guidance || ""}`.toLowerCase();
+    const routeLabels = pending?.routingLabels?.length ? pending.routingLabels.join(" + ") : "Step Notes + Advisor Guidance + Doma Report context";
+    let nextMove = "";
+    let checklist = "";
+
+    if (/bitter|harsh|dry|ashy/.test(combined)) {
+      nextMove = "Since the first move did not solve the bitterness, do not keep changing randomly. Check whether the bitterness is dry/astringent or just roast bitterness. Next, compare the actual yield and time to your house formula. If it is dry and long, try a shorter yield. If it is still harsh at normal yield, try slightly coarser or lower temperature if your machine supports it.";
+      checklist = "Tell me: was the finish dry and lingering, what was the yield, and did the time run longer than usual?";
+    } else if (/fast|thin|watery|weak|ran fast|loaded fast|flow/.test(combined)) {
+      nextMove = "Since the first move did not solve the fast/thin result, keep dose steady and check whether the flow was fast from the start or broke open after a few seconds. If it was fast from the start, go one small step finer if your machine allows it. If it broke open later, focus on distribution, tamp level, and channeling before changing several settings.";
+      checklist = "Tell me: fast from the start or fast after blonding, what was shot time, and did it taste sour, hollow, or just light?";
+    } else if (/puck|channel|spray|messy/.test(combined)) {
+      nextMove = "Since the puck/flow issue repeated, move from visual inspection to cause isolation. Do not judge the puck alone. Check cup taste and flow behavior. If there was spraying or channeling, inspect distribution, tamp level, headspace, basket dose, and puck screen before changing grind.";
+      checklist = "Tell me: did the cup taste bad, did you see spraying/channeling, and did the issue repeat twice?";
+    } else if (/sour|sharp|acid/.test(combined)) {
+      nextMove = "Since the first move did not solve sourness, check whether this is pleasant brightness or sharp under-extraction. If it is sharp and thin, you likely need more extraction: finer grind or slightly longer yield, depending on your machine controls. Change only one variable.";
+      checklist = "Tell me: was it thin, what was the yield/time, and did sweetness improve or stay flat?";
+    } else {
+      nextMove = "Since you already tried the first suggestion and it did not resolve the issue, we should continue the advisement workflow instead of closing it. I need to isolate what changed, what stayed the same, and what the cup tasted like after the attempt.";
+      checklist = "Tell me what you tried, what changed in the cup or flow, and whether the result improved, stayed the same, or got worse.";
+    }
+
+    return `Got it — you already tried the first suggestion and it did not resolve the issue. I will not close this advisement yet. I’m logging that as troubleshooting continuation under ${routeLabels}. ${nextMove} ${checklist}`;
+  }
+
   function buildDecisionCloseoutText(decisionText, pending) {
     const chosen = summarizeArtisanDecision(decisionText, pending);
     const routeLabels = pending?.routingLabels?.length ? pending.routingLabels.join(" + ") : "Step Notes + Advisor Guidance + Doma Report context";
@@ -5318,6 +5351,81 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
     return finalGuidance;
   }
 
+
+  function getBestPendingForContinuation(raw = "") {
+    const pending = stepAdvisorPendingDecisionRef.current || stepAdvisorPendingDecision || {};
+    if (pending && (pending.transcript || pending.guidance || pending.routingLabels?.length)) return pending;
+    if (stepReview && (stepReview.transcript || stepReview.advisorGuidance)) {
+      const routes = stepReview.routes || [];
+      return {
+        transcript: stepReview.transcript || raw,
+        fields: stepReview.fields || [],
+        routes,
+        routingLabels: routes.map((r) => r.label).filter(Boolean),
+        guidance: stepReview.advisorGuidance || "",
+        suggestedAction: stepReview.suggestedAction || ""
+      };
+    }
+    return {
+      transcript: raw,
+      fields: [],
+      routes: [{ label: "Troubleshooting Continuation", detail: "Continuation captured outside the expected decision state." }],
+      routingLabels: ["Troubleshooting Continuation"],
+      guidance: stepAdvisorReply || "",
+      suggestedAction: ""
+    };
+  }
+
+  function handleGlobalTroubleshootingContinuation(rawText) {
+    const raw = String(rawText || "").trim();
+    if (!isTroubleshootingContinuation(raw)) return false;
+    const pending = getBestPendingForContinuation(raw);
+    const continuationGuidance = buildTroubleshootingContinuationGuidance(raw, pending);
+    const updatedPending = {
+      ...pending,
+      troubleshootingContinuation: raw,
+      guidance: `${pending?.guidance || ""}\n\nTroubleshooting continuation: ${continuationGuidance}`,
+      suggestedAction: "Continue troubleshooting; answer ICY's follow-up checklist before closing this advisement."
+    };
+    stepAdvisorPendingDecisionRef.current = updatedPending;
+    setStepAdvisorPendingDecision(updatedPending);
+    setStepAdvisorPhase("Troubleshooting continuation");
+    stepAdvisorConversationPhaseRef.current = "awaiting_decision";
+    stepAdvisorAwaitingInputRef.current = true;
+    setStepAdvisorReply(continuationGuidance);
+    setStepPlacementNotice(`Troubleshooting continuation captured. ICY is keeping this advisement open and will not close the step yet.`);
+    setStepReview({
+      ...(stepReview || {}),
+      at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      transcript: `${pending?.transcript || ""}\nArtisan continuation: ${raw}`.trim(),
+      fields: pending?.fields || [],
+      routes: pending?.routes || [{ label: "Troubleshooting Continuation", detail: "The prior suggestion was tried and did not resolve the issue." }],
+      writtenTo: pending?.routingLabels?.join(" + ") || "Troubleshooting Continuation + Advisor Guidance + Doma Report context",
+      advisorGuidance: continuationGuidance,
+      suggestedAction: "Continue troubleshooting; answer ICY's follow-up checklist before closing.",
+      reportStatus: "The original issue, ICY guidance, attempted action, and unresolved outcome are marked for the Doma Report and community learning.",
+      nextPrompt: "Answer ICY’s follow-up checklist, describe what changed, or tell ICY the result stayed the same."
+    });
+    setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Troubleshooting continuation: ${raw}`);
+    setStepCaptureLedger((prev) => [{
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+      occasion: occasionItem.name,
+      step: safeIndex + 1,
+      stepTitle: current?.title || "Current step",
+      transcript: `Troubleshooting continuation: ${raw}`,
+      fields: pending?.fields || [],
+      routes: pending?.routes || [{ label: "Troubleshooting Continuation", detail: "The prior suggestion was tried and did not resolve the issue." }],
+      advisorGuidance: continuationGuidance
+    }, ...prev].slice(0, 8));
+    recordTelemetry?.("occasion_step_advisor_global_troubleshooting_continuation", { companion: "ICY", occasion: occasionItem.name, step: safeIndex + 1, response: raw, phase: stepAdvisorConversationPhaseRef.current });
+    speakStepAdvisor(continuationGuidance, { resumeListening: true, updateDisplay: false, forceVoice: true });
+    return true;
+  }
+
   async function handleStepAdvisorText(rawText) {
     const raw = String(rawText || "").trim();
     if (!raw) return;
@@ -5330,6 +5438,12 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
 
     if (Date.now() < stepAdvisorSuppressUntilRef.current && !hasWake) {
       setStatus?.("ICY ignored its own voice and is waiting for the artisan.");
+      return;
+    }
+
+    // Global continuation intent: if the artisan says the prior suggestion was already tried
+    // or did not work, continue troubleshooting regardless of the current UI phase.
+    if (!hasWake && !isLikelyAdvisorEcho(raw) && handleGlobalTroubleshootingContinuation(raw)) {
       return;
     }
 
@@ -5379,6 +5493,50 @@ function OccasionWalkthrough({ occasionItem, currentStepIndex, setCurrentStepInd
         setLastSpokenAdvisement(passportSpoken);
         setStepVoiceStatus("ICY advisement ready. Speaking now…");
         speakStepAdvisor(passportSpoken, { resumeListening: true, updateDisplay: false, forceVoice: true });
+        return;
+      }
+      if (isTroubleshootingContinuation(raw)) {
+        const continuationGuidance = buildTroubleshootingContinuationGuidance(raw, pending);
+        const updatedPending = {
+          ...pending,
+          troubleshootingContinuation: raw,
+          guidance: `${pending?.guidance || ""}\n\nTroubleshooting continuation: ${continuationGuidance}`,
+          suggestedAction: "Continue troubleshooting; answer ICY's follow-up checklist before closing this advisement."
+        };
+        stepAdvisorPendingDecisionRef.current = updatedPending;
+        setStepAdvisorPendingDecision(updatedPending);
+        setStepAdvisorPhase("Troubleshooting continuation");
+        stepAdvisorConversationPhaseRef.current = "awaiting_decision";
+        setStepAdvisorReply(continuationGuidance);
+        setStepReview({
+          ...(stepReview || {}),
+          at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+          occasion: occasionItem.name,
+          step: safeIndex + 1,
+          stepTitle: current?.title || "Current step",
+          transcript: `${pending?.transcript || ""}\nArtisan continuation: ${raw}`.trim(),
+          fields: pending?.fields || [],
+          routes: pending?.routes || [],
+          writtenTo: pending?.routingLabels?.join(" + ") || "Step Notes + Advisor Guidance + Doma Report context",
+          advisorGuidance: continuationGuidance,
+          suggestedAction: "Continue troubleshooting; answer ICY's follow-up checklist before closing.",
+          reportStatus: "The original issue, ICY guidance, attempted action, and unresolved outcome are marked for the Doma Report and community learning.",
+          nextPrompt: "Answer ICY’s follow-up checklist, or describe what changed after the attempted fix."
+        });
+        setStepAdvisorTranscript((prev) => `${prev ? `${prev}\n` : ""}Troubleshooting continuation: ${raw}`);
+        setStepCaptureLedger((prev) => [{
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          at: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }),
+          occasion: occasionItem.name,
+          step: safeIndex + 1,
+          stepTitle: current?.title || "Current step",
+          transcript: `Troubleshooting continuation: ${raw}`,
+          fields: pending?.fields || [],
+          routes: pending?.routes || [{ label: "Troubleshooting Continuation", detail: "The first suggestion was tried and did not resolve the issue." }],
+          advisorGuidance: continuationGuidance
+        }, ...prev].slice(0, 8));
+        recordTelemetry?.("occasion_step_advisor_troubleshooting_continuation", { companion: "ICY", occasion: occasionItem.name, step: safeIndex + 1, response: raw });
+        speakStepAdvisor(continuationGuidance, { resumeListening: true, updateDisplay: false, forceVoice: true });
         return;
       }
       const decisionText = summarizeArtisanDecision(raw, pending);
