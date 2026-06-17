@@ -1,30 +1,33 @@
-# Barista Doma / Home Barista IQ — v8.9.30 ICY No-Hands Session Engine
+# Barista Doma / Home Barista IQ — v8.9.31 ICY Step-Context No-Hands Guard
 
 Purpose:
-- Restore the real product promise: Start ICY once, then speak naturally while hands are busy.
-- Typing remains diagnostic/fallback only. The primary market path is no-hands conversation.
+- Keep ICY anchored to the active Occasion step during no-hands sessions.
+- Fix drift where ICY hears the artisan but asks questions unrelated to the current step.
 
-Primary flow:
-1. Open any Occasion step.
-2. Click Start ICY No-Hands Session once.
-3. ICY says: “I’m here. I’ll stay with you on this step. Tell me what happens.”
-4. ICY opens a recorded-audio listening window.
-5. Artisan speaks a natural phrase.
-6. App records audio, sends to /api/transcribe, routes transcript into ICY advisement workflow.
-7. ICY writes notes/guidance, speaks a response, then reopens listening.
-8. Artisan can continue: “I already tried that and it did not work,” “it ran fast,” “no,” etc.
-9. Stop ICY No-Hands Session closes the active session while preserving step state.
-
-Technical direction:
-- Uses MediaRecorder + /api/transcribe for the primary session loop.
-- Avoids fragile Web Speech wake/restart loop as primary experience.
-- Keeps Record Audio, Tap to Speak, and Type to ICY as fallback/debug controls.
-- Maintains global troubleshooting continuation logic from v8.9.29.
-- Build verified.
+What changed:
+- Added step advisement mode detection:
+  - occasion-intention
+  - stagecraft
+  - preparation
+  - taste
+  - technical
+  - step-context
+- Added step-context lock:
+  - For non-technical steps, ICY stays with the current step unless the artisan clearly raises a technical issue.
+- Step 1 “Set the Occasion intention” now keeps ICY focused on:
+  - purpose of the cup/moment
+  - desired feeling
+  - who is receiving the moment
+  - human-centered guidance
+- Machine/troubleshooting questions are suppressed during intention/stagecraft/preparation steps unless the artisan clearly says something technical like bitter, sour, fast shot, grind, dose, puck, milk, etc.
+- Keeps v8.9.30 no-hands session engine.
+- Keeps v8.9.29 global troubleshooting continuation.
 
 Test:
-1. Start ICY No-Hands Session.
-2. Say: “it was very bitter.”
-3. Wait for ICY response.
-4. When listening reopens, say: “I already tried that and it did not work.”
-5. ICY should continue troubleshooting, not close the advisement.
+1. Open The Quiet Table or any Occasion.
+2. Go to Step 1: Set the Occasion intention.
+3. Start ICY No-Hands Session.
+4. Say: “I want this to feel soft and steady.”
+5. Expected: ICY stays with intention/feeling/purpose and does not ask dose, yield, grind, puck, milk, etc.
+6. Then say a clearly technical issue, e.g. “The shot was very bitter.”
+7. Expected: ICY may move into technical recovery while still naming the active step.

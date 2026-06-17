@@ -6183,9 +6183,30 @@ function applyVoiceTextToFields(text, { updateProfile, updateOccasion, setGuestR
 }
 
 
+
+function getStepAdvisementMode(currentStep = {}) {
+  const title = String(currentStep?.title || "").toLowerCase();
+  const action = String(currentStep?.action || "").toLowerCase();
+  const advisor = String(currentStep?.advisor || "").toLowerCase();
+  const combined = `${title} ${action} ${advisor}`;
+  if (/occasion intention|set the occasion|intention|desired feeling|purpose|human purpose/.test(combined)) return "occasion-intention";
+  if (/script|stagecraft|say|present|serve|guest|resonance|first sip/.test(combined)) return "stagecraft";
+  if (/mise|place|readiness|prep|prepare|set up|setup/.test(combined)) return "preparation";
+  if (/taste|sip|palate|flavor|sensory/.test(combined)) return "taste";
+  if (/dose|yield|grind|shot|pull|extraction|espresso/.test(combined)) return "technical";
+  return "step-context";
+}
+
+function isClearlyTechnicalIssue(text = "") {
+  const lower = String(text || "").toLowerCase();
+  return /dose|yield|grams?|shot|time|seconds?|grind|finer|coarser|fast|slow|gush|chok|no flow|few drops|sour|bitter|harsh|dry|watery|thin|puck|channel|spray|milk|foam|steam|temperature|temp|pressure|basket/.test(lower);
+}
+
 function getContextualIcyChecklist(text, { profile, occasion, occasionItem, currentStep } = {}) {
   const raw = String(text || "").trim();
   const lower = raw.toLowerCase();
+  const stepMode = getStepAdvisementMode(currentStep);
+  const forceStepContext = stepMode !== "technical" && !isClearlyTechnicalIssue(raw);
   const machine = profile?.machine || profile?.espressoMachine || profile?.allInOneMachine || profile?.machineType || "";
   const grinder = profile?.grinder || profile?.grinderModel || "";
   const dose = profile?.quickShotDose || profile?.houseDose || "";
@@ -6194,16 +6215,22 @@ function getContextualIcyChecklist(text, { profile, occasion, occasionItem, curr
   const grind = profile?.quickShotGrind || profile?.grinderSetting || "";
   const beans = profile?.beans || profile?.beanName || profile?.coffeeBeans || "";
   const missing = [];
-  if (!machine) missing.push("machine");
-  if (!grinder) missing.push("grinder");
-  if (!dose) missing.push("dose");
-  if (!yieldOut) missing.push("yield");
-  if (!shotTime) missing.push("shot time");
-  if (!grind) missing.push("grind setting");
-  if (!beans) missing.push("beans");
+  if (!forceStepContext) {
+    if (!machine) missing.push("machine");
+    if (!grinder) missing.push("grinder");
+    if (!dose) missing.push("dose");
+    if (!yieldOut) missing.push("yield");
+    if (!shotTime) missing.push("shot time");
+    if (!grind) missing.push("grind setting");
+    if (!beans) missing.push("beans");
+  }
 
-  let category = "observation";
-  if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) category = "choke/no-flow";
+  let category = forceStepContext ? stepMode : "observation";
+  if (forceStepContext && stepMode === "occasion-intention") category = "occasion-intention";
+  else if (forceStepContext && stepMode === "stagecraft") category = "stagecraft/guest";
+  else if (forceStepContext && stepMode === "preparation") category = "preparation";
+  else if (forceStepContext && stepMode === "taste") category = "taste";
+  else if (/few drops|no flow|barely drip|barely dripping|chok|nothing came out|stalled/.test(lower)) category = "choke/no-flow";
   else if (/runny|watery|thin|fast|gush|too quick|ran quick|ran fast|weak/.test(lower)) category = "fast/thin";
   else if (/messy puck|wet puck|soupy puck|fractured puck|puck|channel|spray|spurt|uneven/.test(lower)) category = "puck/flow";
   else if (/bitter|dry|ashy|harsh|over extract|over-extract/.test(lower)) category = "bitter/harsh";
@@ -6219,7 +6246,25 @@ function getContextualIcyChecklist(text, { profile, occasion, occasionItem, curr
   if (!beans) common.push("Confirm the bean/roast if it matters for this cup.");
 
   let checklist = [];
-  if (category === "fast/thin") checklist = [
+  if (category === "occasion-intention") checklist = [
+    "What is the purpose of this cup or moment?",
+    "What feeling should the guest or household carry away: soft, steady, gentle, cared for, playful, impressive, or calm?",
+    "Who is receiving this moment, and what do they need right now?",
+    "Should ICY keep the guidance quiet and human-centered, or more technical once the purpose is set?"
+  ];
+  else if (category === "preparation") checklist = [
+    "What needs to be ready before the machine work starts?",
+    "Is the drinkware, water, milk, bean, towel, and serving space in place?",
+    "Is there anything that could interrupt the moment once the step begins?",
+    "Should ICY keep this as a readiness note or a recovery concern?"
+  ];
+  else if (category === "taste") checklist = [
+    "What did you notice first: sweetness, acidity, body, texture, finish, or balance?",
+    "Did the cup match the intended feeling for this Occasion?",
+    "Would you serve it again in this moment?",
+    "Should ICY save this as a preference, an adjustment, or a guest-resonance note?"
+  ];
+  else if (category === "fast/thin") checklist = [
     "Was the flow fast from the start, or did it speed up after blonding?",
     "What are the dose, yield, and time for this pull?",
     "Did the cup taste sour, hollow, watery, or just brighter than expected?",
@@ -6299,11 +6344,21 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
   const writtenTo = routeLabels.length ? `I wrote this to ${routeLabels.join(" and ")}. You can verify it in the Where this was written panel on this same step, and it will be included in your Doma Report when you create the report.` : "I kept this as a visible Step Note and Doma Report context.";
   const fields = changedFields?.length ? ` I also updated these visible fields: ${changedFields.join(", ")}.` : "";
   const ctx = getContextualIcyChecklist(raw, { profile, occasion, occasionItem, currentStep });
-  const missingLine = ctx.missing.length ? ` I still need ${ctx.missing.slice(0, 4).join(", ")} to make this more precise.` : " I have enough basic setup context to give you a first next move.";
+  const stepMode = getStepAdvisementMode(currentStep);
+  const stepAnchored = stepMode !== "technical" && !isClearlyTechnicalIssue(raw);
+  const missingLine = stepAnchored
+    ? " This step does not need machine troubleshooting unless you ask for it; I am staying with the step purpose."
+    : (ctx.missing.length ? ` I still need ${ctx.missing.slice(0, 4).join(", ")} to make this more precise.` : " I have enough basic setup context to give you a first next move.");
   const checklistLine = ctx.checklist.slice(0, 3).map((q, i) => `${i + 1}) ${q}`).join(" ");
   let guidance = "";
 
-  if (ctx.category === "choke/no-flow") {
+  if (ctx.category === "occasion-intention") {
+    guidance = `This is an Occasion intention step. I am not moving into shot repair or machine variables yet. Say the purpose out loud, choose the desired feeling, and let that become the anchor for the rest of the Occasion. A strong capture would sound like: “This is a quiet table moment. I want it to feel soft, steady, gentle, and cared for.”`;
+  } else if (ctx.category === "preparation") {
+    guidance = `This is a preparation/readiness step. Stay with the checklist and remove friction before the cup begins. ICY should help protect the moment, not jump ahead into extraction unless you report a technical issue.`;
+  } else if (ctx.category === "taste") {
+    guidance = `This is a taste/palate step. Describe what landed first and whether it matched the intended Occasion. ICY should capture preference and guest resonance before suggesting technical adjustment.`;
+  } else if (ctx.category === "choke/no-flow") {
     guidance = `This sounds like a choke or no-flow condition, not a fast shot. With ${machine} and ${grinder}, compare against your house formula of ${houseDose} in, ${houseYield} out, around ${houseTime}. First stop the pump, knock out the puck, purge, and try one to two steps coarser only if the dose and prep were normal.`;
   } else if (ctx.category === "fast/thin") {
     guidance = `This sounds like fast flow or a thin cup. Compare it to your house formula: ${houseDose} in, ${houseYield} out, around ${houseTime}, grind ${grind}. If the taste is watery, sour, or hollow, keep the dose steady and move one small step finer. If you actually like the brightness, save it as a preference instead of treating it as failure.`;
@@ -6325,7 +6380,8 @@ function buildOccasionAwareAdvisorReply(text, { occasionItem, currentStep, stepN
     guidance = `I captured this as a contextual note for the current Occasion step. I am not going to guess beyond the data. Answer one or two checklist items and I can narrow the next move.`;
   }
 
-  return `I'm here with you in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}. ${writtenTo}${fields}${missingLine} Based on what you said, I am reading this as ${ctx.category}. ${guidance} Quick checklist: ${checklistLine} If you answer those, I can refine the next move. This guidance is marked for the Doma Report, and you can Add More, Repeat This Step, View Report, or Move to Next Step.`;
+  const anchorLine = stepAnchored ? " Step-context lock is on, so I will stay inside this step unless you clearly ask for technical recovery." : " You raised a technical issue, so I am allowing technical recovery while keeping the active step visible.";
+  return `I'm here with you in ${occasionName}, Step ${stepNumber} of ${totalSteps}: ${stepTitle}.${anchorLine} ${writtenTo}${fields}${missingLine} Based on what you said, I am reading this as ${ctx.category}. ${guidance} Quick checklist: ${checklistLine} If you answer those, I can refine the next move. This guidance is marked for the Doma Report, and you can Add More, Repeat This Step, View Report, or Move to Next Step.`;
 }
 
 function formatSeconds(value) { const n = Math.max(0, Number(value) || 0); const m = Math.floor(n/60); const s = n % 60; return `${m}:${String(s).padStart(2,"0")}`; }

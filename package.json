@@ -1,6 +1,6 @@
 {
-  "name": "barista-doma-home-barista-development-platform-v8930-icy-no-hands-session-engine",
-  "version": "8.9.30",
+  "name": "barista-doma-home-barista-development-platform-v8931-icy-step-context-no-hands-guard",
+  "version": "8.9.31",
   "private": true,
   "scripts": {
     "dev": "next dev",
